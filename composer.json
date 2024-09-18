@@ -1,0 +1,52 @@
+{
+    "name": "diego-ninja/laravel-device-tracker",
+    "description": "This package provides session tracking functionalities, multi-session management and user device management features for laravel applications.",
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Diego Rin Martín",
+            "email": "yosoy@diego.ninja"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "jenssegers/agent": "^2",
+        "laravel/framework": "^11",
+        "nesbot/carbon": "^3"
+    },
+    "require-dev": {
+        "barryvdh/laravel-ide-helper": "^3.1",
+        "friendsofphp/php-cs-fixer": "^3.21",
+        "larastan/larastan": "^2",
+        "mockery/mockery": "^1.4.4",
+        "pestphp/pest": "^3",
+        "squizlabs/php_codesniffer": "^3.7"
+    },
+    "minimum-stability": "stable",
+    "autoload": {
+        "psr-4": {
+            "Ninja\\DeviceTracker\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "extra": {
+        "laravel": {
+            "aliases": {
+                "DeviceTracker": "DeviceTrackerFacade"
+            },
+            "providers": [
+                "DeviceTrackerServiceProvider"
+            ]
+        }
+    }
+}
