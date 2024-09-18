@@ -42,10 +42,10 @@
     "extra": {
         "laravel": {
             "aliases": {
-                "DeviceTracker": "DeviceTrackerFacade"
+                "DeviceTracker": "Ninja\\DeviceTracker\\DeviceTrackerFacade"
             },
             "providers": [
-                "DeviceTrackerServiceProvider"
+                "Ninja\\DeviceTracker\\DeviceTrackerServiceProvider"
             ]
         }
     }
