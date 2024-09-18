@@ -10,12 +10,7 @@ class DeviceTrackerServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
-        $this->publishes([
-            __DIR__ . '/../config/devices.php' => config_path('devices.php')], 'config');
-
-        $this->publishes([
-            __DIR__ . '/../database/migrations' => base_path('database/migrations')
-        ], 'migrations');
+        $this->registerPublishing();
 
         $router = $this->app['router'];
         $router->middleware('session', SessionTracker::class);
@@ -42,5 +37,17 @@ class DeviceTrackerServiceProvider extends ServiceProvider
     private function registerAuthenticationEventHandler(): void
     {
         Event::subscribe(AuthenticationHandler::class);
+    }
+
+    private function registerPublishing(): void
+    {
+        if ($this->app->runningInConsole()) {
+            $this->publishes([
+                __DIR__ . '/../config/devices.php' => config_path('devices.php')], 'config');
+
+            $this->publishesMigrations([
+                __DIR__ . '/../database/migrations' => database_path('migrations')
+            ], 'device-tracker-migrations');
+        }
     }
 }
