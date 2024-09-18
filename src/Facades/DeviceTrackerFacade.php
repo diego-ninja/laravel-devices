@@ -1,6 +1,6 @@
 <?php
 
-namespace Ninja\DeviceTracker;
+namespace Ninja\DeviceTracker\Facades;
 
 use Illuminate\Support\Facades\Facade;
 

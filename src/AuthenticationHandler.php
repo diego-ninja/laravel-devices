@@ -3,6 +3,7 @@
 namespace Ninja\DeviceTracker;
 
 use Illuminate\Events\Dispatcher;
+use Ninja\DeviceTracker\Facades\DeviceTrackerFacade;
 
 final readonly class AuthenticationHandler
 {

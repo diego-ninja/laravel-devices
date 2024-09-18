@@ -11,10 +11,10 @@ class DeviceTrackerServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->publishes([
-            __DIR__ . '/config/config.php' => config_path('devices.php')], 'config');
+            __DIR__ . '/../config/devices.php' => config_path('devices.php')], 'config');
 
         $this->publishes([
-            __DIR__ . '/migrations' => base_path('database/migrations')
+            __DIR__ . '/../database/migrations' => base_path('database/migrations')
         ], 'migrations');
 
         $router = $this->app['router'];
@@ -23,10 +23,10 @@ class DeviceTrackerServiceProvider extends ServiceProvider
 
     public function register(): void
     {
-        $config = __DIR__ . '/config/config.php';
+        $config = __DIR__ . '/../config/devices.php';
         $this->mergeConfigFrom(
-            $config,
-            'devices'
+            path: $config,
+            key: 'devices'
         );
         $this->registerDeviceTracker();
         $this->registerAuthenticationEventHandler();

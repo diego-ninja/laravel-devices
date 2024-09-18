@@ -14,7 +14,7 @@ This package provides session tracking functionalities, multisession management 
 In composer.json:
 
     "require": {
-        "diego-ninja/laravel-device-tracker" "1.0.0"
+        "diego-ninja/laravel-device-tracker": "^1"
     }
 
 Run:

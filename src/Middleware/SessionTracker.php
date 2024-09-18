@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Ninja\DeviceTracker\DeviceTrackerFacade;
+use Ninja\DeviceTracker\Facades\DeviceTrackerFacade;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Support\Facades\Config;
 
