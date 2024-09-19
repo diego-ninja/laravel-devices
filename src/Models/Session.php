@@ -74,7 +74,7 @@ class Session extends Model
             'user_id' => $userId,
             'device_uid' => $deviceId,
             'ip' => request()->ip(),
-            'last_activity' => $now
+            'last_activity_at' => $now
         ]);
 
         SessionFacade::put(self::DEVICE_SESSION_ID, $session->id);
