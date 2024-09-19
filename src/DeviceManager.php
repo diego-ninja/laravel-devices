@@ -32,5 +32,4 @@ final readonly class DeviceManager
     {
         return Device::addUserDevice();
     }
-
 }

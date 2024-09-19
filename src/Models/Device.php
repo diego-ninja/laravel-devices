@@ -89,6 +89,5 @@ class Device extends Model
         }
 
         return false;
-
     }
 }
