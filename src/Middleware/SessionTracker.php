@@ -6,7 +6,7 @@ use Closure;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Ninja\DeviceTracker\Facades\DeviceTrackerFacade;
+use Ninja\DeviceTracker\Facades\DeviceManager;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Support\Facades\Config;
 
@@ -30,7 +30,7 @@ final readonly class SessionTracker
             return $this->redirectToSecurityCode();
         }
 
-        $this->refreshAndLogSession($request);
+        $this->reloadAndLogSession($request);
 
         return $next($request);
     }
@@ -46,7 +46,7 @@ final readonly class SessionTracker
 
     private function isSessionBlockedOrInactive(): bool
     {
-        return DeviceTrackerFacade::isSessionBlocked() || DeviceTrackerFacade::isSessionInactive();
+        return DeviceManager::isBlocked() || DeviceManager::isInactive();
     }
 
     private function handleBlockedOrInactiveSession(Request $request): Response|RedirectResponse
@@ -60,7 +60,7 @@ final readonly class SessionTracker
 
     private function isSessionLocked(): bool
     {
-        return DeviceTrackerFacade::isSessionLocked();
+        return DeviceManager::isLocked();
     }
 
     private function redirectToSecurityCode(): RedirectResponse
@@ -68,9 +68,8 @@ final readonly class SessionTracker
         return redirect()->route(Config::get('devices.security_code_route_name'));
     }
 
-    private function refreshAndLogSession(Request $request): void
+    private function reloadAndLogSession(Request $request): void
     {
-        DeviceTrackerFacade::refreshSession($request);
-        DeviceTrackerFacade::logSession($request);
+        DeviceManager::reload($request);
     }
 }

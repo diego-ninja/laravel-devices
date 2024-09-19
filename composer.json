@@ -42,7 +42,8 @@
     "extra": {
         "laravel": {
             "aliases": {
-                "DeviceTracker": "Ninja\\DeviceTracker\\Facades\\DeviceTrackerFacade"
+                "DeviceManager": "Ninja\\DeviceTracker\\Facades\\DeviceManager",
+                "SessionManager": "Ninja\\DeviceTracker\\Facades\\SessionManager"
             },
             "providers": [
                 "Ninja\\DeviceTracker\\DeviceTrackerServiceProvider"

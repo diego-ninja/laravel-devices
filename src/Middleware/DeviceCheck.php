@@ -6,16 +6,21 @@ use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Config;
+use Random\RandomException;
 
 final readonly class DeviceCheck
 {
+    /**
+     * @throws RandomException
+     */
     public function handle(Request $request, Closure $next)
     {
+
         if (!Cookie::has('d_i')) {
             Cookie::queue(
                 Cookie::forever(
                     name: 'd_i',
-                    value: str_random(60),
+                    value: bin2hex(random_bytes(32)),
                     secure: Config::get('session.secure', false),
                     httpOnly: Config::get('session.http_only', true)
                 )

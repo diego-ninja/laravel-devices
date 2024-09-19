@@ -4,25 +4,9 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Ignore routes for logging
+    | Ignore routes for restarting the session
     |--------------------------------------------------------------------------
-    | This option specifies the routes which the Session Tracker must not create
-    | the log for them.
-    | The format is:
-    | 'ignore_log' => [
-    |   array('method'=>'get', 'route'=>'route.name'),
-    |   array('method'=>'post','route'=>'route/uri/{param}')
-    | ],
-    |
-    */
-
-    'ignore_log' => [],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Ignore routes for refreshing the session
-    |--------------------------------------------------------------------------
-    | This option specifies the routes which the session must not be refreshed
+    | This option specifies the routes which the session must not be restarted
     | when they are requested,(e.g. poller requests and chat requests)
     |
     | The format is:
@@ -33,7 +17,7 @@ return [
     |
     */
 
-    'ignore_refresh' => [],
+    'ignore_restart' => [],
 
     /*
     |--------------------------------------------------------------------------

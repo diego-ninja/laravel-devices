@@ -23,14 +23,18 @@ class DeviceTrackerServiceProvider extends ServiceProvider
             path: $config,
             key: 'devices'
         );
-        $this->registerDeviceTracker();
+        $this->registerFacades();
         $this->registerAuthenticationEventHandler();
     }
 
-    private function registerDeviceTracker(): void
+    private function registerFacades(): void
     {
-        $this->app->bind('deviceTracker', function ($app) {
-            return new DeviceTracker($app);
+        $this->app->bind('device', function ($app) {
+            return new DeviceManager($app);
+        });
+
+        $this->app->bind('session', function ($app) {
+            return new SessionManager($app);
         });
     }
 
