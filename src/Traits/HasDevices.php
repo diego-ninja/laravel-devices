@@ -12,7 +12,7 @@ trait HasDevices
     public function activeSessions($exceptSelf = false): HasMany
     {
         $query =  $this->sessions()
-            ->where('end_date', null)
+            ->where('finished_at', null)
             ->where('block', Session::STATUS_DEFAULT)
             ->where('login_code', null);
 
@@ -26,7 +26,7 @@ trait HasDevices
 
     public function recentSession(): Session
     {
-        return $this->sessions()->orderBy('last_activity', 'desc')->first();
+        return $this->sessions()->orderBy('last_activity_at', 'desc')->first();
     }
 
     public function sessions(): HasMany

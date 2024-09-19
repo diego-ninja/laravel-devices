@@ -86,8 +86,8 @@ class Session extends Model
     {
         self::where('device_uid', $deviceId)
             ->where('user_id', $userId)
-            ->whereNull('end_date')
-            ->update(['end_date' => $now]);
+            ->whereNull('finished_at')
+            ->update(['finished_at' => $now]);
     }
 
     public static function end(bool $forgetSession = false): bool
