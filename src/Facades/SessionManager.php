@@ -8,6 +8,6 @@ final class SessionManager extends Facade
 {
     protected static function getFacadeAccessor(): string
     {
-        return 'session';
+        return 'session_manager';
     }
 }

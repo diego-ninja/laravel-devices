@@ -29,11 +29,11 @@ class DeviceTrackerServiceProvider extends ServiceProvider
 
     private function registerFacades(): void
     {
-        $this->app->bind('device', function ($app) {
+        $this->app->bind('device_manager', function ($app) {
             return new DeviceManager($app);
         });
 
-        $this->app->bind('session', function ($app) {
+        $this->app->bind('session_manager', function ($app) {
             return new SessionManager($app);
         });
     }
