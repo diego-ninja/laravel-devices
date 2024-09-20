@@ -4,7 +4,7 @@ namespace Ninja\DeviceTracker\Models;
 
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Http\Request;
@@ -28,7 +28,7 @@ use Ninja\DeviceTracker\DTO\Location;
  * @property integer                      $user_id                unsigned int
  * @property string                       $device_uid             string
  * @property string                       $ip                     string
- * @property array                        $location               json
+ * @property Location                     $location               json
  * @property boolean                      $block                  boolean
  * @property integer                      $blocked_by             unsigned int
  * @property string                       $login_code             string
@@ -86,6 +86,14 @@ class Session extends Model
         }
 
         return self::STATUS_ACTIVE;
+    }
+
+    public function location(): Attribute
+    {
+        return Attribute::make(
+            get: fn(string $value) => Location::fromArray(json_decode($value, true)),
+            set: fn(Location $value) => $value->json()
+        );
     }
 
     public static function start(): Session

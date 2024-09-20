@@ -8,32 +8,30 @@ use Stringable;
 final readonly class Location implements JsonSerializable, Stringable
 {
     public function __construct(
-        public string $ip,
-        public string $hostname,
-        public string $country,
-        public string $region,
-        public string $city,
-        public string $postal,
-        public string $latitude,
-        public string $longitude,
-        public string $timezone
+        public ?string $ip,
+        public ?string $hostname,
+        public ?string $country,
+        public ?string $region,
+        public ?string $city,
+        public ?string $postal,
+        public ?string $latitude,
+        public ?string $longitude,
+        public ?string $timezone
     ) {
     }
 
     public static function fromArray(array $location): self
     {
-        [$lat,$long] = explode(",", $location['loc']);
-
         return new self(
-            ip: $location['ip'],
-            hostname: $location['hostname'],
-            country: $location['country'],
-            region: $location['region'],
-            city: $location['city'],
-            postal: $location['postal'],
-            latitude: $lat,
-            longitude: $long,
-            timezone: $location['timezone']
+            ip: $location['ip'] ?? null,
+            hostname: $location['hostname'] ?? null,
+            country: $location['country'] ?? null,
+            region: $location['region'] ?? null,
+            city: $location['city'] ?? null,
+            postal: $location['postal'] ?? null,
+            latitude: $location['latitude'] ?? null,
+            longitude: $location['longitude'] ?? null,
+            timezone: $location['timezone'] ?? null
         );
     }
 

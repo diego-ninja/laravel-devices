@@ -13,7 +13,7 @@ trait HasDevices
     {
         $query =  $this->sessions()
             ->where('finished_at', null)
-            ->where('block', null)
+            ->where('block', false)
             ->where('login_code', null);
 
         if ($exceptSelf) {
@@ -21,6 +21,7 @@ trait HasDevices
                 $query->where('id', '!=', SessionFacade::get(Session::DEVICE_SESSION_ID));
             }
         }
+
         return $query;
     }
 
@@ -42,6 +43,11 @@ trait HasDevices
     public function currentDevice(): Device
     {
         return $this->devices()->where('uid', SessionFacade::get('d_i'))->first();
+    }
+
+    public function currentSession(): Session
+    {
+        return $this->sessions()->where('id', SessionFacade::get(Session::DEVICE_SESSION_ID))->first();
     }
     public function isUserDevice(): bool
     {
