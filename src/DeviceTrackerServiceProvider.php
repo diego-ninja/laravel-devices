@@ -4,6 +4,7 @@ namespace Ninja\DeviceTracker;
 
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
+use Ninja\DeviceTracker\Contracts\LocationProvider;
 use Ninja\DeviceTracker\Middleware\SessionTracker;
 
 class DeviceTrackerServiceProvider extends ServiceProvider
@@ -21,6 +22,11 @@ class DeviceTrackerServiceProvider extends ServiceProvider
             path: $config,
             key: 'devices'
         );
+
+        $this->app->singleton(LocationProvider::class, function ($app) {
+            return new IpinfoLocationProvider(request()->ip());
+        });
+
         $this->registerFacades();
         $this->registerAuthenticationEventHandler();
     }

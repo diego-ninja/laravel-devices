@@ -15,6 +15,8 @@ use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session as SessionFacade;
 use Jenssegers\Agent\Agent;
+use Ninja\DeviceTracker\Contracts\LocationProvider;
+use Ninja\DeviceTracker\DTO\Location;
 
 /**
  * Class Session
@@ -28,7 +30,7 @@ use Jenssegers\Agent\Agent;
  * @property integer                      $user_id                unsigned int
  * @property string                       $device_uid             string
  * @property string                       $ip                     string
- * @property string                       $location               string
+ * @property array                        $location               json
  * @property boolean                      $block                  boolean
  * @property integer                      $blocked_by             unsigned int
  * @property string                       $login_code             string
@@ -91,6 +93,8 @@ class Session extends Model
         $deviceId = Cookie::get('d_i');
         $userId = Auth::user()->id;
         $now = Carbon::now();
+        /** @var Location $location */
+        $location = app(LocationProvider::class)->location();
 
         if ($deviceId) {
             self::endPreviousSessions($deviceId, $userId, $now);
@@ -100,6 +104,7 @@ class Session extends Model
             'user_id' => $userId,
             'device_uid' => $deviceId,
             'ip' => request()->ip(),
+            'location' => $location->array(),
             'last_activity_at' => $now
         ]);
 

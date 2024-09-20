@@ -12,11 +12,11 @@ return new class extends Migration {
             $table->integer('user_id');
             $table->string('device_uid')->nullable();
             $table->string('ip')->nullable();
-            $table->string('location')->nullable();
-            $table->tinyInteger('block')->nullable();
+            $table->json('location')->nullable();
+            $table->boolean('block')->nullable()->default(false);
             $table->integer('blocked_by')->nullable();
             $table->string('login_code')->nullable();
-            $table->timestamps();
+            $table->timestamp('started_at')->nullable();
             $table->timestamp('finished_at')->nullable();
             $table->timestamp('last_activity_at')->nullable();
         });

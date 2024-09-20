@@ -1,8 +1,11 @@
 <?php
 
-namespace Ninja\DeviceTracker\Models\DTO;
+namespace Ninja\DeviceTracker\DTO;
 
-final readonly class Session
+use JsonSerializable;
+use Stringable;
+
+final readonly class Session implements JsonSerializable, Stringable
 {
     public function __construct(
         public string $id,
@@ -31,5 +34,35 @@ final readonly class Session
             finishedAt: $session->finished_at,
             device: Device::fromModel($session->device()->first())
         );
+    }
+
+    public function array(): array
+    {
+        return [
+            "id" => $this->id,
+            "ip" => $this->ip,
+            "location" => $this->location,
+            "status" => $this->status,
+            "lastActivityAt" => $this->lastActivityAt,
+            "createdAt" => $this->createdAt,
+            "updatedAt" => $this->updatedAt,
+            "finishedAt" => $this->finishedAt,
+            "device" => $this->device->array()
+        ];
+    }
+
+    public function json(): string
+    {
+        return json_encode($this->array());
+    }
+
+    public function __toString(): string
+    {
+        return $this->id;
+    }
+
+    public function jsonSerialize(): array
+    {
+        return $this->array();
     }
 }

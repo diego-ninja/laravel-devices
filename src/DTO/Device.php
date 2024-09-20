@@ -1,6 +1,6 @@
 <?php
 
-namespace Ninja\DeviceTracker\Models\DTO;
+namespace Ninja\DeviceTracker\DTO;
 
 use JsonSerializable;
 use Stringable;
@@ -33,7 +33,7 @@ final readonly class Device implements JsonSerializable, Stringable
         );
     }
 
-    public function toArray(): array
+    public function array(): array
     {
         return [
             "uid" => $this->uid,
@@ -54,6 +54,11 @@ final readonly class Device implements JsonSerializable, Stringable
 
     public function jsonSerialize(): array
     {
-        return $this->toArray();
+        return $this->array();
+    }
+
+    public function json(): string
+    {
+        return json_encode($this->array());
     }
 }
