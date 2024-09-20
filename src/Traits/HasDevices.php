@@ -13,7 +13,7 @@ trait HasDevices
     {
         $query =  $this->sessions()
             ->where('finished_at', null)
-            ->where('block', Session::STATUS_DEFAULT)
+            ->where('block', null)
             ->where('login_code', null);
 
         if ($exceptSelf) {

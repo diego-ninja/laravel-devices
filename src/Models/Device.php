@@ -26,6 +26,7 @@ use Jenssegers\Agent\Agent;
  * @property string                       $platform_version       string
  * @property boolean                      $mobile                 boolean
  * @property string                       $device                 string
+ * @property string                       $device_type            string
  * @property boolean                      $robot                  boolean
  * @property string                       $source                 string
  * @property Carbon                       $created_at             datetime
@@ -46,6 +47,7 @@ class Device extends Model
         'platform_version',
         'mobile',
         'device',
+        'device_type',
         'robot',
         'source'
     ];

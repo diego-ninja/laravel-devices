@@ -4,6 +4,7 @@ namespace Ninja\DeviceTracker\Models;
 
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -42,6 +43,11 @@ class Session extends Model
 {
     public const  DEVICE_SESSION_ID = 'session.id';
 
+    public const STATUS_ACTIVE = 'active';
+    public const STATUS_INACTIVE = 'inactive';
+    public const STATUS_BLOCKED = 'blocked';
+    public const STATUS_FINISHED = 'finished';
+
     protected $table = 'device_sessions';
 
     protected $fillable = [
@@ -52,12 +58,32 @@ class Session extends Model
         'last_activity_at'
     ];
 
-    public const STATUS_DEFAULT = null;
-    public const STATUS_BLOCKED = 1;
 
     public function device(): HasOne
     {
         return $this->hasOne(Device::class, 'device_uid', 'device_uid');
+    }
+
+    public function user(): HasOne
+    {
+        return $this->hasOne(Authenticatable::class, 'id', 'user_id');
+    }
+
+    public function status(): string
+    {
+        if ($this->block) {
+            return self::STATUS_BLOCKED;
+        }
+
+        if ($this->finished_at !== null) {
+            return self::STATUS_FINISHED;
+        }
+
+        if (abs(strtotime($this->last_activity_at) - strtotime(now())) > Config::get('devices.inactivity_seconds', 1200)) {
+            return self::STATUS_INACTIVE;
+        }
+
+        return self::STATUS_ACTIVE;
     }
 
     public static function start(): Session
@@ -97,6 +123,10 @@ class Session extends Model
         }
 
         $session = self::getSession();
+        if (!$session) {
+            return false;
+        }
+
         $session->finished_at = Carbon::now();
         $session->save();
 
@@ -114,6 +144,11 @@ class Session extends Model
         }
 
         $session = self::getSession();
+
+        if (!$session) {
+            return false;
+        }
+
         $session->last_activity_at = Carbon::now();
         $session->finished_at = null;
         $session->save();
@@ -166,7 +201,7 @@ class Session extends Model
 
         return
             $session?->last_activity_at &&
-            abs(strtotime($session?->last_activity_at) - strtotime(now())) > 1200;
+            abs(strtotime($session?->last_activity_at) - strtotime(now())) > Config::get('devices.inactivity_seconds', 1200);
     }
 
     public static function blockById($sessionId): bool
@@ -183,7 +218,7 @@ class Session extends Model
 
     public function block(): void
     {
-        $this->block = self::STATUS_BLOCKED;
+        $this->block = true;
         $this->blocked_by = Auth::user()->id;
         $this->save();
     }
@@ -195,7 +230,7 @@ class Session extends Model
         }
 
         $session = self::getSession();
-        return $session->block == self::STATUS_BLOCKED;
+        return $session->block;
     }
 
     public static function isLocked(): bool
