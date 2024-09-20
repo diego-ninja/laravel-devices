@@ -4,9 +4,8 @@ namespace Ninja\DeviceTracker\Models;
 
 use Carbon\Carbon;
 use Exception;
-use Illuminate\Auth\Authenticatable;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,7 +13,6 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session as SessionFacade;
-use Jenssegers\Agent\Agent;
 use Ninja\DeviceTracker\Contracts\LocationProvider;
 use Ninja\DeviceTracker\DTO\Location;
 
@@ -51,7 +49,7 @@ class Session extends Model
 
     protected $table = 'device_sessions';
 
-    protected $timestamps = false;
+    public $timestamps = false;
 
     protected $fillable = [
         'user_id',
@@ -65,7 +63,7 @@ class Session extends Model
 
     public function device(): HasOne
     {
-        return $this->hasOne(Device::class, 'device_uid', 'device_uid');
+        return $this->hasOne(Device::class, 'uid', 'device_uid');
     }
 
     public function user(): HasOne
@@ -106,7 +104,7 @@ class Session extends Model
             'user_id' => $userId,
             'device_uid' => $deviceId,
             'ip' => request()->ip(),
-            'location' => $location->array(),
+            'location' => $location->json(),
             'started_at' => $now,
             'last_activity_at' => $now
         ]);

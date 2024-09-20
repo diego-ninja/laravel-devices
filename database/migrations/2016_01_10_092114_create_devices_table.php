@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('platform_version')->nullable();
             $table->tinyInteger('mobile')->nullable();
             $table->string('device')->nullable();
+            $table->string('device_type')->nullable();
             $table->tinyInteger('robot')->nullable();
             $table->string('source')->nullable();
             $table->timestamps();

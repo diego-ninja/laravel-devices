@@ -3,8 +3,10 @@
 namespace Ninja\DeviceTracker\Models;
 
 use Carbon\Carbon;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
 use Jenssegers\Agent\Agent;
@@ -57,6 +59,11 @@ class Device extends Model
         return $this->hasMany(Session::class);
     }
 
+    public function user(): HasOne
+    {
+        return $this->hasOne(Authenticatable::class, 'id', 'user_id');
+    }
+
     public static function isUserDevice(): bool
     {
         if (Cookie::has('d_i')) {
@@ -76,8 +83,6 @@ class Device extends Model
                 userAgent: $userAgent ?? request()->userAgent()
             );
 
-//            $agent->setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3");
-
             self::create([
                 'user_id' => Auth::user()->id,
                 'uid' => Cookie::get('d_i'),
@@ -87,6 +92,7 @@ class Device extends Model
                 'platform_version' => $agent->version($agent->platform()),
                 'mobile' => $agent->isMobile(),
                 'device' => $agent->device(),
+                'device_type' => $agent->deviceType(),
                 'robot' => $agent->isRobot(),
                 'source' => $agent->getUserAgent()
             ]);
