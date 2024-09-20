@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cookie;
 use Jenssegers\Agent\Agent;
 
@@ -61,7 +62,7 @@ class Device extends Model
 
     public function user(): HasOne
     {
-        return $this->hasOne(Authenticatable::class, 'id', 'user_id');
+        return $this->hasOne(Config::get("devices.authenticatable_class"), 'id', 'user_id');
     }
 
     public static function isUserDevice(): bool

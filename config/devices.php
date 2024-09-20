@@ -93,4 +93,15 @@ return [
     */
     'security_code_lifetime' => 1200,
 
+    /*
+    |--------------------------------------------------------------------------
+    | Authenticatable class
+    |--------------------------------------------------------------------------
+    | The class name of the authenticatable model.
+    | This option specifies the model class that should be used for authentication.
+    | Typically, this is the User model, but it can be customized to any model that
+    | implements the Authenticatable contract.
+    |
+    */
+    'authenticatable_class' => 'App\Models\User',
 ];

@@ -68,7 +68,7 @@ class Session extends Model
 
     public function user(): HasOne
     {
-        return $this->hasOne(Authenticatable::class, 'id', 'user_id');
+        return $this->hasOne(Config::get("devices.authenticatable_class"), 'id', 'user_id');
     }
 
     public function status(): string

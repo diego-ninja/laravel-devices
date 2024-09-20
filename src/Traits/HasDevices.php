@@ -31,12 +31,12 @@ trait HasDevices
 
     public function sessions(): HasMany
     {
-        return $this->hasMany(Session::class);
+        return $this->hasMany(Session::class, 'user_id');
     }
 
     public function devices(): HasMany
     {
-        return $this->hasMany(Device::class);
+        return $this->hasMany(Device::class, 'user_id');
     }
 
     public function currentDevice(): Device
