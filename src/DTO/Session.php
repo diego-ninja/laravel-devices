@@ -10,11 +10,10 @@ final readonly class Session implements JsonSerializable, Stringable
     public function __construct(
         public string $id,
         public string $ip,
-        public string $location,
+        public Location $location,
         public string $status,
         public string $lastActivityAt,
-        public string $createdAt,
-        public string $updatedAt,
+        public string $startedAt,
         public string $finishedAt,
         public Device $device
     ) {
@@ -25,11 +24,10 @@ final readonly class Session implements JsonSerializable, Stringable
         return new self(
             id: $session->id,
             ip: $session->ip,
-            location: $session->location,
+            location: Location::fromArray($session->location),
             status: $session->status(),
             lastActivityAt: $session->last_activity_at,
-            createdAt: $session->created_at,
-            updatedAt: $session->updated_at,
+            startedAt: $session->started_at,
             finishedAt: $session->finished_at,
             device: Device::fromModel($session->device()->first())
         );
@@ -40,11 +38,10 @@ final readonly class Session implements JsonSerializable, Stringable
         return [
             "id" => $this->id,
             "ip" => $this->ip,
-            "location" => $this->location,
+            "location" => $this->location->array(),
             "status" => $this->status,
             "lastActivityAt" => $this->lastActivityAt,
-            "createdAt" => $this->createdAt,
-            "updatedAt" => $this->updatedAt,
+            "startedAt" => $this->startedAt,
             "finishedAt" => $this->finishedAt,
             "device" => $this->device->array()
         ];

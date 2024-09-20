@@ -22,6 +22,8 @@ final readonly class Location implements JsonSerializable, Stringable
 
     public static function fromArray(array $location): self
     {
+        [$lat,$long] = explode(",", $location['loc']);
+
         return new self(
             ip: $location['ip'],
             hostname: $location['hostname'],
@@ -29,8 +31,8 @@ final readonly class Location implements JsonSerializable, Stringable
             region: $location['region'],
             city: $location['city'],
             postal: $location['postal'],
-            latitude: $location['latitude'],
-            longitude: $location['longitude'],
+            latitude: $lat,
+            longitude: $long,
             timezone: $location['timezone']
         );
     }

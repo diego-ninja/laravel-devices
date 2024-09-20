@@ -12,7 +12,13 @@ class IpinfoLocationProvider implements Contracts\LocationProvider
 
     public function __construct(string $ip)
     {
-        $this->location = Location::fromArray($this->fetch($ip));
+        $locationData = $this->fetch($ip);
+        [$lat, $long] = explode(",", $locationData['loc']);
+
+        $locationData['latitude'] = $lat;
+        $locationData['longitude'] = $long;
+
+        $this->location = Location::fromArray($locationData);
     }
 
     public function fetch(string $ip): array
