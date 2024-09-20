@@ -34,10 +34,9 @@ use Ninja\DeviceTracker\DTO\Location;
  * @property boolean                      $block                  boolean
  * @property integer                      $blocked_by             unsigned int
  * @property string                       $login_code             string
+ * @property Carbon                       $started_at             datetime
  * @property Carbon                       $finished_at            datetime
  * @property Carbon                       $last_activity_at       datetime
- * @property Carbon                       $created_at             datetime
- * @property Carbon                       $updated_at             datetime
  *
  * @property Session                       $session
  */
@@ -57,6 +56,7 @@ class Session extends Model
         'device_uid',
         'ip',
         'location',
+        'started_at',
         'last_activity_at'
     ];
 
@@ -105,6 +105,7 @@ class Session extends Model
             'device_uid' => $deviceId,
             'ip' => request()->ip(),
             'location' => $location->array(),
+            'started_at' => $now,
             'last_activity_at' => $now
         ]);
 
@@ -282,7 +283,7 @@ class Session extends Model
         $session = self::getSession();
         $code = rand(100000, 999999);
         $session->login_code = md5($code);
-        $session->created_at = Carbon::now();
+        $session->started_at = Carbon::now();
 
         $session->save();
 
@@ -296,7 +297,7 @@ class Session extends Model
         }
 
         $session = self::getSession();
-        if (time() - strtotime($session->created_at) > Config::get('devices.security_code_lifetime', 1200)) {
+        if (time() - strtotime($session->started_at) > Config::get('devices.security_code_lifetime', 1200)) {
             return -2;
         }
 
