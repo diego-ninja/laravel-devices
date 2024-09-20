@@ -51,6 +51,8 @@ class Session extends Model
 
     protected $table = 'device_sessions';
 
+    protected $timestamps = false;
+
     protected $fillable = [
         'user_id',
         'device_uid',
