@@ -66,13 +66,17 @@ class Device extends Model
         return false;
     }
 
-    public static function addUserDevice(): bool
+    public static function addUserDevice(?string $userAgent = null): bool
     {
         if (Cookie::has('d_i')) {
-            $agent = new Agent();
-            // $agent->setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3");
+            $agent = new Agent(
+                headers: request()->headers->all(),
+                userAgent: $userAgent ?? request()->userAgent()
+            );
 
-             self::create([
+//            $agent->setUserAgent("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3");
+
+            self::create([
                 'user_id' => Auth::user()->id,
                 'uid' => Cookie::get('d_i'),
                 'browser' => $agent->browser(),
@@ -83,7 +87,7 @@ class Device extends Model
                 'device' => $agent->device(),
                 'robot' => $agent->isRobot(),
                 'source' => $agent->getUserAgent()
-             ]);
+            ]);
 
             return true;
         }

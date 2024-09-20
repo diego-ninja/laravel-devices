@@ -12,7 +12,7 @@ final readonly class AuthenticationHandler
     {
         if (SessionManager::forgot()) {
             SessionManager::start();
-            DeviceManager::addUserDevice();
+            DeviceManager::addUserDevice(null);
         } else {
             SessionManager::renew();
         }

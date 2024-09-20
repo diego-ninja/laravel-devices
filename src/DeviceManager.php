@@ -14,7 +14,6 @@ final readonly class DeviceManager
         $this->app = $app;
     }
 
-
     /**
      * @return bool
      */
@@ -28,8 +27,8 @@ final readonly class DeviceManager
         return Device::destroy($id);
     }
 
-    public function addUserDevice(): bool
+    public function addUserDevice(?string $userAgent = null): bool
     {
-        return Device::addUserDevice();
+        return Device::addUserDevice($userAgent);
     }
 }

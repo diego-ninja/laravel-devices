@@ -32,9 +32,9 @@ final readonly class SessionManager
         return Session::renew();
     }
 
-    public function reload(Request $request): bool
+    public function restart(Request $request): bool
     {
-        return Session::reload($request);
+        return Session::restart($request);
     }
 
     public function isInactive(Authenticatable $user = null): bool
@@ -82,12 +82,12 @@ final readonly class SessionManager
 
     public function forgot(): bool
     {
-        return !SessionFacade::has('dbsession.id');
+        return !SessionFacade::has(Session::DEVICE_SESSION_ID);
     }
 
     public function sessionId(): ?int
     {
-        return SessionFacade::get('dbsession.id');
+        return SessionFacade::get(Session::DEVICE_SESSION_ID);
     }
 
     public function delete(): void
@@ -95,7 +95,7 @@ final readonly class SessionManager
 
         if ($this->sessionId() != null) {
             Session::destroy($this->sessionId());
-            SessionFacade::forget('dbsession.id');
+            SessionFacade::forget(Session::DEVICE_SESSION_ID);
         }
     }
 

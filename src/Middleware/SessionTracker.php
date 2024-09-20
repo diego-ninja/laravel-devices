@@ -6,9 +6,13 @@ use Closure;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 use Ninja\DeviceTracker\Facades\DeviceManager;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Support\Facades\Config;
+use Ninja\DeviceTracker\Facades\SessionManager;
+use Ninja\DeviceTracker\Models\Session;
+use Symfony\Component\Routing\Exception\RouteNotFoundException;
 
 final readonly class SessionTracker
 {
@@ -18,19 +22,11 @@ final readonly class SessionTracker
 
     public function handle(Request $request, Closure $next)
     {
-        if ($this->auth->guest()) {
-            return $this->handleGuest($request);
+        if ($request->session()->has(Session::DEVICE_SESSION_ID)) {
+            SessionManager::restart($request);
+        } else {
+            SessionManager::end(true);
         }
-
-        if ($this->isSessionBlockedOrInactive()) {
-            return $this->handleBlockedOrInactiveSession($request);
-        }
-
-        if ($this->isSessionLocked()) {
-            return $this->redirectToSecurityCode();
-        }
-
-        $this->reloadAndLogSession($request);
 
         return $next($request);
     }
@@ -46,21 +42,27 @@ final readonly class SessionTracker
 
     private function isSessionBlockedOrInactive(): bool
     {
-        return DeviceManager::isBlocked() || DeviceManager::isInactive();
+        return SessionManager::isBlocked() || SessionManager::isInactive();
     }
 
     private function handleBlockedOrInactiveSession(Request $request): Response|RedirectResponse
     {
-        if ($request->ajax()) {
+        if ($request->ajax() || !Config::get('devices.use_redirects')) {
             return response('Unauthorized.', 401);
         }
 
-        return redirect()->route(Config::get('devices.logout_route_name'));
+        try {
+            return redirect()->route(Config::get('devices.logout_route_name'));
+        } catch (RouteNotFoundException $e) {
+            Log::error('Route not found', ['route' => Config::get('devices.logout_route_name'), 'exception' => $e]);
+        }
+
+        return response('Unauthorized.', 401);
     }
 
     private function isSessionLocked(): bool
     {
-        return DeviceManager::isLocked();
+        return SessionManager::isLocked();
     }
 
     private function redirectToSecurityCode(): RedirectResponse
@@ -68,8 +70,8 @@ final readonly class SessionTracker
         return redirect()->route(Config::get('devices.security_code_route_name'));
     }
 
-    private function reloadAndLogSession(Request $request): void
+    private function restartAndLogSession(Request $request): void
     {
-        DeviceManager::reload($request);
+        SessionManager::restart($request);
     }
 }

@@ -11,9 +11,7 @@ class DeviceTrackerServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->registerPublishing();
-
-        $router = $this->app['router'];
-        $router->middleware('session', SessionTracker::class);
+        $this->registerMiddlewares();
     }
 
     public function register(): void
@@ -26,6 +24,13 @@ class DeviceTrackerServiceProvider extends ServiceProvider
         $this->registerFacades();
         $this->registerAuthenticationEventHandler();
     }
+
+    private function registerMiddlewares(): void
+    {
+        $router = $this->app['router'];
+        $router->middleware('session', SessionTracker::class);
+    }
+
 
     private function registerFacades(): void
     {

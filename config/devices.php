@@ -4,6 +4,16 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Use redirects to routes or json responses
+    |--------------------------------------------------------------------------
+    | This option specifies if middleware should redirect to pages or return json
+    |
+    */
+
+    'use_redirects' => true,
+
+    /*
+    |--------------------------------------------------------------------------
     | Ignore routes for restarting the session
     |--------------------------------------------------------------------------
     | This option specifies the routes which the session must not be restarted
@@ -29,7 +39,7 @@ return [
     |
     */
 
-    'inactivity_seconds' => 1200,
+    'inactivity_seconds' => env('SESSION_LIFETIME', 1200),
 
     /*
     |--------------------------------------------------------------------------
