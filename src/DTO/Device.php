@@ -17,7 +17,6 @@ final readonly class Device implements JsonSerializable, Stringable
         public string $device,
         public string $deviceType
     ) {
-
     }
     public static function fromModel(\Ninja\DeviceTracker\Models\Device $device): self
     {

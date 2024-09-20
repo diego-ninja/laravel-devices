@@ -18,7 +18,6 @@ final readonly class Session implements JsonSerializable, Stringable
         public string $finishedAt,
         public Device $device
     ) {
-
     }
 
     public static function fromModel(\Ninja\DeviceTracker\Models\Session $session): self

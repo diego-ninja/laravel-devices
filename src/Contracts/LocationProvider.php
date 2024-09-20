@@ -15,5 +15,4 @@ interface LocationProvider
     public function timezone(): ?string;
     public function fetch(string $ip): array;
     public function location(): ?Location;
-
 }
