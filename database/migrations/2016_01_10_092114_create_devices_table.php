@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('devices', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('uid');
+            $table->uuid()->unique();
             $table->integer('user_id');
             $table->string('browser')->nullable();
             $table->string('browser_version')->nullable();

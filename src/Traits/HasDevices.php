@@ -3,6 +3,7 @@
 namespace Ninja\DeviceTracker\Traits;
 
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Session as SessionFacade;
 use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Models\Session;
@@ -57,6 +58,16 @@ trait HasDevices
             }
         }
         return false;
+    }
+
+    public function isInactive(): bool
+    {
+        if ($this->sessions()->count() > 0) {
+            $lastActivity = $this->recentSession()->last_activity_at;
+            return $lastActivity && abs(strtotime($lastActivity) - strtotime(now())) > Config::get('devices.inactivity_seconds', 1200);
+        }
+
+        return true;
     }
 
     public function devicesUids(): array

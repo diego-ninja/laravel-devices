@@ -1,13 +1,14 @@
 # Laravel Device Tracker
-This package provides session tracking functionalities, multisession management and user device management features for laravel applications.
+This package provides session tracking functionalities, multi session management and user device management features for laravel applications.
 
 
 ## Features
 * Session Management
-* Session Log
 * Multiple session for users
-* Request Log
 * User Devices
+* Locking sessions
+* Security code for session locking
+* Session location tracking
 
 
 ## Installation
@@ -20,8 +21,10 @@ In composer.json:
 Run:
 
     composer update
-    
-Note: For v  5.5 Auto-discovery takes care.
+
+Publish config and migrations:
+
+    php artisan vendor:publish --provider="Ninja\DeviceTracker\DeviceTrackerServiceProvider"
 
 Add the service provider to `bootstrap/providers.php` under `providers`:
 
@@ -30,11 +33,6 @@ Add the service provider to `bootstrap/providers.php` under `providers`:
         Ninja\DeviceTracker\DeviceTrackerServiceProvider::class,
     ]
 
-Add the SessionTracker alias to `config/app.php` under `aliases`:
-
-        'aliases' => [
-            'DeviceTracker' => 'Ninja\DeviceTracker\DeviceTrackerFacade',
-        ]
 	
 Update config file to reference your login and logout route names:
 
@@ -82,7 +80,7 @@ From your user models:
 	
 	$user->devicesUids(); //Returns array of users saved trusted devices Ids.
 	
-From SessionTrackerFacade:
+From SessionManagerFacade:
 
 	SessionTracker::startSession(); //Creates a new session for current user
 	
@@ -92,7 +90,7 @@ From SessionTrackerFacade:
 	
 	SessionTracker::renewSession(); //Restarts the ended session which is not forgotten for the current user. Usefull for restarting the session after locking it for inactivity
 	
-	SessionTracker::refreshSession($request); //Keeps the session alive for each request. Useful in middleware
+	SessionTracker::restartSession($request); //Keeps the session alive for each request. Useful in middleware
 	
 	SessionTracker::logSession($request); //Logs the current request for the current session. (request logs stored in sessiontracker_session_requests table)
 	
@@ -127,6 +125,10 @@ From SessionTrackerFacade:
 	SessionTracker::deleteSession(); //Deletes and forgets the current session
 	
 	SessionTracker::refreshSecurityCode(); //Renews the security code by which the current session is locked
+
+From DeviceManagerFacade:
+
+    
 
 ## Author
 

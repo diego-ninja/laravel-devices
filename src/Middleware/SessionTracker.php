@@ -22,10 +22,27 @@ final readonly class SessionTracker
 
     public function handle(Request $request, Closure $next)
     {
+        $session = Session::current();
+        if ($session) {
+            if ($session->isBlocked()) {
+            }
+
+            if ($session->isInactive()) {
+            }
+
+            if ($session->isLocked()) {
+            }
+
+            $session->restart($request);
+        } else {
+        }
+
+
+
         if ($request->session()->has(Session::DEVICE_SESSION_ID)) {
             SessionManager::restart($request);
         } else {
-            SessionManager::end(true);
+            SessionManager::end(forgetSession: true);
         }
 
         return $next($request);

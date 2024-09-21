@@ -4,6 +4,7 @@ namespace Ninja\DeviceTracker\Models;
 
 use Carbon\Carbon;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -11,6 +12,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cookie;
 use Jenssegers\Agent\Agent;
+use Ramsey\Uuid\Uuid;
+use Ramsey\Uuid\UuidInterface;
 
 /**
  * Class DeviceManager
@@ -21,8 +24,8 @@ use Jenssegers\Agent\Agent;
  * @mixin \Illuminate\Database\Eloquent\Builder
  *
  * @property string                       $id                     unsigned string
+ * @property UuidInterface                $uuid                   string
  * @property integer                      $user_id                unsigned string
- * @property string                       $uid                    string
  * @property string                       $browser                string
  * @property string                       $browser_version        string
  * @property string                       $platform               string
@@ -42,8 +45,8 @@ class Device extends Model
     protected $table = 'devices';
 
     protected $fillable = [
+        'uuid',
         'user_id',
-        'uid',
         'browser',
         'browser_version',
         'platform',
@@ -65,6 +68,14 @@ class Device extends Model
         return $this->hasOne(Config::get("devices.authenticatable_class"), 'id', 'user_id');
     }
 
+    public function uuid(): Attribute
+    {
+        return Attribute::make(
+            get: fn(string $value) => Uuid::fromString($value),
+            set: fn(UuidInterface $value) => $value->toString()
+        );
+    }
+
     public static function isUserDevice(): bool
     {
         if (Cookie::has('d_i')) {
@@ -74,6 +85,15 @@ class Device extends Model
             }
         }
         return false;
+    }
+
+    public static function findByUuid(UuidInterface|string $uuid): ?self
+    {
+        if (is_string($uuid)) {
+            $uuid = Uuid::fromString($uuid);
+        }
+
+        return self::where('uuid', $uuid->toString())->first();
     }
 
     public static function addUserDevice(?string $userAgent = null): bool
@@ -86,7 +106,7 @@ class Device extends Model
 
             self::create([
                 'user_id' => Auth::user()->id,
-                'uid' => Cookie::get('d_i'),
+                'uuid' => Uuid::fromString(Cookie::get('d_i')),
                 'browser' => $agent->browser(),
                 'browser_version' => $agent->version($agent->browser()),
                 'platform' => $agent->platform(),

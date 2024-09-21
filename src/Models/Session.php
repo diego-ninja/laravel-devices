@@ -3,7 +3,6 @@
 namespace Ninja\DeviceTracker\Models;
 
 use Carbon\Carbon;
-use Exception;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -15,6 +14,10 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session as SessionFacade;
 use Ninja\DeviceTracker\Contracts\LocationProvider;
 use Ninja\DeviceTracker\DTO\Location;
+use Ninja\DeviceTracker\Exception\SessionNotFoundException;
+use Ramsey\Uuid\Uuid;
+use Ramsey\Uuid\UuidInterface;
+use Random\RandomException;
 
 /**
  * Class Session
@@ -25,8 +28,9 @@ use Ninja\DeviceTracker\DTO\Location;
  * @mixin \Illuminate\Database\Eloquent\Builder
  *
  * @property integer                      $id                     unsigned int
+ * @property UuidInterface                $uuid                   uuid
  * @property integer                      $user_id                unsigned int
- * @property string                       $device_uid             string
+ * @property UuidInterface                $device_uuid            string
  * @property string                       $ip                     string
  * @property Location                     $location               json
  * @property boolean                      $block                  boolean
@@ -46,14 +50,16 @@ class Session extends Model
     public const STATUS_INACTIVE = 'inactive';
     public const STATUS_BLOCKED = 'blocked';
     public const STATUS_FINISHED = 'finished';
+    public const STATUS_LOCKED = 'locked';
 
     protected $table = 'device_sessions';
 
     public $timestamps = false;
 
     protected $fillable = [
+        'uuid',
         'user_id',
-        'device_uid',
+        'device_uuid',
         'ip',
         'location',
         'started_at',
@@ -63,12 +69,20 @@ class Session extends Model
 
     public function device(): HasOne
     {
-        return $this->hasOne(Device::class, 'uid', 'device_uid');
+        return $this->hasOne(Device::class, 'uuid', 'device_uuid');
     }
 
     public function user(): HasOne
     {
         return $this->hasOne(Config::get("devices.authenticatable_class"), 'id', 'user_id');
+    }
+
+    public function uuid(): Attribute
+    {
+        return Attribute::make(
+            get: fn(string $value) => Uuid::fromString($value),
+            set: fn(UuidInterface $value) => $value->toString()
+        );
     }
 
     public function status(): string
@@ -79,6 +93,10 @@ class Session extends Model
 
         if ($this->finished_at !== null) {
             return self::STATUS_FINISHED;
+        }
+
+        if ($this->login_code !== null) {
+            return self::STATUS_LOCKED;
         }
 
         if (abs(strtotime($this->last_activity_at) - strtotime(now())) > Config::get('devices.inactivity_seconds', 1200)) {
@@ -96,7 +114,7 @@ class Session extends Model
         );
     }
 
-    public static function start(): Session
+    public function start(): Session
     {
         $deviceId = Cookie::get('d_i');
         $userId = Auth::user()->id;
@@ -106,11 +124,12 @@ class Session extends Model
         $location = app(LocationProvider::class)->fetch($ip);
 
         if ($deviceId && !Config::get('devices.allow_device_multi_session')) {
-            self::endPreviousSessions($deviceId, $userId, $now);
+            $this->endPreviousSessions($deviceId, $userId, $now);
         }
 
-        $session = self::create([
+        $session = $this->create([
             'user_id' => $userId,
+            'uuid' => Uuid::uuid7(),
             'device_uid' => $deviceId,
             'ip' => $ip,
             'location' => $location,
@@ -118,12 +137,12 @@ class Session extends Model
             'last_activity_at' => $now
         ]);
 
-        SessionFacade::put(self::DEVICE_SESSION_ID, $session->id);
+        SessionFacade::put(self::DEVICE_SESSION_ID, $session->uuid);
 
         return $session;
     }
 
-    private static function endPreviousSessions($deviceId, $userId, $now): void
+    private function endPreviousSessions($deviceId, $userId, $now): void
     {
         self::where('device_uid', $deviceId)
             ->where('user_id', $userId)
@@ -131,13 +150,19 @@ class Session extends Model
             ->update(['finished_at' => $now]);
     }
 
-    public static function end(bool $forgetSession = false): bool
+    public function end(bool $forgetSession = false): bool
     {
-        if (!SessionFacade::has(self::DEVICE_SESSION_ID)) {
-            return false;
+        if ($forgetSession) {
+            SessionFacade::forget(self::DEVICE_SESSION_ID);
         }
 
-        $session = self::getSession();
+        $this->finished_at = Carbon::now();
+        return $this->save();
+
+        /**
+        $sessionId = $sessionId ?? SessionFacade::get(self::DEVICE_SESSION_ID);
+        $session = self::getSession($sessionId);
+
         if (!$session) {
             return false;
         }
@@ -150,10 +175,16 @@ class Session extends Model
         }
 
         return true;
+        **/
     }
 
-    public static function renew(): bool
+    public function renew(): bool
     {
+        $this->last_activity_at = Carbon::now();
+        $this->finished_at = null;
+        return $this->save();
+
+        /**
         if (!SessionFacade::has(self::DEVICE_SESSION_ID)) {
             return false;
         }
@@ -167,170 +198,133 @@ class Session extends Model
         $session->last_activity_at = Carbon::now();
         $session->finished_at = null;
         $session->save();
-
-        return true;
+        **/
     }
 
-    public static function restart(Request $request): bool
+    public function restart(Request $request): bool
     {
         foreach (Config::get('devices.ignore_restart', []) as $ignore) {
-            if (self::shouldIgnoreRestart($request, $ignore)) {
+            if ($this->shouldIgnoreRestart($request, $ignore)) {
                 return false;
             }
         }
 
-        return self::renew();
+        return $this->renew();
     }
 
-    private static function shouldIgnoreRestart(Request $request, array $ignore): bool
+    private function shouldIgnoreRestart(Request $request, array $ignore): bool
     {
         return ($request->route()->getName() === $ignore['route'] || $request->route()->getUri() === $ignore['route'])
             && $request->route()->methods()[0] == $ignore['method'];
     }
-    public static function isInactive($user): bool
-    {
-        if ($user) {
-            return self::isUserInactive($user);
-        }
 
-        return self::isCurrentSessionInactive();
-    }
-
-    private static function isUserInactive($user): bool
-    {
-        if ($user->sessions->count() > 0) {
-            $lastActivity = $user->getFreshestSession()->last_activity;
-            return $lastActivity && abs(strtotime($lastActivity) - strtotime(now())) > Config::get('devices.inactivity_seconds', 1200);
-        }
-
-        return true;
-    }
-
-    private static function isCurrentSessionInactive(): bool
-    {
-        if (!SessionFacade::has(self::DEVICE_SESSION_ID)) {
-            return true;
-        }
-
-        $session = self::getSession();
-
-        return
-            $session?->last_activity_at &&
-            abs(strtotime($session?->last_activity_at) - strtotime(now())) > Config::get('devices.inactivity_seconds', 1200);
-    }
-
-    public static function blockById($sessionId): bool
-    {
-        try {
-            $session = self::findOrFail($sessionId);
-        } catch (Exception $e) {
-            return false;
-        }
-
-        $session->block();
-        return true;
-    }
-
-    public function block(): void
+    public function block(): bool
     {
         $this->block = true;
         $this->blocked_by = Auth::user()->id;
+        return $this->save();
+    }
+
+    public function isBlocked(): bool
+    {
+        return $this->block;
+    }
+
+    public function isLocked(): bool
+    {
+        return $this->login_code !== null;
+    }
+
+    public function loginCode(): ?string
+    {
+        return $this->login_code;
+    }
+
+    /**
+     * @throws RandomException
+     */
+    public function lockByCode(): ?int
+    {
+        $code = random_int(100000, 999999);
+        $this->login_code = sha1($code);
+
         $this->save();
-    }
-
-    public static function isBlocked(): bool
-    {
-        if (!SessionFacade::has(self::DEVICE_SESSION_ID)) {
-            return true;
-        }
-
-        $session = self::getSession();
-        return $session->block;
-    }
-
-    public static function isLocked(): bool
-    {
-        if (!SessionFacade::has(self::DEVICE_SESSION_ID)) {
-            return true;
-        }
-
-        $session = self::getSession();
-        return $session->login_code !== null;
-    }
-
-    public static function loginCode(): ?string
-    {
-        if (!SessionFacade::has(self::DEVICE_SESSION_ID)) {
-            return null;
-        }
-
-        $session = self::getSession();
-        return $session->login_code;
-    }
-
-    public static function lockByCode(): ?int
-    {
-        if (!SessionFacade::has(self::DEVICE_SESSION_ID)) {
-            return null;
-        }
-
-        $session = self::getSession();
-        $code = rand(100000, 999999);
-        $session->login_code = md5($code);
-
-        $session->save();
 
         return $code;
     }
 
-    public static function refreshCode(): ?int
+    /**
+     * @throws RandomException
+     */
+    public function refreshCode(): ?int
     {
-        if (!SessionFacade::has(self::DEVICE_SESSION_ID)) {
-            return null;
-        }
+        // TODO: implement code generator class
+        $code = random_int(100000, 999999);
+        $this->login_code = sha1($code);
+        $this->started_at = Carbon::now();
 
-        $session = self::getSession();
-        $code = rand(100000, 999999);
-        $session->login_code = md5($code);
-        $session->started_at = Carbon::now();
-
-        $session->save();
+        $this->save();
 
         return $code;
     }
 
-    public static function unlockByCode($code): int
+    public function unlockByCode(int $code): bool
     {
-        if (!SessionFacade::has(self::DEVICE_SESSION_ID)) {
-            return -1;
+        if (time() - strtotime($this->started_at) > Config::get('devices.security_code_lifetime', 1200)) {
+            return false;
         }
 
-        $session = self::getSession();
-        if (time() - strtotime($session->started_at) > Config::get('devices.security_code_lifetime', 1200)) {
-            return -2;
+        if (sha1($code) === $this->login_code) {
+            $this->login_code = null;
+            $this->save();
+            return true;
         }
 
-        if (md5($code) === $session->login_code) {
-            $session->login_code = null;
-            $session->save();
-            return 0;
-        }
-
-        return -1;
+        return false;
     }
 
-    private static function getSession(): ?Session
+    /**
+     * @throws SessionNotFoundException
+     */
+    public static function findByUuid(UuidInterface|string $uuid): ?self
     {
+        if (is_string($uuid)) {
+            $uuid = Uuid::fromString($uuid);
+        }
+
+        $session = self::where('uuid', $uuid->toString())->first();
+        if (!$session) {
+            throw SessionNotFoundException::withSession($uuid);
+        }
+
+        return $session;
+    }
+
+    public static function current(): ?Session
+    {
+        return self::get();
+    }
+
+    public static function get(?UuidInterface $sessionId = null): ?Session
+    {
+        $sessionId = $sessionId ?? self::sessionId();
+
         try {
-            return self::findOrFail(SessionFacade::get(self::DEVICE_SESSION_ID));
-        } catch (Exception $e) {
+            return self::findByUuid($sessionId);
+        } catch (SessionNotFoundException $e) {
             SessionFacade::forget(self::DEVICE_SESSION_ID);
 
             Log::warning(
-                sprintf('Session %s not found: %s', SessionFacade::get(self::DEVICE_SESSION_ID), $e->getMessage())
+                sprintf('Session %s not found: %s', $sessionId, $e->getMessage())
             );
 
             return null;
         }
+    }
+
+    private static function sessionId(): ?UuidInterface
+    {
+        $id = SessionFacade::get(self::DEVICE_SESSION_ID);
+        return $id ? Uuid::fromString($id) : null;
     }
 }

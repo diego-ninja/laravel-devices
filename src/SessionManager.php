@@ -7,6 +7,9 @@ use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session as SessionFacade;
 use Ninja\DeviceTracker\Models\Session;
+use Ninja\DeviceTracker\Traits\HasDevices;
+use Ramsey\Uuid\UuidInterface;
+use Random\RandomException;
 
 final readonly class SessionManager
 {
@@ -19,65 +22,71 @@ final readonly class SessionManager
 
     public function start(): Session
     {
-        return Session::start();
+        return (new Session())->start();
     }
 
-    public function end(bool $forgetSession = false): bool
+    public function end(?UuidInterface $sessionId = null, bool $forgetSession = false): bool
     {
-        return Session::end($forgetSession);
+        $session = Session::get($sessionId);
+        return $session->end($forgetSession);
     }
 
     public function renew(): bool
     {
-        return Session::renew();
+        return Session::current()->renew();
     }
 
     public function restart(Request $request): bool
     {
-        return Session::restart($request);
+        return Session::current()->restart($request);
     }
 
+    /**
+     * @throws \Exception
+     */
     public function isInactive(Authenticatable $user = null): bool
     {
-        return Session::isInactive($user);
+        $uses = in_array(HasDevices::class, class_uses($user));
+        if ($uses) {
+            return $user?->isInactive() ?? false;
+        }
+
+        throw new \Exception('Authenticatable instance must use HasDevices trait');
     }
 
-    public function block(string $sessionId): bool
+    public function block(UuidInterface $sessionId): bool
     {
-        return Session::blockById($sessionId);
+        $session = Session::get($sessionId);
+        return $session->block();
     }
 
-    /**
-     * @return bool
-     */
-    public function isBlocked(): bool
+    public function isBlocked(UuidInterface $sessionId): bool
     {
-        return Session::isBlocked();
+        $session = Session::get($sessionId);
+        return $session->isBlocked();
     }
 
-    /**
-     * @return bool
-     */
-    public function isLocked(): bool
-    {
-        return Session::isLocked();
-    }
 
-    /**
-     * @return int|null
-     */
-    public function lockByCode(): ?int
+
+    public function isLocked(UuidInterface $sessionId): bool
     {
-        return Session::lockByCode();
+        $session = Session::get($sessionId);
+        return $session->isLocked();
     }
 
     /**
-     * @param $code
-     * @return bool
+     * @throws RandomException
      */
-    public function unlockByCode($code): bool
+    public function lock(UuidInterface $sessionId): ?int
     {
-        return Session::unlockByCode($code);
+        $session = Session::get($sessionId);
+        return $session->lockByCode();
+    }
+
+    public function unlock(UuidInterface $sessionId, int $code): bool
+    {
+        $session = Session::get($sessionId);
+        return $session->unlockByCode($code);
     }
 
     public function forgot(): bool
@@ -99,13 +108,18 @@ final readonly class SessionManager
         }
     }
 
-    public function securityCode(): ?string
+    public function securityCode(UuidInterface $sessionId): ?string
     {
-        return Session::loginCode();
+        $session = Session::get($sessionId);
+        return $session->login_code;
     }
 
-    public function refreshSecurityCode(): ?int
+    /**
+     * @throws RandomException
+     */
+    public function refreshSecurityCode(UuidInterface $sessionId): ?int
     {
-        return Session::refreshCode();
+        $session = Session::get($sessionId);
+        return $session->refreshCode();
     }
 }
