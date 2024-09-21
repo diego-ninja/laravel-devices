@@ -61,7 +61,7 @@ class Device extends Model
 
     public function sessions(): HasMany
     {
-        return $this->hasMany(Session::class);
+        return $this->hasMany(Session::class, 'device_uuid', 'uuid');
     }
 
     public function user(): HasOne

@@ -81,6 +81,15 @@ return [
     */
     'logout_route_name' => 'app.logout',
 
+    /*
+    |--------------------------------------------------------------------------
+    | Logout guard
+    |--------------------------------------------------------------------------
+    |
+    | This option allows you to easily specify the guard to logout. You must specify
+    | this option is you don't want to use redirects.
+    */
+    'logout_guard' => 'web',
 
     /*
     |--------------------------------------------------------------------------

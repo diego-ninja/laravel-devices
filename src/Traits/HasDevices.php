@@ -67,8 +67,9 @@ trait HasDevices
 
     public function addDevice(?string $userAgent = null): bool
     {
-        if (Cookie::has('d_i')) {
-            if ($this->hasDevice(Uuid::fromString(Cookie::get('d_i')))) {
+        $cookieName = Config::get('devices.device_id_cookie_name');
+        if (Cookie::has($cookieName)) {
+            if ($this->hasDevice(Uuid::fromString(Cookie::get($cookieName)))) {
                 return true;
             }
 
@@ -79,7 +80,7 @@ trait HasDevices
 
             Device::create([
                 'user_id' => $this->id,
-                'uuid' => Uuid::fromString(Cookie::get('d_i')),
+                'uuid' => Uuid::fromString(Cookie::get($cookieName)),
                 'browser' => $agent->browser(),
                 'browser_version' => $agent->version($agent->browser()),
                 'platform' => $agent->platform(),

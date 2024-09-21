@@ -41,4 +41,17 @@ final class SessionController extends Controller
 
         return response()->json(['message' => 'Session not found'], 404);
     }
+
+    public function unlock(Request $request): JsonResponse
+    {
+        $session = Session::get($request->input('id'));
+        $code = $request->input('login_code');
+
+        if ($session) {
+            $session->unlockByCode($code);
+            return response()->json(['message' => 'Session unlocked successfully']);
+        }
+
+        return response()->json(['message' => 'Session not found'], 404);
+    }
 }
