@@ -101,18 +101,19 @@ class Session extends Model
         $deviceId = Cookie::get('d_i');
         $userId = Auth::user()->id;
         $now = Carbon::now();
-        /** @var Location $location */
-        $location = app(LocationProvider::class)->location();
 
-        if ($deviceId) {
+        $ip = request()->ip();
+        $location = app(LocationProvider::class)->fetch($ip);
+
+        if ($deviceId && !Config::get('devices.allow_device_multi_session')) {
             self::endPreviousSessions($deviceId, $userId, $now);
         }
 
         $session = self::create([
             'user_id' => $userId,
             'device_uid' => $deviceId,
-            'ip' => request()->ip(),
-            'location' => $location->json(),
+            'ip' => $ip,
+            'location' => $location,
             'started_at' => $now,
             'last_activity_at' => $now
         ]);

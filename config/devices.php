@@ -9,8 +9,16 @@ return [
     | This option specifies if middleware should redirect to pages or return json
     |
     */
-
     'use_redirects' => true,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Allows multiple sessions per device
+    |--------------------------------------------------------------------------
+    | This option specifies if the user can have multiple active sessions per device
+    |
+    */
+    'allow_device_multi_session' => true,
 
     /*
     |--------------------------------------------------------------------------
@@ -26,7 +34,6 @@ return [
     | ],
     |
     */
-
     'ignore_restart' => [],
 
     /*
@@ -38,7 +45,6 @@ return [
     | the session is considered inactive or idle.
     |
     */
-
     'inactivity_seconds' => env('SESSION_LIFETIME', 1200),
 
     /*
@@ -51,7 +57,6 @@ return [
     | Note: Your login route must have a name.
     |
     */
-
     'login_route_name' => 'app.login',
 
     /*
@@ -64,7 +69,6 @@ return [
     | Note: Your logout route must have a name.
     |
     */
-
     'logout_route_name' => 'app.logout',
 
 
@@ -78,7 +82,6 @@ return [
     | Note: Your login code route must have a name.
     |
     */
-
     'security_code_route_name' => 'app.securityCode',
 
 

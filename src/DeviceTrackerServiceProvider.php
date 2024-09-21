@@ -23,8 +23,8 @@ class DeviceTrackerServiceProvider extends ServiceProvider
             key: 'devices'
         );
 
-        $this->app->singleton(LocationProvider::class, function ($app) {
-            return new IpinfoLocationProvider(request()->ip());
+        $this->app->singleton(LocationProvider::class, function () {
+            return new IpinfoLocationProvider();
         });
 
         $this->registerFacades();

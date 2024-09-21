@@ -31,15 +31,6 @@ final readonly class SessionTracker
         return $next($request);
     }
 
-    private function handleGuest(Request $request): Response|RedirectResponse
-    {
-        if ($request->ajax()) {
-            return response('Unauthorized.', 401);
-        }
-
-        return redirect()->route(Config::get('devices.logout_route_name'));
-    }
-
     private function isSessionBlockedOrInactive(): bool
     {
         return SessionManager::isBlocked() || SessionManager::isInactive();

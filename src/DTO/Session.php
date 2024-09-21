@@ -24,7 +24,7 @@ final readonly class Session implements JsonSerializable, Stringable
         return new self(
             id: $session->id,
             ip: $session->ip,
-            location: Location::fromArray($session->location),
+            location: $session->location,
             status: $session->status(),
             lastActivityAt: $session->last_activity_at,
             startedAt: $session->started_at,
