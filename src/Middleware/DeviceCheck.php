@@ -12,11 +12,12 @@ final readonly class DeviceCheck
 {
     public function handle(Request $request, Closure $next)
     {
+        $cookieName = Config::get('devices.device_id_cookie_name');
 
-        if (!Cookie::has('d_i')) {
+        if (!Cookie::has($cookieName)) {
             Cookie::queue(
                 Cookie::forever(
-                    name: 'd_i',
+                    name: $cookieName,
                     value: Uuid::uuid7()->toString(),
                     secure: Config::get('session.secure', false),
                     httpOnly: Config::get('session.http_only', true)

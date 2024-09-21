@@ -8,7 +8,7 @@ use Stringable;
 final readonly class Device implements JsonSerializable, Stringable
 {
     public function __construct(
-        public ?string $uid,
+        public string $uuid,
         public string $userAgent,
         public string $browser,
         public string $browserVersion,
@@ -21,7 +21,7 @@ final readonly class Device implements JsonSerializable, Stringable
     public static function fromModel(\Ninja\DeviceTracker\Models\Device $device): self
     {
         return new self(
-            uid: $device->uid,
+            uuid: $device->uuid->toString(),
             userAgent: $device->source,
             browser: $device->browser,
             browserVersion: $device->browser_version,
@@ -35,7 +35,7 @@ final readonly class Device implements JsonSerializable, Stringable
     public function array(): array
     {
         return [
-            "uid" => $this->uid,
+            "uuid" => $this->uuid,
             "userAgent" => $this->userAgent,
             "browser" => $this->browser,
             "browserVersion" => $this->browserVersion,

@@ -116,7 +116,7 @@ class Session extends Model
 
     public function start(): Session
     {
-        $deviceId = Cookie::get('d_i');
+        $deviceId = Device::getDeviceUuid();
         $userId = Auth::user()->id;
         $now = Carbon::now();
 
@@ -130,7 +130,7 @@ class Session extends Model
         $session = $this->create([
             'user_id' => $userId,
             'uuid' => Uuid::uuid7(),
-            'device_uid' => $deviceId,
+            'device_uuid' => $deviceId,
             'ip' => $ip,
             'location' => $location,
             'started_at' => $now,
@@ -158,24 +158,6 @@ class Session extends Model
 
         $this->finished_at = Carbon::now();
         return $this->save();
-
-        /**
-        $sessionId = $sessionId ?? SessionFacade::get(self::DEVICE_SESSION_ID);
-        $session = self::getSession($sessionId);
-
-        if (!$session) {
-            return false;
-        }
-
-        $session->finished_at = Carbon::now();
-        $session->save();
-
-        if ($forgetSession) {
-            SessionFacade::forget(self::DEVICE_SESSION_ID);
-        }
-
-        return true;
-        **/
     }
 
     public function renew(): bool
@@ -183,22 +165,6 @@ class Session extends Model
         $this->last_activity_at = Carbon::now();
         $this->finished_at = null;
         return $this->save();
-
-        /**
-        if (!SessionFacade::has(self::DEVICE_SESSION_ID)) {
-            return false;
-        }
-
-        $session = self::getSession();
-
-        if (!$session) {
-            return false;
-        }
-
-        $session->last_activity_at = Carbon::now();
-        $session->finished_at = null;
-        $session->save();
-        **/
     }
 
     public function restart(Request $request): bool
@@ -216,6 +182,11 @@ class Session extends Model
     {
         return ($request->route()->getName() === $ignore['route'] || $request->route()->getUri() === $ignore['route'])
             && $request->route()->methods()[0] == $ignore['method'];
+    }
+
+    public function isInactive(): bool
+    {
+        return abs(strtotime($this->last_activity_at) - strtotime(now())) > Config::get('devices.inactivity_seconds', 1200);
     }
 
     public function block(): bool

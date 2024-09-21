@@ -11,7 +11,7 @@ return new class extends Migration {
             $table->increments('id');
             $table->uuid()->unique();
             $table->integer('user_id');
-            $table->string('device_uid')->nullable();
+            $table->uuid('device_uuid');
             $table->string('ip')->nullable();
             $table->json('location')->nullable();
             $table->boolean('block')->nullable()->default(false);

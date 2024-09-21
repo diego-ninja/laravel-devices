@@ -8,7 +8,7 @@ use Stringable;
 final readonly class Session implements JsonSerializable, Stringable
 {
     public function __construct(
-        public string $id,
+        public string $uuid,
         public string $ip,
         public Location $location,
         public string $status,
@@ -22,7 +22,7 @@ final readonly class Session implements JsonSerializable, Stringable
     public static function fromModel(\Ninja\DeviceTracker\Models\Session $session): self
     {
         return new self(
-            id: $session->id,
+            uuid: $session->uuid->toString(),
             ip: $session->ip,
             location: $session->location,
             status: $session->status(),
@@ -36,7 +36,7 @@ final readonly class Session implements JsonSerializable, Stringable
     public function array(): array
     {
         return [
-            "id" => $this->id,
+            "uuid" => $this->uuid,
             "ip" => $this->ip,
             "location" => $this->location->array(),
             "status" => $this->status,
@@ -54,7 +54,7 @@ final readonly class Session implements JsonSerializable, Stringable
 
     public function __toString(): string
     {
-        return $this->id;
+        return $this->uuid;
     }
 
     public function jsonSerialize(): array

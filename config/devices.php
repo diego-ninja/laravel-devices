@@ -4,6 +4,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Cookie name for current user deice tracking
+    |--------------------------------------------------------------------------
+    | This option specifies the name of the cookie that will be used to store
+    | the device id of the current user.
+    |
+    */
+    'device_id_cookie_name' => 'device_id',
+
+
+    /*
+    |--------------------------------------------------------------------------
     | Use redirects to routes or json responses
     |--------------------------------------------------------------------------
     | This option specifies if middleware should redirect to pages or return json

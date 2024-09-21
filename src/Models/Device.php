@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cookie;
 use Jenssegers\Agent\Agent;
+use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 
@@ -76,51 +77,26 @@ class Device extends Model
         );
     }
 
-    public static function isUserDevice(): bool
-    {
-        if (Cookie::has('d_i')) {
-            $user = Auth::user();
-            if (in_array(Cookie::get('d_i'), $user->devicesUids())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
+    /**
+     * @throws DeviceNotFoundException
+     */
     public static function findByUuid(UuidInterface|string $uuid): ?self
     {
         if (is_string($uuid)) {
             $uuid = Uuid::fromString($uuid);
         }
 
-        return self::where('uuid', $uuid->toString())->first();
-    }
-
-    public static function addUserDevice(?string $userAgent = null): bool
-    {
-        if (Cookie::has('d_i')) {
-            $agent = new Agent(
-                headers: request()->headers->all(),
-                userAgent: $userAgent ?? request()->userAgent()
-            );
-
-            self::create([
-                'user_id' => Auth::user()->id,
-                'uuid' => Uuid::fromString(Cookie::get('d_i')),
-                'browser' => $agent->browser(),
-                'browser_version' => $agent->version($agent->browser()),
-                'platform' => $agent->platform(),
-                'platform_version' => $agent->version($agent->platform()),
-                'mobile' => $agent->isMobile(),
-                'device' => $agent->device(),
-                'device_type' => $agent->deviceType(),
-                'robot' => $agent->isRobot(),
-                'source' => $agent->getUserAgent()
-            ]);
-
-            return true;
+        $session = self::where('uuid', $uuid->toString())->first();
+        if (!$session) {
+            throw DeviceNotFoundException::withDevice($uuid);
         }
 
-        return false;
+        return $session;
+    }
+
+    public static function getDeviceUuid(): ?UuidInterface
+    {
+        $cookieName = Config::get('devices.device_id_cookie_name');
+        return Cookie::has($cookieName) ? Uuid::fromString(Cookie::get($cookieName)) : null;
     }
 }

@@ -12,7 +12,7 @@ final readonly class AuthenticationHandler
     {
         if (SessionManager::forgot()) {
             SessionManager::start();
-            DeviceManager::addUserDevice(null);
+            DeviceManager::addUserDevice(request()->userAgent());
         } else {
             SessionManager::renew();
         }
@@ -20,7 +20,7 @@ final readonly class AuthenticationHandler
 
     public function onLogout($event): void
     {
-        SessionManager::end(true);
+        SessionManager::end(forgetSession: true);
     }
 
     public function subscribe(Dispatcher $events): void

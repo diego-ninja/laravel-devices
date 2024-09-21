@@ -2,8 +2,11 @@
 
 namespace Ninja\DeviceTracker;
 
+use Auth;
 use Illuminate\Foundation\Application;
+use Illuminate\Support\Collection;
 use Ninja\DeviceTracker\Models\Device;
+use Ramsey\Uuid\UuidInterface;
 
 final readonly class DeviceManager
 {
@@ -14,12 +17,9 @@ final readonly class DeviceManager
         $this->app = $app;
     }
 
-    /**
-     * @return bool
-     */
-    public function isUserDevice(): bool
+    public function isUserDevice(UuidInterface $uuid): bool
     {
-        return Device::isUserDevice();
+        return Device::isUserDevice($uuid);
     }
 
     public function deleteDevice($id): int
@@ -29,6 +29,16 @@ final readonly class DeviceManager
 
     public function addUserDevice(?string $userAgent = null): bool
     {
-        return Device::addUserDevice($userAgent);
+        return Auth::user()?->addDevice($userAgent);
+    }
+
+    public function getUserDevices(): Collection
+    {
+        return Auth::user()?->devices;
+    }
+
+    public function getDeviceUuid(): ?UuidInterface
+    {
+        return Device::getDeviceUuid();
     }
 }

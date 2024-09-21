@@ -4,9 +4,13 @@ namespace Ninja\DeviceTracker\Traits;
 
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Session as SessionFacade;
+use Jenssegers\Agent\Agent;
 use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Models\Session;
+use Ramsey\Uuid\Uuid;
+use Ramsey\Uuid\UuidInterface;
 
 trait HasDevices
 {
@@ -43,20 +47,53 @@ trait HasDevices
 
     public function currentDevice(): Device
     {
-        return $this->devices()->where('uid', SessionFacade::get('d_i'))->first();
+        return $this->devices()->where(
+            column: 'uuid',
+            value: SessionFacade::get(Config::get("devices.device_id_cookie_name"))
+        )->first();
     }
 
     public function currentSession(): Session
     {
-        return $this->sessions()->where('id', SessionFacade::get(Session::DEVICE_SESSION_ID))->first();
+        return $this->sessions()->where(
+            column: 'uuid',
+            value: SessionFacade::get(Session::DEVICE_SESSION_ID)
+        )->first();
     }
-    public function isUserDevice(): bool
+    public function hasDevice(UuidInterface $uuid): bool
     {
-        if (SessionFacade::has('d_i')) {
-            if (in_array(SessionFacade::get('d_i'), $this->devicesUids())) {
+        return in_array($uuid, $this->devicesUids());
+    }
+
+    public function addDevice(?string $userAgent = null): bool
+    {
+        if (Cookie::has('d_i')) {
+            if ($this->hasDevice(Uuid::fromString(Cookie::get('d_i')))) {
                 return true;
             }
+
+            $agent = new Agent(
+                headers: request()->headers->all(),
+                userAgent: $userAgent ?? request()->userAgent()
+            );
+
+            Device::create([
+                'user_id' => $this->id,
+                'uuid' => Uuid::fromString(Cookie::get('d_i')),
+                'browser' => $agent->browser(),
+                'browser_version' => $agent->version($agent->browser()),
+                'platform' => $agent->platform(),
+                'platform_version' => $agent->version($agent->platform()),
+                'mobile' => $agent->isMobile(),
+                'device' => $agent->device(),
+                'device_type' => $agent->deviceType(),
+                'robot' => $agent->isRobot(),
+                'source' => $agent->getUserAgent()
+            ]);
+
+            return true;
         }
+
         return false;
     }
 
@@ -72,7 +109,7 @@ trait HasDevices
 
     public function devicesUids(): array
     {
-        $query = $this->devices()->pluck('uid');
+        $query = $this->devices()->pluck('uuid');
         return $query->all();
     }
 }
