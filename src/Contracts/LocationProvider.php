@@ -13,5 +13,5 @@ interface LocationProvider
     public function latitude(): ?string;
     public function longitude(): ?string;
     public function timezone(): ?string;
-    public function fetch(string $ip): Location;
+    public function locate(string $ip): Location;
 }

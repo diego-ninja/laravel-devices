@@ -10,7 +10,7 @@ class IpinfoLocationProvider implements Contracts\LocationProvider
 
     private Location $location;
 
-    public function fetch(string $ip): Location
+    public function locate(string $ip): Location
     {
         $url = sprintf(self::API_URL, $ip);
         $locationData = json_decode(file_get_contents($url), true);

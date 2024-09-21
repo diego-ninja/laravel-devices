@@ -12,7 +12,6 @@ return [
     */
     'device_id_cookie_name' => 'device_id',
 
-
     /*
     |--------------------------------------------------------------------------
     | Use redirects to routes or json responses
@@ -118,4 +117,16 @@ return [
     |
     */
     'authenticatable_class' => 'App\Models\User',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Development IP Pool
+    |--------------------------------------------------------------------------
+    |
+    | This option allows you to easily specify the IP addresses that will be
+    | used to test the package in development mode.
+    |
+    */
+    'development_ip_pool' => ['138.100.56.25','2.153.101.169','104.26.14.39','104.26.3.12'],
+
 ];

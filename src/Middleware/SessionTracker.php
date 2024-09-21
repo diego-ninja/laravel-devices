@@ -25,35 +25,24 @@ final readonly class SessionTracker
         $session = Session::current();
         if ($session) {
             if ($session->isBlocked()) {
+                return $this->logout($request);
             }
 
             if ($session->isInactive()) {
+                return $this->logout($request);
             }
 
             if ($session->isLocked()) {
+                return $this->manageLock($request);
             }
 
             $session->restart($request);
-        } else {
-        }
-
-
-
-        if ($request->session()->has(Session::DEVICE_SESSION_ID)) {
-            SessionManager::restart($request);
-        } else {
-            SessionManager::end(forgetSession: true);
         }
 
         return $next($request);
     }
 
-    private function isSessionBlockedOrInactive(): bool
-    {
-        return SessionManager::isBlocked() || SessionManager::isInactive();
-    }
-
-    private function handleBlockedOrInactiveSession(Request $request): Response|RedirectResponse
+    private function logout(Request $request): Response|RedirectResponse
     {
         if ($request->ajax() || !Config::get('devices.use_redirects')) {
             return response('Unauthorized.', 401);
@@ -68,18 +57,18 @@ final readonly class SessionTracker
         return response('Unauthorized.', 401);
     }
 
-    private function isSessionLocked(): bool
+    private function manageLock(Request $request): Response|RedirectResponse
     {
-        return SessionManager::isLocked();
-    }
+        if ($request->ajax() || !Config::get('devices.use_redirects')) {
+            return response('Session locked.', 401);
+        }
 
-    private function redirectToSecurityCode(): RedirectResponse
-    {
-        return redirect()->route(Config::get('devices.security_code_route_name'));
-    }
+        try {
+            return redirect()->route(Config::get('devices.security_code_route_name'));
+        } catch (RouteNotFoundException $e) {
+            Log::error('Route not found', ['route' => Config::get('devices.logout_route_name'), 'exception' => $e]);
+        }
 
-    private function restartAndLogSession(Request $request): void
-    {
-        SessionManager::restart($request);
+        return response('Session locked.', 401);
     }
 }

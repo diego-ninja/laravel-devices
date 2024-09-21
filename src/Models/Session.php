@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session as SessionFacade;
 use Ninja\DeviceTracker\Contracts\LocationProvider;
@@ -121,7 +120,7 @@ class Session extends Model
         $now = Carbon::now();
 
         $ip = request()->ip();
-        $location = app(LocationProvider::class)->fetch($ip);
+        $location = app(LocationProvider::class)->locate($ip);
 
         if ($deviceId && !Config::get('devices.allow_device_multi_session')) {
             $this->endPreviousSessions($deviceId, $userId, $now);
