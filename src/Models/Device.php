@@ -77,6 +77,11 @@ class Device extends Model
         );
     }
 
+    public function isCurrent(): bool
+    {
+        return $this->uuid->toString() === self::getDeviceUuid()?->toString();
+    }
+
     /**
      * @throws DeviceNotFoundException
      */
