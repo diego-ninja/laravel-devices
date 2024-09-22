@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session as SessionFacade;
 use Ninja\DeviceTracker\Contracts\LocationProvider;
 use Ninja\DeviceTracker\DTO\Location;
+use Ninja\DeviceTracker\Enums\Status;
 use Ninja\DeviceTracker\Exception\SessionNotFoundException;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
@@ -32,6 +33,7 @@ use Random\RandomException;
  * @property UuidInterface                $device_uuid            string
  * @property string                       $ip                     string
  * @property Location                     $location               json
+ * @property Status                       $status                 string
  * @property boolean                      $block                  boolean
  * @property integer                      $blocked_by             unsigned int
  * @property string                       $login_code             string
@@ -45,12 +47,6 @@ class Session extends Model
 {
     public const  DEVICE_SESSION_ID = 'session.id';
 
-    public const STATUS_ACTIVE = 'active';
-    public const STATUS_INACTIVE = 'inactive';
-    public const STATUS_BLOCKED = 'blocked';
-    public const STATUS_FINISHED = 'finished';
-    public const STATUS_LOCKED = 'locked';
-
     protected $table = 'device_sessions';
 
     public $timestamps = false;
@@ -61,6 +57,7 @@ class Session extends Model
         'device_uuid',
         'ip',
         'location',
+        'status',
         'started_at',
         'last_activity_at'
     ];
@@ -84,25 +81,12 @@ class Session extends Model
         );
     }
 
-    public function status(): string
+    public function status(): Attribute
     {
-        if ($this->block) {
-            return self::STATUS_BLOCKED;
-        }
-
-        if ($this->finished_at !== null) {
-            return self::STATUS_FINISHED;
-        }
-
-        if ($this->login_code !== null) {
-            return self::STATUS_LOCKED;
-        }
-
-        if (abs(strtotime($this->last_activity_at) - strtotime(now())) > Config::get('devices.inactivity_seconds', 1200)) {
-            return self::STATUS_INACTIVE;
-        }
-
-        return self::STATUS_ACTIVE;
+        return Attribute::make(
+            get: fn(string $value) => Status::from($value),
+            set: fn(Status $value) => $value->value()
+        );
     }
 
     public function location(): Attribute
@@ -132,6 +116,7 @@ class Session extends Model
             'device_uuid' => $deviceId,
             'ip' => $ip,
             'location' => $location,
+            'status' => Status::Active,
             'started_at' => $now,
             'last_activity_at' => $now
         ]);
@@ -155,6 +140,7 @@ class Session extends Model
             SessionFacade::forget(self::DEVICE_SESSION_ID);
         }
 
+        $this->status = Status::Finished;
         $this->finished_at = Carbon::now();
         return $this->save();
     }
@@ -190,24 +176,19 @@ class Session extends Model
 
     public function block(): bool
     {
-        $this->block = true;
+        $this->status = Status::Blocked;
         $this->blocked_by = Auth::user()->id;
         return $this->save();
     }
 
     public function isBlocked(): bool
     {
-        return $this->block;
+        return $this->status === Status::Blocked;
     }
 
     public function isLocked(): bool
     {
-        return $this->login_code !== null;
-    }
-
-    public function loginCode(): ?string
-    {
-        return $this->login_code;
+        return $this->status === Status::Locked;
     }
 
     /**
@@ -218,6 +199,7 @@ class Session extends Model
         $code = random_int(100000, 999999);
         $this->login_code = sha1($code);
 
+        $this->status = Status::Locked;
         $this->save();
 
         return $code;
@@ -245,6 +227,7 @@ class Session extends Model
         }
 
         if (sha1($code) === $this->login_code) {
+            $this->status = Status::Active;
             $this->login_code = null;
             $this->save();
             return true;

@@ -14,7 +14,7 @@ return new class extends Migration {
             $table->uuid('device_uuid');
             $table->string('ip')->nullable();
             $table->json('location')->nullable();
-            $table->boolean('block')->nullable()->default(false);
+            $table->string('status')->default('active');
             $table->integer('blocked_by')->nullable();
             $table->string('login_code')->nullable();
             $table->timestamp('started_at')->nullable();
