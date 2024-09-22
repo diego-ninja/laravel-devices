@@ -2,13 +2,37 @@
 
 namespace Ninja\DeviceTracker\Http\Controllers;
 
+use Auth;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Ninja\DeviceTracker\Models\Session;
+use Ninja\DeviceTracker\DTO\Session as SessionDTO;
 
 final class SessionController extends Controller
 {
+    public function list(Request $request): JsonResponse
+    {
+        $ret = [];
+
+        $sessions = Auth::user()->sessions;
+        foreach ($sessions as $session) {
+            $ret[] = SessionDTO::fromModel($session);
+        }
+        return response()->json($ret);
+    }
+
+    public function show(Request $request): JsonResponse
+    {
+        $session = Auth::user()->sessions()->find($request->input('id'));
+
+        if ($session) {
+            return response()->json(SessionDTO::fromModel($session));
+        }
+
+        return response()->json(['message' => 'Session not found'], 404);
+    }
+
     /**
      * End the session by given id
      *
@@ -48,8 +72,11 @@ final class SessionController extends Controller
         $code = $request->input('login_code');
 
         if ($session) {
-            $session->unlockByCode($code);
-            return response()->json(['message' => 'Session unlocked successfully']);
+            if ($session->unlockByCode($code)) {
+                return response()->json(['message' => 'Session unlocked successfully']);
+            } else {
+                return response()->json(['message' => 'Invalid code'], 401);
+            }
         }
 
         return response()->json(['message' => 'Session not found'], 404);

@@ -13,6 +13,7 @@ class DeviceTrackerServiceProvider extends ServiceProvider
     {
         $this->registerPublishing();
         $this->registerMiddlewares();
+        $this->registerRoutes();
     }
 
     public function register(): void
@@ -35,6 +36,22 @@ class DeviceTrackerServiceProvider extends ServiceProvider
     {
         $router = $this->app['router'];
         $router->middleware('session', SessionTracker::class);
+    }
+
+    private function registerRoutes(): void
+    {
+        $router = $this->app['router'];
+        $router->group(['middleware' => 'auth'], function () use ($router) {
+            $router->get('devices', 'Ninja\DeviceTracker\Http\Controllers\DeviceController@list');
+            $router->get('devices/{id}', 'Ninja\DeviceTracker\Http\Controllers\DeviceController@show');
+        });
+        $router->group(['middleware' => 'auth'], function () use ($router) {
+            $router->get('sessions', 'Ninja\DeviceTracker\Http\Controllers\SessionController@list');
+            $router->get('sessions/{id}', 'Ninja\DeviceTracker\Http\Controllers\SessionController@show');
+            $router->post('sessions/{id}/end', 'Ninja\DeviceTracker\Http\Controllers\SessionController@end');
+            $router->post('sessions/{id}/lock', 'Ninja\DeviceTracker\Http\Controllers\SessionController@lock');
+            $router->post('sessions/{id}/unlock', 'Ninja\DeviceTracker\Http\Controllers\SessionController@unlock');
+        });
     }
 
 

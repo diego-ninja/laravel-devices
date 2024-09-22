@@ -3,6 +3,7 @@
 namespace Ninja\DeviceTracker\DTO;
 
 use JsonSerializable;
+use Ninja\DeviceTracker\Enums\Status;
 use Stringable;
 
 final readonly class Session implements JsonSerializable, Stringable
@@ -11,7 +12,7 @@ final readonly class Session implements JsonSerializable, Stringable
         public string $uuid,
         public string $ip,
         public Location $location,
-        public string $status,
+        public Status $status,
         public string $lastActivityAt,
         public string $startedAt,
         public string $finishedAt,
@@ -26,7 +27,7 @@ final readonly class Session implements JsonSerializable, Stringable
             uuid: $session->uuid->toString(),
             ip: $session->ip,
             location: $session->location,
-            status: $session->status(),
+            status: $session->status,
             lastActivityAt: $session->last_activity_at,
             startedAt: $session->started_at,
             finishedAt: $session->finished_at,
@@ -41,7 +42,7 @@ final readonly class Session implements JsonSerializable, Stringable
             "uuid" => $this->uuid,
             "ip" => $this->ip,
             "location" => $this->location->array(),
-            "status" => $this->status,
+            "status" => $this->status->value,
             "lastActivityAt" => $this->lastActivityAt,
             "startedAt" => $this->startedAt,
             "finishedAt" => $this->finishedAt,
