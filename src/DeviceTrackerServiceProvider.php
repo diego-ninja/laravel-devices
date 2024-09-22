@@ -42,15 +42,15 @@ class DeviceTrackerServiceProvider extends ServiceProvider
     {
         $router = $this->app['router'];
         $router->group(['middleware' => 'auth'], function () use ($router) {
-            $router->get('devices', 'Ninja\DeviceTracker\Http\Controllers\DeviceController@list');
-            $router->get('devices/{id}', 'Ninja\DeviceTracker\Http\Controllers\DeviceController@show');
+            $router->get('devices', 'Ninja\DeviceTracker\Http\Controllers\DeviceController@list')->name('devices.list');
+            $router->get('devices/{id}', 'Ninja\DeviceTracker\Http\Controllers\DeviceController@show')->name('devices.show');
         });
         $router->group(['middleware' => 'auth'], function () use ($router) {
-            $router->get('sessions', 'Ninja\DeviceTracker\Http\Controllers\SessionController@list');
-            $router->get('sessions/{id}', 'Ninja\DeviceTracker\Http\Controllers\SessionController@show');
-            $router->post('sessions/{id}/end', 'Ninja\DeviceTracker\Http\Controllers\SessionController@end');
-            $router->post('sessions/{id}/lock', 'Ninja\DeviceTracker\Http\Controllers\SessionController@lock');
-            $router->post('sessions/{id}/unlock', 'Ninja\DeviceTracker\Http\Controllers\SessionController@unlock');
+            $router->get('sessions', 'Ninja\DeviceTracker\Http\Controllers\SessionController@list')->name('sessions.list');
+            $router->get('sessions/{id}', 'Ninja\DeviceTracker\Http\Controllers\SessionController@show')->name('sessions.show');
+            $router->post('sessions/{id}/end', 'Ninja\DeviceTracker\Http\Controllers\SessionController@end')->name('sessions.end');
+            $router->post('sessions/{id}/lock', 'Ninja\DeviceTracker\Http\Controllers\SessionController@lock')->name('sessions.lock');
+            $router->post('sessions/{id}/unlock', 'Ninja\DeviceTracker\Http\Controllers\SessionController@unlock')->name('sessions.unlock');
         });
     }
 
