@@ -7,41 +7,33 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Config;
 use Ninja\DeviceTracker\Http\Resources\SessionResource;
+use Ramsey\Uuid\Uuid;
 
+/**
+ * @authenticated
+ */
 final class SessionController extends Controller
 {
-    /**
-     * @authenticated
-     */
     public function list(Request $request): JsonResponse
     {
         $sessions = $this->getUserSessions($request);
-        return response()->json(SessionResource::collection($sessions)->with($request));
+        return response()->json(SessionResource::collection($sessions));
     }
 
-    /**
-     * @authenticated
-     */
-    public function show(Request $request): JsonResponse
+    public function show(Request $request, string $id): JsonResponse
     {
-        $session = $this->findUserSession($request, $request->input('id'));
+        $session = $this->findUserSession($request, $id);
 
         if ($session) {
-            return response()->json(SessionResource::make($session)->with($request));
+            return response()->json(SessionResource::make($session));
         }
 
         return response()->json(['message' => 'Session not found'], 404);
     }
 
-    /**
-     * End the session by given id
-     *
-     * @param Request $request
-     * @return JsonResponse
-     */
-    public function end(Request $request): JsonResponse
+    public function end(Request $request, string $id): JsonResponse
     {
-        $session = $this->findUserSession($request, $request->input('id'));
+        $session = $this->findUserSession($request, $id);
 
         if ($session) {
             $session->end();
@@ -51,24 +43,30 @@ final class SessionController extends Controller
         return response()->json(['message' => 'Session not found'], 404);
     }
 
-    public function lock(Request $request): JsonResponse
+    public function lock(Request $request, string $id): JsonResponse
     {
-        $session = $this->findUserSession($request, $request->input('id'));
+        $session = $this->findUserSession($request, $id);
 
         if ($session) {
-            $session->lock();
-            return response()->json([
-                'message' => 'Session locked successfully with code: ' . $session->login_code,
-                'login_code' => $session->login_code
-            ]);
+            $code = $session->lockByCode();
+            if($code) {
+                return response()->json(
+                    [
+                        'message'    => 'Session locked successfully',
+                        'login_code' => $code
+                    ]
+                );
+            } else {
+                return response()->json(['message' => 'Session already locked'], 400);
+            }
         }
 
         return response()->json(['message' => 'Session not found'], 404);
     }
 
-    public function unlock(Request $request): JsonResponse
+    public function unlock(Request $request, string $id): JsonResponse
     {
-        $session = $this->findUserSession($request, $request->input('id'));
+        $session = $this->findUserSession($request, $id);
         $code = $request->input('login_code');
 
         if ($session) {
@@ -91,12 +89,13 @@ final class SessionController extends Controller
             ->get();
     }
 
-    private function findUserSession(Request $request, $id)
+    private function findUserSession(Request $request, string $id)
     {
         return $request
             ->user(Config::get('devices.auth_guard'))
             ->sessions()
             ->with("device")
-            ->find($id);
+            ->where('uuid', Uuid::fromString($id))
+            ->first();
     }
 }

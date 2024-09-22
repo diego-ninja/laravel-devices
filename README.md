@@ -9,6 +9,7 @@ This package provides session tracking functionalities, multi session management
 * Locking sessions
 * Security code for session locking
 * Session location tracking
+* Ready to use middleware, routes, controllers and resources
 
 
 ## Installation

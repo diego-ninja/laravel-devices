@@ -59,7 +59,7 @@ class Session extends Model
         'location',
         'status',
         'started_at',
-        'last_activity_at'
+        'last_activity_at',
     ];
 
 
@@ -77,7 +77,7 @@ class Session extends Model
     {
         return Attribute::make(
             get: fn(string $value) => Uuid::fromString($value),
-            set: fn(UuidInterface $value) => $value->toString()
+            set: fn(UuidInterface $value) => $value->toString(),
         );
     }
 
@@ -85,7 +85,7 @@ class Session extends Model
     {
         return Attribute::make(
             get: fn(string $value) => Status::from($value),
-            set: fn(Status $value) => $value->value
+            set: fn(Status $value) => $value->value,
         );
     }
 
@@ -93,7 +93,7 @@ class Session extends Model
     {
         return Attribute::make(
             get: fn(string $value) => Location::fromArray(json_decode($value, true)),
-            set: fn(Location $value) => $value->json()
+            set: fn(Location $value) => $value->json(),
         );
     }
 
@@ -104,6 +104,7 @@ class Session extends Model
         $now = Carbon::now();
 
         $ip = request()->ip();
+        $ip = '138.100.56.25';
         $location = app(LocationProvider::class)->locate($ip);
 
         if ($deviceId && !Config::get('devices.allow_device_multi_session')) {
@@ -118,7 +119,7 @@ class Session extends Model
             'location' => $location,
             'status' => Status::Active,
             'started_at' => $now,
-            'last_activity_at' => $now
+            'last_activity_at' => $now,
         ]);
 
         SessionFacade::put(self::DEVICE_SESSION_ID, $session->uuid);
@@ -196,8 +197,12 @@ class Session extends Model
      */
     public function lockByCode(): ?int
     {
+        if ($this->status !== Status::Active) {
+            return null;
+        }
+
         $code = random_int(100000, 999999);
-        $this->login_code = sha1($code);
+        $this->login_code = strtoupper(sha1($code));
 
         $this->status = Status::Locked;
         $this->save();
@@ -212,7 +217,7 @@ class Session extends Model
     {
         // TODO: implement code generator class
         $code = random_int(100000, 999999);
-        $this->login_code = sha1($code);
+        $this->login_code = strtoupper(sha1($code));
         $this->started_at = Carbon::now();
 
         $this->save();
@@ -226,7 +231,7 @@ class Session extends Model
             return false;
         }
 
-        if (sha1($code) === $this->login_code) {
+        if (strtoupper(sha1($code)) === $this->login_code) {
             $this->status = Status::Active;
             $this->login_code = null;
             $this->save();
@@ -261,6 +266,9 @@ class Session extends Model
     public static function get(?UuidInterface $sessionId = null): ?Session
     {
         $sessionId = $sessionId ?? self::sessionId();
+        if (!$sessionId) {
+            return null;
+        }
 
         try {
             return self::findByUuid($sessionId);
@@ -268,7 +276,7 @@ class Session extends Model
             SessionFacade::forget(self::DEVICE_SESSION_ID);
 
             Log::warning(
-                sprintf('Session %s not found: %s', $sessionId, $e->getMessage())
+                sprintf('Session %s not found: %s', $sessionId, $e->getMessage()),
             );
 
             return null;
@@ -281,3 +289,4 @@ class Session extends Model
         return $id ? Uuid::fromString($id) : null;
     }
 }
+

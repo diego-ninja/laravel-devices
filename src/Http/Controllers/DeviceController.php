@@ -6,7 +6,12 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Config;
 use Ninja\DeviceTracker\Http\Resources\DeviceResource;
+use Ramsey\Uuid\Uuid;
+use Ramsey\Uuid\UuidInterface;
 
+/**
+ * @authenticated
+ */
 final class DeviceController extends Controller
 {
     public function list(Request $request)
@@ -14,19 +19,20 @@ final class DeviceController extends Controller
         $devices = $request
             ->user(Config::get('devices.auth_guard'))->devices;
 
-        return response()->json(DeviceResource::collection($devices)->with($request));
+        return response()->json(DeviceResource::collection($devices));
     }
 
-    public function show(Request $request)
+    public function show(Request $request, string $id)
     {
         $device = $request
             ->user(Config::get('devices.auth_guard'))
             ->devices()
             ->with('sessions')
-            ->find($request->input('id'));
+            ->where('uuid', Uuid::fromString($id))
+            ->first();
 
         if ($device) {
-            return response()->json(DeviceResource::make($device)->with($request));
+            return response()->json(DeviceResource::make($device));
         }
 
         return response()->json(['message' => 'Device not found'], 404);
