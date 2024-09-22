@@ -28,6 +28,10 @@ final readonly class SessionManager
     public function end(?UuidInterface $sessionId = null, bool $forgetSession = false): bool
     {
         $session = Session::get($sessionId);
+        if (!$session) {
+            return false;
+        }
+
         return $session->end($forgetSession);
     }
 

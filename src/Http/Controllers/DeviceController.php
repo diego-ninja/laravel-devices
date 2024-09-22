@@ -2,31 +2,31 @@
 
 namespace Ninja\DeviceTracker\Http\Controllers;
 
-use Auth;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Ninja\DeviceTracker\DTO\Device as DeviceDTO;
+use Illuminate\Support\Facades\Config;
+use Ninja\DeviceTracker\Http\Resources\DeviceResource;
 
 final class DeviceController extends Controller
 {
     public function list(Request $request)
     {
-        $ret = [];
+        $devices = $request
+            ->user(Config::get('devices.auth_guard'))->devices;
 
-        $devices = Auth::user()->devices;
-        foreach ($devices as $device) {
-            $ret[] = DeviceDTO::fromModel($device);
-        }
-
-        return response()->json($ret);
+        return response()->json(DeviceResource::collection($devices)->with($request));
     }
 
     public function show(Request $request)
     {
-        $device = Auth::user()->devices()->find($request->input('id'));
+        $device = $request
+            ->user(Config::get('devices.auth_guard'))
+            ->devices()
+            ->with('sessions')
+            ->find($request->input('id'));
 
         if ($device) {
-            return response()->json(DeviceDTO::fromModel($device));
+            return response()->json(DeviceResource::make($device)->with($request));
         }
 
         return response()->json(['message' => 'Device not found'], 404);

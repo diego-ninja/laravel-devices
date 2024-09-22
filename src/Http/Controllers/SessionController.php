@@ -2,32 +2,32 @@
 
 namespace Ninja\DeviceTracker\Http\Controllers;
 
-use Auth;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Ninja\DeviceTracker\Models\Session;
-use Ninja\DeviceTracker\DTO\Session as SessionDTO;
+use Illuminate\Support\Facades\Config;
+use Ninja\DeviceTracker\Http\Resources\SessionResource;
 
 final class SessionController extends Controller
 {
+    /**
+     * @authenticated
+     */
     public function list(Request $request): JsonResponse
     {
-        $ret = [];
-
-        $sessions = Auth::user()->sessions;
-        foreach ($sessions as $session) {
-            $ret[] = SessionDTO::fromModel($session);
-        }
-        return response()->json($ret);
+        $sessions = $this->getUserSessions($request);
+        return response()->json(SessionResource::collection($sessions)->with($request));
     }
 
+    /**
+     * @authenticated
+     */
     public function show(Request $request): JsonResponse
     {
-        $session = Auth::user()->sessions()->find($request->input('id'));
+        $session = $this->findUserSession($request, $request->input('id'));
 
         if ($session) {
-            return response()->json(SessionDTO::fromModel($session));
+            return response()->json(SessionResource::make($session)->with($request));
         }
 
         return response()->json(['message' => 'Session not found'], 404);
@@ -41,7 +41,7 @@ final class SessionController extends Controller
      */
     public function end(Request $request): JsonResponse
     {
-        $session = Session::get($request->input('id'));
+        $session = $this->findUserSession($request, $request->input('id'));
 
         if ($session) {
             $session->end();
@@ -53,7 +53,7 @@ final class SessionController extends Controller
 
     public function lock(Request $request): JsonResponse
     {
-        $session = Session::get($request->input('id'));
+        $session = $this->findUserSession($request, $request->input('id'));
 
         if ($session) {
             $session->lock();
@@ -68,7 +68,7 @@ final class SessionController extends Controller
 
     public function unlock(Request $request): JsonResponse
     {
-        $session = Session::get($request->input('id'));
+        $session = $this->findUserSession($request, $request->input('id'));
         $code = $request->input('login_code');
 
         if ($session) {
@@ -80,5 +80,23 @@ final class SessionController extends Controller
         }
 
         return response()->json(['message' => 'Session not found'], 404);
+    }
+
+    private function getUserSessions(Request $request)
+    {
+        return $request
+            ->user(Config::get('devices.auth_guard'))
+            ->sessions()
+            ->with("device")
+            ->get();
+    }
+
+    private function findUserSession(Request $request, $id)
+    {
+        return $request
+            ->user(Config::get('devices.auth_guard'))
+            ->sessions()
+            ->with("device")
+            ->find($id);
     }
 }

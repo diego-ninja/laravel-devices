@@ -15,8 +15,7 @@ final readonly class Session implements JsonSerializable, Stringable
         public Status $status,
         public string $lastActivityAt,
         public string $startedAt,
-        public string $finishedAt,
-        public bool $isCurrent,
+        public ?string $finishedAt,
         public Device $device
     ) {
     }
@@ -31,7 +30,6 @@ final readonly class Session implements JsonSerializable, Stringable
             lastActivityAt: $session->last_activity_at,
             startedAt: $session->started_at,
             finishedAt: $session->finished_at,
-            isCurrent: $session->device->isCurrent(),
             device: Device::fromModel($session->device)
         );
     }
@@ -46,7 +44,6 @@ final readonly class Session implements JsonSerializable, Stringable
             "lastActivityAt" => $this->lastActivityAt,
             "startedAt" => $this->startedAt,
             "finishedAt" => $this->finishedAt,
-            "is_current" => $this->isCurrent,
             "device" => $this->device->array()
         ];
     }

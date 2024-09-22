@@ -85,7 +85,7 @@ class Session extends Model
     {
         return Attribute::make(
             get: fn(string $value) => Status::from($value),
-            set: fn(Status $value) => $value->value()
+            set: fn(Status $value) => $value->value
         );
     }
 

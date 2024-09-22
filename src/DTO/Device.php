@@ -9,26 +9,28 @@ final readonly class Device implements JsonSerializable, Stringable
 {
     public function __construct(
         public string $uuid,
-        public string $userAgent,
         public string $browser,
         public string $browserVersion,
         public string $platform,
         public string $platformVersion,
         public string $device,
-        public string $deviceType
+        public string $deviceType,
+        public bool $isCurrent,
+        public ?string $userAgent
     ) {
     }
     public static function fromModel(\Ninja\DeviceTracker\Models\Device $device): self
     {
         return new self(
             uuid: $device->uuid->toString(),
-            userAgent: $device->source,
             browser: $device->browser,
             browserVersion: $device->browser_version,
             platform: $device->platform,
             platformVersion: $device->platform_version,
             device: $device->device,
-            deviceType: $device->device_type
+            deviceType: $device->device_type,
+            isCurrent: $device->isCurrent(),
+            userAgent: $device->source
         );
     }
 
@@ -36,13 +38,14 @@ final readonly class Device implements JsonSerializable, Stringable
     {
         return [
             "uuid" => $this->uuid,
-            "userAgent" => $this->userAgent,
             "browser" => $this->browser,
             "browserVersion" => $this->browserVersion,
             "platform" => $this->platform,
             "platformVersion" => $this->platformVersion,
             "device" => $this->device,
-            "deviceType" => $this->deviceType
+            "deviceType" => $this->deviceType,
+            "isCurrent" => $this->isCurrent,
+            "userAgent" => $this->userAgent
         ];
     }
 

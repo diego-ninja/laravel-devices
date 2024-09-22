@@ -83,13 +83,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Logout guard
+    | Auth guard
     |--------------------------------------------------------------------------
     |
-    | This option allows you to easily specify the guard to logout. You must specify
-    | this option is you don't want to use redirects.
+    | This option allows you to easily specify the guard that should be used for
+    | authenticating the user.
     */
-    'logout_guard' => 'web',
+    'auth_guard' => 'web',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Auth middleware
+    |--------------------------------------------------------------------------
+    |
+    | This option allows you to easily specify the middleware that should be used for
+    | authenticating the user in the routes.
+    */
+    'auth_middleware' => 'auth',
 
     /*
     |--------------------------------------------------------------------------
