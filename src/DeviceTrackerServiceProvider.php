@@ -14,7 +14,10 @@ class DeviceTrackerServiceProvider extends ServiceProvider
     {
         $this->registerPublishing();
         $this->registerMiddlewares();
-        $this->registerRoutes();
+
+        if (Config::get('devices.load_routes')) {
+            $this->registerRoutes();
+        }
     }
 
     public function register(): void

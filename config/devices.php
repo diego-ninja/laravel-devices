@@ -23,6 +23,15 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Load routes
+    |--------------------------------------------------------------------------
+    | This option specifies if provider should load the routes
+    |
+    */
+    'load_routes' => true,
+
+    /*
+    |--------------------------------------------------------------------------
     | Allows multiple sessions per device
     |--------------------------------------------------------------------------
     | This option specifies if the user can have multiple active sessions per device
