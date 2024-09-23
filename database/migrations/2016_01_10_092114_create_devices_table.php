@@ -3,6 +3,7 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\Schema;
+use Ninja\DeviceTracker\Enums\DeviceStatus;
 
 return new class extends Migration
 {
@@ -12,6 +13,7 @@ return new class extends Migration
             $table->increments('id');
             $table->uuid()->unique();
             $table->integer('user_id');
+            $table->string('status')->default(DeviceStatus::Unverified->value);
             $table->string('browser')->nullable();
             $table->string('browser_version')->nullable();
             $table->string('platform')->nullable();
@@ -22,6 +24,8 @@ return new class extends Migration
             $table->tinyInteger('robot')->nullable();
             $table->string('source')->nullable();
             $table->timestamps();
+            $table->timestamp('verified_at')->nullable();
+            $table->timestamp('hijacked_at')->nullable();
         });
     }
 

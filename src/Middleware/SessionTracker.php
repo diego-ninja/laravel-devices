@@ -22,6 +22,7 @@ final readonly class SessionTracker
     public function handle(Request $request, Closure $next)
     {
         $session = Session::current();
+
         if ($session) {
             if ($session->isLocked()) {
                 return $this->manageLock($request);

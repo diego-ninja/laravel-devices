@@ -3,6 +3,8 @@
 namespace Ninja\DeviceTracker\Models;
 
 use Carbon\Carbon;
+use Event;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -13,7 +15,10 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session as SessionFacade;
 use Ninja\DeviceTracker\Contracts\LocationProvider;
 use Ninja\DeviceTracker\DTO\Location;
-use Ninja\DeviceTracker\Enums\Status;
+use Ninja\DeviceTracker\Enums\SessionStatus;
+use Ninja\DeviceTracker\Events\SessionFinishedEvent;
+use Ninja\DeviceTracker\Events\SessionLockedEvent;
+use Ninja\DeviceTracker\Events\SessionStartedEvent;
 use Ninja\DeviceTracker\Exception\SessionNotFoundException;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
@@ -33,7 +38,7 @@ use Random\RandomException;
  * @property UuidInterface                $device_uuid            string
  * @property string                       $ip                     string
  * @property Location                     $location               json
- * @property Status                       $status                 string
+ * @property SessionStatus                $status                 string
  * @property boolean                      $block                  boolean
  * @property integer                      $blocked_by             unsigned int
  * @property string                       $login_code             string
@@ -84,8 +89,8 @@ class Session extends Model
     public function status(): Attribute
     {
         return Attribute::make(
-            get: fn(string $value) => Status::from($value),
-            set: fn(Status $value) => $value->value,
+            get: fn(string $value) => SessionStatus::from($value),
+            set: fn(SessionStatus $value) => $value->value,
         );
     }
 
@@ -108,7 +113,7 @@ class Session extends Model
         $location = app(LocationProvider::class)->locate($ip);
 
         if ($deviceId && !Config::get('devices.allow_device_multi_session')) {
-            $this->endPreviousSessions($deviceId, $userId, $now);
+            $this->endPreviousSessions($deviceId, $userId);
         }
 
         $session = $this->create([
@@ -117,39 +122,52 @@ class Session extends Model
             'device_uuid' => $deviceId,
             'ip' => $ip,
             'location' => $location,
-            'status' => Status::Active,
+            'status' => SessionStatus::Active,
             'started_at' => $now,
             'last_activity_at' => $now,
         ]);
 
         SessionFacade::put(self::DEVICE_SESSION_ID, $session->uuid);
+        Event::dispatch(new SessionStartedEvent($this, Auth::user()));
 
         return $session;
     }
 
-    private function endPreviousSessions($deviceId, $userId, $now): void
+    private function endPreviousSessions($deviceId, $userId): void
     {
-        self::where('device_uid', $deviceId)
+        $previousSessions = self::where('device_uuid', $deviceId)
             ->where('user_id', $userId)
             ->whereNull('finished_at')
-            ->update(['finished_at' => $now]);
+            ->get();
+
+        foreach ($previousSessions as $session) {
+            $session->end(forgetSession: true);
+        }
+
     }
 
-    public function end(bool $forgetSession = false): bool
+    public function end(bool $forgetSession = false, ?Authenticatable $user = null): bool
     {
         if ($forgetSession) {
             SessionFacade::forget(self::DEVICE_SESSION_ID);
         }
 
-        $this->status = Status::Finished;
+        $this->status = SessionStatus::Finished;
         $this->finished_at = Carbon::now();
-        return $this->save();
+
+        if ($this->save()) {
+            Event::dispatch(new SessionFinishedEvent($this, $user ?? Auth::user()));
+            return true;
+        }
+
+        return false;
     }
 
     public function renew(): bool
     {
         $this->last_activity_at = Carbon::now();
         $this->finished_at = null;
+
         return $this->save();
     }
 
@@ -175,39 +193,54 @@ class Session extends Model
         return abs(strtotime($this->last_activity_at) - strtotime(now())) > Config::get('devices.inactivity_seconds', 1200);
     }
 
-    public function block(): bool
+    public function block(?Authenticatable $user = null): bool
     {
-        $this->status = Status::Blocked;
-        $this->blocked_by = Auth::user()->id;
-        return $this->save();
+        $user = $user ?? Auth::user();
+
+        $this->status = SessionStatus::Blocked;
+        $this->blocked_by = $user->id;
+
+
+        if ($this->save()) {
+            Event::dispatch(new SessionFinishedEvent($this, $user));
+            return true;
+        }
+
+        return false;
     }
 
     public function isBlocked(): bool
     {
-        return $this->status === Status::Blocked;
+        return $this->status === SessionStatus::Blocked;
     }
 
     public function isLocked(): bool
     {
-        return $this->status === Status::Locked;
+        return $this->status === SessionStatus::Locked;
     }
 
     /**
      * @throws RandomException
      */
-    public function lockByCode(): ?int
+    public function lockByCode(?Authenticatable $user = null): ?int
     {
-        if ($this->status !== Status::Active) {
+        if ($this->status !== SessionStatus::Active) {
             return null;
         }
 
+        $user = $user ?? Auth::user();
+
         $code = random_int(100000, 999999);
         $this->login_code = strtoupper(sha1($code));
+        $this->status = SessionStatus::Locked;
 
-        $this->status = Status::Locked;
-        $this->save();
 
-        return $code;
+        if ($this->save()) {
+            Event::dispatch(new SessionLockedEvent($this, $code, $user));
+            return $code;
+        }
+
+        return null;
     }
 
     /**
@@ -232,13 +265,20 @@ class Session extends Model
         }
 
         if (strtoupper(sha1($code)) === $this->login_code) {
-            $this->status = Status::Active;
+            $this->status = SessionStatus::Active;
             $this->login_code = null;
             $this->save();
             return true;
         }
 
         return false;
+    }
+
+    public function finish(): void
+    {
+        $this->status = SessionStatus::Finished;
+        $this->finished_at = Carbon::now();
+        $this->save();
     }
 
     /**

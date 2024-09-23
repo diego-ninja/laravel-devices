@@ -12,17 +12,21 @@ final readonly class DeviceCheck
 {
     public function handle(Request $request, Closure $next)
     {
-        $cookieName = Config::get('devices.device_id_cookie_name');
+        $guard = Config::get('devices.auth_guard');
 
-        if (!Cookie::has($cookieName)) {
-            Cookie::queue(
-                Cookie::forever(
-                    name: $cookieName,
-                    value: Uuid::uuid7()->toString(),
-                    secure: Config::get('session.secure', false),
-                    httpOnly: Config::get('session.http_only', true)
-                )
-            );
+        if ($guard && auth($guard)->check()) {
+            $cookieName = Config::get('devices.device_id_cookie_name');
+
+            if (!Cookie::has($cookieName)) {
+                Cookie::queue(
+                    Cookie::forever(
+                        name: $cookieName,
+                        value: Uuid::uuid7()->toString(),
+                        secure: Config::get('session.secure', false),
+                        httpOnly: Config::get('session.http_only', true)
+                    )
+                );
+            }
         }
 
         return $next($request);

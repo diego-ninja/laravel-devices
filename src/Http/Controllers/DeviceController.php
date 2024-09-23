@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Config;
 use Ninja\DeviceTracker\Http\Resources\DeviceResource;
+use Ninja\DeviceTracker\Models\Device;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 
@@ -24,17 +25,57 @@ final class DeviceController extends Controller
 
     public function show(Request $request, string $id)
     {
-        $device = $request
-            ->user(Config::get('devices.auth_guard'))
-            ->devices()
-            ->with('sessions')
-            ->where('uuid', Uuid::fromString($id))
-            ->first();
+        $device = $this->getUserDevice($request, $id);
 
         if ($device) {
             return response()->json(DeviceResource::make($device));
         }
 
         return response()->json(['message' => 'Device not found'], 404);
+    }
+
+    public function verify(Request $request, string $id)
+    {
+        $device = $this->getUserDevice($request, $id);
+
+        if ($device) {
+            $device->verify();
+            return response()->json(['message' => 'Device verified successfully']);
+        }
+
+        return response()->json(['message' => 'Device not found'], 404);
+    }
+
+    public function hijack(Request $request, string $id)
+    {
+        $device = $this->getUserDevice($request, $id);
+
+        if ($device) {
+            $device->hijack();
+            return response()->json(['message' => "Device {$id} flagged as hijacked"]);
+        }
+
+        return response()->json(['message' => 'Device not found'], 404);
+    }
+
+    public function forget(Request $request, string $id)
+    {
+        $device = $this->getUserDevice($request, $id);
+
+        if ($device) {
+            $device->forget();
+            return response()->json(['message' => 'Device forgotten successfully. All active sessions were ended.']);
+        }
+
+        return response()->json(['message' => 'Device not found'], 404);
+    }
+
+    private function getUserDevice(Request $request, string $id): ?Device
+    {
+        return $request
+            ->user(Config::get('devices.auth_guard'))
+            ->devices()
+            ->where('uuid', Uuid::fromString($id))
+            ->firstOrFail();
     }
 }

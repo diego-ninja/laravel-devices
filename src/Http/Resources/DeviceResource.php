@@ -14,6 +14,7 @@ final class DeviceResource extends JsonResource
     {
         return [
             "uuid" => $this->resource->uuid,
+            "status" => $this->resource->status,
             "browser" => $this->resource->browser,
             "browser_version" => $this->resource->browser_version,
             "platform" => $this->resource->platform,

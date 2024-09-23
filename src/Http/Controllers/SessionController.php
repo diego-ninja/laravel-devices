@@ -7,7 +7,9 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Config;
 use Ninja\DeviceTracker\Http\Resources\SessionResource;
+use Ninja\DeviceTracker\Models\Session;
 use Ramsey\Uuid\Uuid;
+use Random\RandomException;
 
 /**
  * @authenticated
@@ -80,6 +82,30 @@ final class SessionController extends Controller
         return response()->json(['message' => 'Session not found'], 404);
     }
 
+    /**
+     * @throws RandomException
+     */
+    public function refresh(Request $request, string $id): JsonResponse
+    {
+        $session = $this->findUserSession($request, $id);
+
+        if ($session) {
+            $code = $session->refreshCode();
+            if ($code) {
+                return response()->json(
+                    [
+                        'message'    => 'Session refreshed successfully',
+                        'login_code' => $code
+                    ]
+                );
+            } else {
+                return response()->json(['message' => 'Unable to refresh code for session'], 400);
+            }
+        }
+
+        return response()->json(['message' => 'Session not found'], 404);
+    }
+
     private function getUserSessions(Request $request)
     {
         return $request
@@ -89,7 +115,7 @@ final class SessionController extends Controller
             ->get();
     }
 
-    private function findUserSession(Request $request, string $id)
+    private function findUserSession(Request $request, string $id): ?Session
     {
         return $request
             ->user(Config::get('devices.auth_guard'))

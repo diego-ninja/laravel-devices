@@ -3,20 +3,20 @@
 namespace Ninja\DeviceTracker\DTO;
 
 use JsonSerializable;
-use Ninja\DeviceTracker\Enums\Status;
+use Ninja\DeviceTracker\Enums\SessionStatus;
 use Stringable;
 
 final readonly class Session implements JsonSerializable, Stringable
 {
     public function __construct(
-        public string $uuid,
-        public string $ip,
-        public Location $location,
-        public Status $status,
-        public string $lastActivityAt,
-        public string $startedAt,
-        public ?string $finishedAt,
-        public Device $device
+        public string        $uuid,
+        public string        $ip,
+        public Location      $location,
+        public SessionStatus $status,
+        public string        $lastActivityAt,
+        public string        $startedAt,
+        public ?string       $finishedAt,
+        public Device        $device
     ) {
     }
 

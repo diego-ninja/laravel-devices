@@ -2,7 +2,7 @@
 
 namespace Ninja\DeviceTracker\Enums;
 
-enum Status: string
+enum SessionStatus: string
 {
     case Active = 'active';
     case Inactive = 'inactive';

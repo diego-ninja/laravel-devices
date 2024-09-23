@@ -3,6 +3,7 @@
 namespace Ninja\DeviceTracker\Models;
 
 use Carbon\Carbon;
+use Event;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
@@ -12,6 +13,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cookie;
 use Jenssegers\Agent\Agent;
+use Ninja\DeviceTracker\Enums\DeviceStatus;
+use Ninja\DeviceTracker\Events\DeviceHijackedEvent;
+use Ninja\DeviceTracker\Events\DeviceVerifiedEvent;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
@@ -27,6 +31,7 @@ use Ramsey\Uuid\UuidInterface;
  * @property string                       $id                     unsigned string
  * @property UuidInterface                $uuid                   string
  * @property integer                      $user_id                unsigned string
+ * @property DeviceStatus                 $status                 string
  * @property string                       $browser                string
  * @property string                       $browser_version        string
  * @property string                       $platform               string
@@ -38,8 +43,9 @@ use Ramsey\Uuid\UuidInterface;
  * @property string                       $source                 string
  * @property Carbon                       $created_at             datetime
  * @property Carbon                       $updated_at             datetime
+ * @property Carbon                       $verified_at            datetime
+ * @property Carbon                       $hijacked_at            datetime
  *
- * @property Session                       $session
  */
 class Device extends Model
 {
@@ -77,9 +83,59 @@ class Device extends Model
         );
     }
 
+    public function status(): Attribute
+    {
+        return Attribute::make(
+            get: fn(string $value) => DeviceStatus::from($value),
+            set: fn(DeviceStatus $value) => $value->value
+        );
+    }
+
     public function isCurrent(): bool
     {
         return $this->uuid->toString() === self::getDeviceUuid()?->toString();
+    }
+
+    public function verify(): void
+    {
+        $this->verified_at = now();
+        $this->status = DeviceStatus::Verified;
+
+        Event::dispatch(new DeviceVerifiedEvent($this, $this->user));
+
+        $this->save();
+    }
+
+    public function verified(): bool
+    {
+        return $this->status === DeviceStatus::Verified;
+    }
+
+    public function hijack(?Authenticatable $user = null): void
+    {
+        $user = $user ?? Auth::user();
+
+        $this->hijacked_at = now();
+        $this->status = DeviceStatus::Hijacked;
+
+        foreach ($this->sessions as $session) {
+            $session->block();
+        }
+
+        Event::dispatch(new DeviceHijackedEvent($this, $user));
+
+        $this->save();
+    }
+
+    public function hijacked(): bool
+    {
+        return $this->status === DeviceStatus::Hijacked;
+    }
+
+    public function forget(): bool
+    {
+        $this->sessions()->delete();
+        return $this->delete();
     }
 
     /**

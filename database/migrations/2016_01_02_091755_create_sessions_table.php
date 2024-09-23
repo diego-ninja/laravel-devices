@@ -3,6 +3,7 @@
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\Schema;
+use Ninja\DeviceTracker\Enums\SessionStatus;
 
 return new class extends Migration {
     public function up(): void
@@ -14,7 +15,7 @@ return new class extends Migration {
             $table->uuid('device_uuid');
             $table->string('ip')->nullable();
             $table->json('location')->nullable();
-            $table->string('status')->default('active');
+            $table->string('status')->default(SessionStatus::Active->value);
             $table->integer('blocked_by')->nullable();
             $table->string('login_code')->nullable();
             $table->timestamp('started_at')->nullable();

@@ -9,6 +9,7 @@ final readonly class Device implements JsonSerializable, Stringable
 {
     public function __construct(
         public string $uuid,
+        public string $status,
         public string $browser,
         public string $browserVersion,
         public string $platform,
@@ -23,6 +24,7 @@ final readonly class Device implements JsonSerializable, Stringable
     {
         return new self(
             uuid: $device->uuid->toString(),
+            status: $device->status->value,
             browser: $device->browser,
             browserVersion: $device->browser_version,
             platform: $device->platform,
@@ -38,6 +40,7 @@ final readonly class Device implements JsonSerializable, Stringable
     {
         return [
             "uuid" => $this->uuid,
+            "status" => $this->status,
             "browser" => $this->browser,
             "browserVersion" => $this->browserVersion,
             "platform" => $this->platform,
