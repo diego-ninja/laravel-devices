@@ -1,5 +1,5 @@
 {
-    "name": "diego-ninja/laravel-device-tracker",
+    "name": "diego-ninja/laravel-devices",
     "description": "This package provides session tracking functionalities, multi-session management and user device management features for laravel applications.",
     "license": "MIT",
     "type": "library",
