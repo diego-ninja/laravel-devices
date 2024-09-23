@@ -3,7 +3,6 @@
 namespace Ninja\DeviceTracker\Models;
 
 use Carbon\Carbon;
-use Event;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
@@ -14,6 +13,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cookie;
 use Jenssegers\Agent\Agent;
 use Ninja\DeviceTracker\Enums\DeviceStatus;
+use Ninja\DeviceTracker\Events\DeviceCreatedEvent;
 use Ninja\DeviceTracker\Events\DeviceHijackedEvent;
 use Ninja\DeviceTracker\Events\DeviceVerifiedEvent;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
@@ -103,9 +103,9 @@ class Device extends Model
         $this->verified_at = now();
         $this->status = DeviceStatus::Verified;
 
-        Event::dispatch(new DeviceVerifiedEvent($this, $this->user));
-
-        $this->save();
+        if ($this->save()) {
+            DeviceVerifiedEvent::dispatch($this, $this->user);
+        }
     }
 
     public function verified(): bool
@@ -124,9 +124,9 @@ class Device extends Model
             $session->block();
         }
 
-        Event::dispatch(new DeviceHijackedEvent($this, $user));
-
-        $this->save();
+        if ($this->save()) {
+            DeviceHijackedEvent::dispatch($this, $user);
+        }
     }
 
     public function hijacked(): bool
@@ -138,6 +138,36 @@ class Device extends Model
     {
         $this->sessions()->delete();
         return $this->delete();
+    }
+
+    public static function register(string $source = null, Authenticatable $user = null): ?self
+    {
+        $agent = new Agent(
+            headers: request()->headers->all(),
+            userAgent: $source
+        );
+
+        $device = self::create([
+            'uuid' => Uuid::uuid7(),
+            'user_id' => $user->id,
+            'browser' => $agent->browser(),
+            'browser_version' => $agent->version($agent->browser()),
+            'platform' => $agent->platform(),
+            'platform_version' => $agent->version($agent->platform()),
+            'mobile' => $agent->isMobile(),
+            'device' => $agent->device(),
+            'device_type' => $agent->deviceType(),
+            'robot' => $agent->isRobot(),
+            'ip' => request()->ip(),
+            'source' => $source
+        ]);
+
+        if ($device) {
+            DeviceCreatedEvent::dispatch($device, $user);
+            return $device;
+        }
+
+        return null;
     }
 
     /**

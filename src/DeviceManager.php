@@ -3,6 +3,8 @@
 namespace Ninja\DeviceTracker;
 
 use Auth;
+use Config;
+use Cookie;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Collection;
 use Ninja\DeviceTracker\Models\Device;
@@ -19,21 +21,23 @@ final readonly class DeviceManager
 
     public function isUserDevice(UuidInterface $uuid): bool
     {
-        return Device::isUserDevice($uuid);
-    }
-
-    public function deleteDevice($id): int
-    {
-        return Device::destroy($id);
+        $device = Device::findByUuid($uuid);
+        return $device->user_id === Auth::id();
     }
 
     public function addUserDevice(?string $userAgent = null): bool
     {
-        if (Auth::user()->hasDevice(Device::getDeviceUuid())) {
-            return true;
+        $cookieName = Config::get('devices.device_id_cookie_name');
+        if (Cookie::has($cookieName)) {
+            if (Auth::user()?->hasDevice(Device::getDeviceUuid())) {
+                return true;
+            }
+
+            $device = Device::register($userAgent, Auth::user());
+            return Auth::user()?->addDevice($device);
         }
 
-        return Auth::user()?->addDevice($userAgent);
+        return false;
     }
 
     public function getUserDevices(): Collection

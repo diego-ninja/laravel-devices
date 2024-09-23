@@ -1,6 +1,5 @@
-# Laravel Device Tracker
+# 📱🖥️ Laravel Devices
 This package provides session tracking functionalities, multi session management and user device management features for laravel applications.
-
 
 ## Features
 * Session Management
@@ -8,16 +7,17 @@ This package provides session tracking functionalities, multi session management
 * User Devices
 * Locking sessions
 * Device verifying
-* Device hijacking protection
+* Device hijacking detection (WIP)
 * Security code for session locking
 * Session location tracking
+* Application events
 * Ready to use middleware, routes, controllers and resources
 
 ## Installation
 In composer.json:
 
     "require": {
-        "diego-ninja/laravel-device-tracker": "^1"
+        "diego-ninja/laravel-devices": "^1"
     }
 
 Run:
@@ -46,7 +46,7 @@ Migrate your database:
 
 Add the trait to your user model:
 
-    use Ninja\DeviceTracker\Traits\DeviceTrackerUserTrait;
+    use Ninja\DeviceTracker\Traits\HasDevices;
     
     class User extends Model {
     	use DeviceTrackerUserTrait;

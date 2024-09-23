@@ -4,13 +4,10 @@ namespace Ninja\DeviceTracker\Traits;
 
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Session as SessionFacade;
-use Jenssegers\Agent\Agent;
 use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Models\Session;
 use Ramsey\Uuid\Uuid;
-use Ramsey\Uuid\UuidInterface;
 
 trait HasDevices
 {
@@ -60,43 +57,22 @@ trait HasDevices
             value: SessionFacade::get(Session::DEVICE_SESSION_ID)
         )->first();
     }
-    public function hasDevice(UuidInterface $uuid): bool
+    public function hasDevice(Device|string $device): bool
     {
-        return in_array($uuid, $this->devicesUids());
+        $deviceId = $device instanceof Device ? $device->uuid : Uuid::fromString($device);
+        return in_array($deviceId, $this->devicesUids());
     }
 
-    public function addDevice(?string $userAgent = null): bool
+    public function addDevice(Device $device): bool
     {
-        $cookieName = Config::get('devices.device_id_cookie_name');
-        if (Cookie::has($cookieName)) {
-            if ($this->hasDevice(Uuid::fromString(Cookie::get($cookieName)))) {
-                return true;
-            }
-
-            $agent = new Agent(
-                headers: request()->headers->all(),
-                userAgent: $userAgent ?? request()->userAgent()
-            );
-
-            Device::create([
-                'user_id' => $this->id,
-                'uuid' => Uuid::fromString(Cookie::get($cookieName)),
-                'browser' => $agent->browser(),
-                'browser_version' => $agent->version($agent->browser()),
-                'platform' => $agent->platform(),
-                'platform_version' => $agent->version($agent->platform()),
-                'mobile' => $agent->isMobile(),
-                'device' => $agent->device(),
-                'device_type' => $agent->deviceType(),
-                'robot' => $agent->isRobot(),
-                'source' => $agent->getUserAgent(),
-                'ip' => request()->ip(),
-            ]);
-
+        if ($this->hasDevice($device->uuid)) {
             return true;
         }
 
-        return false;
+        $device->user_id = $this->id;
+        $device->save();
+
+        return true;
     }
 
     public function isInactive(): bool

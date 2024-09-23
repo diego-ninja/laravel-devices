@@ -3,7 +3,6 @@
 namespace Ninja\DeviceTracker\Models;
 
 use Carbon\Carbon;
-use Event;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
@@ -16,6 +15,7 @@ use Illuminate\Support\Facades\Session as SessionFacade;
 use Ninja\DeviceTracker\Contracts\LocationProvider;
 use Ninja\DeviceTracker\DTO\Location;
 use Ninja\DeviceTracker\Enums\SessionStatus;
+use Ninja\DeviceTracker\Events\SessionBlockedEvent;
 use Ninja\DeviceTracker\Events\SessionFinishedEvent;
 use Ninja\DeviceTracker\Events\SessionLockedEvent;
 use Ninja\DeviceTracker\Events\SessionStartedEvent;
@@ -125,7 +125,7 @@ class Session extends Model
         ]);
 
         SessionFacade::put(self::DEVICE_SESSION_ID, $session->uuid);
-        Event::dispatch(new SessionStartedEvent($session, $device->user));
+        SessionStartedEvent::dispatch($session, $device->user);
 
         return $session;
     }
@@ -153,7 +153,7 @@ class Session extends Model
         $this->finished_at = Carbon::now();
 
         if ($this->save()) {
-            Event::dispatch(new SessionFinishedEvent($this, $user ?? Auth::user()));
+            SessionFinishedEvent::dispatch($this, $user ?? Auth::user());
             return true;
         }
 
@@ -199,7 +199,7 @@ class Session extends Model
 
 
         if ($this->save()) {
-            Event::dispatch(new SessionFinishedEvent($this, $user));
+            SessionBlockedEvent::dispatch($this, $user);
             return true;
         }
 
@@ -233,7 +233,7 @@ class Session extends Model
 
 
         if ($this->save()) {
-            Event::dispatch(new SessionLockedEvent($this, $code, $user));
+            SessionLockedEvent::dispatch($this, $code, $user);
             return $code;
         }
 
