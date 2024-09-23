@@ -102,24 +102,21 @@ class Session extends Model
         );
     }
 
-    public function start(): Session
+    public static function start(Device $device): Session
     {
-        $deviceId = Device::getDeviceUuid();
-        $userId = Auth::user()->id;
         $now = Carbon::now();
-
         $ip = request()->ip();
         $ip = '138.100.56.25';
         $location = app(LocationProvider::class)->locate($ip);
 
-        if ($deviceId && !Config::get('devices.allow_device_multi_session')) {
-            $this->endPreviousSessions($deviceId, $userId);
+        if (!Config::get('devices.allow_device_multi_session')) {
+            self::endPreviousSessions($device->uuid, $device->user->id);
         }
 
-        $session = $this->create([
-            'user_id' => $userId,
+        $session = self::create([
+            'user_id' => $device->user->id,
             'uuid' => Uuid::uuid7(),
-            'device_uuid' => $deviceId,
+            'device_uuid' => $device->uuid,
             'ip' => $ip,
             'location' => $location,
             'status' => SessionStatus::Active,
@@ -128,15 +125,15 @@ class Session extends Model
         ]);
 
         SessionFacade::put(self::DEVICE_SESSION_ID, $session->uuid);
-        Event::dispatch(new SessionStartedEvent($this, Auth::user()));
+        Event::dispatch(new SessionStartedEvent($session, $device->user));
 
         return $session;
     }
 
-    private function endPreviousSessions($deviceId, $userId): void
+    private static function endPreviousSessions(Device $device, Authenticatable $user): void
     {
-        $previousSessions = self::where('device_uuid', $deviceId)
-            ->where('user_id', $userId)
+        $previousSessions = self::where('device_uuid', $device->uuid)
+            ->where('user_id', $user->id)
             ->whereNull('finished_at')
             ->get();
 

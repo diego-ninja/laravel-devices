@@ -89,7 +89,8 @@ trait HasDevices
                 'device' => $agent->device(),
                 'device_type' => $agent->deviceType(),
                 'robot' => $agent->isRobot(),
-                'source' => $agent->getUserAgent()
+                'source' => $agent->getUserAgent(),
+                'ip' => request()->ip(),
             ]);
 
             return true;

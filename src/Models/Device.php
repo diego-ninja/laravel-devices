@@ -41,6 +41,7 @@ use Ramsey\Uuid\UuidInterface;
  * @property string                       $device_type            string
  * @property boolean                      $robot                  boolean
  * @property string                       $source                 string
+ * @property string                       $ip                     string
  * @property Carbon                       $created_at             datetime
  * @property Carbon                       $updated_at             datetime
  * @property Carbon                       $verified_at            datetime
@@ -62,7 +63,8 @@ class Device extends Model
         'device',
         'device_type',
         'robot',
-        'source'
+        'ip',
+        'source',
     ];
 
     public function sessions(): HasMany
@@ -153,6 +155,11 @@ class Device extends Model
         }
 
         return $session;
+    }
+
+    public static function current(): ?self
+    {
+        return self::findByUuid(self::getDeviceUuid());
     }
 
     public static function getDeviceUuid(): ?UuidInterface

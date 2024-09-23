@@ -23,6 +23,7 @@ final class DeviceResource extends JsonResource
             "device_type" => $this->resource->device_type,
             "is_current" => $this->resource->isCurrent(),
             "source" => $this->resource->source,
+            "ip_address" => $this->resource->ip,
             "sessions" => SessionResource::collection($this->whenLoaded('sessions')),
         ];
     }

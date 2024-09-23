@@ -6,6 +6,8 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session as SessionFacade;
+use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
+use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Models\Session;
 use Ninja\DeviceTracker\Traits\HasDevices;
 use Ramsey\Uuid\UuidInterface;
@@ -20,9 +22,21 @@ final readonly class SessionManager
         $this->app = $app;
     }
 
+    /**
+     * @throws DeviceNotFoundException
+     */
     public function start(): Session
     {
-        return (new Session())->start();
+        $device = Device::current();
+        if (!$device) {
+            throw new DeviceNotFoundException('Device not found');
+        }
+
+        if ($device->hijacked()) {
+            throw new DeviceNotFoundException('Device is flagged as hijacked.');
+        }
+
+        return Session::start(device: $device);
     }
 
     public function end(?UuidInterface $sessionId = null, bool $forgetSession = false): bool

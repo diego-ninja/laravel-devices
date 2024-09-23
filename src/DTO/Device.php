@@ -17,6 +17,7 @@ final readonly class Device implements JsonSerializable, Stringable
         public string $device,
         public string $deviceType,
         public bool $isCurrent,
+        public string $ip,
         public ?string $userAgent
     ) {
     }
@@ -32,6 +33,7 @@ final readonly class Device implements JsonSerializable, Stringable
             device: $device->device,
             deviceType: $device->device_type,
             isCurrent: $device->isCurrent(),
+            ip: $device->ip,
             userAgent: $device->source
         );
     }
@@ -42,13 +44,14 @@ final readonly class Device implements JsonSerializable, Stringable
             "uuid" => $this->uuid,
             "status" => $this->status,
             "browser" => $this->browser,
-            "browserVersion" => $this->browserVersion,
+            "browser_version" => $this->browserVersion,
             "platform" => $this->platform,
-            "platformVersion" => $this->platformVersion,
+            "platform_version" => $this->platformVersion,
             "device" => $this->device,
-            "deviceType" => $this->deviceType,
-            "isCurrent" => $this->isCurrent,
-            "userAgent" => $this->userAgent
+            "device_type" => $this->deviceType,
+            "is_current" => $this->isCurrent,
+            "ip_address" => $this->ip,
+            "user_agent" => $this->userAgent
         ];
     }
 

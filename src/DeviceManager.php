@@ -29,6 +29,10 @@ final readonly class DeviceManager
 
     public function addUserDevice(?string $userAgent = null): bool
     {
+        if (Auth::user()->hasDevice(Device::getDeviceUuid())) {
+            return true;
+        }
+
         return Auth::user()?->addDevice($userAgent);
     }
 

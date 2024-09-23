@@ -23,6 +23,7 @@ return new class extends Migration
             $table->string('device_type')->nullable();
             $table->tinyInteger('robot')->nullable();
             $table->string('source')->nullable();
+            $table->string('ip');
             $table->timestamps();
             $table->timestamp('verified_at')->nullable();
             $table->timestamp('hijacked_at')->nullable();
