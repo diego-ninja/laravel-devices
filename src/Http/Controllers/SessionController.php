@@ -51,7 +51,7 @@ final class SessionController extends Controller
 
         if ($session) {
             $code = $session->lockByCode();
-            if($code) {
+            if ($code) {
                 return response()->json(
                     [
                         'message'    => 'Session locked successfully',

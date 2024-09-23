@@ -11,7 +11,7 @@ This package provides session tracking functionalities, multi session management
 * Security code for session locking
 * Session location tracking
 * Application events
-* Ready to use middleware, routes, controllers and resources
+* Ready to use middleware, routes, controllers and dtos and resources
 
 ## Installation
 In composer.json:
@@ -49,11 +49,11 @@ Add the trait to your user model:
     use Ninja\DeviceTracker\Traits\HasDevices;
     
     class User extends Model {
-    	use DeviceTrackerUserTrait;
+    	use HasDevices;
     }
 
 
-Add the DeviceCheck middleware in your kernel.php file:
+Add the DeviceCheck middleware in your bootstrap/app.php file:
 
     protected $middleware = [
     		'Ninja\DeviceTracker\Middleware\DeviceCheck',

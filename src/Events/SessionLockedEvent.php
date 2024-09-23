@@ -10,7 +10,9 @@ use Ninja\DeviceTracker\Models\Session;
 
 final class SessionLockedEvent
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable;
+    use InteractsWithSockets;
+    use SerializesModels;
 
     public function __construct(public readonly Session $session, public readonly int $code, public readonly Authenticatable $user)
     {

@@ -140,7 +140,6 @@ class Session extends Model
         foreach ($previousSessions as $session) {
             $session->end(forgetSession: true);
         }
-
     }
 
     public function end(bool $forgetSession = false, ?Authenticatable $user = null): bool
@@ -326,4 +325,3 @@ class Session extends Model
         return $id ? Uuid::fromString($id) : null;
     }
 }
-

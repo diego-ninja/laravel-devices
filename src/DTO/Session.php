@@ -9,14 +9,14 @@ use Stringable;
 final readonly class Session implements JsonSerializable, Stringable
 {
     public function __construct(
-        public string        $uuid,
-        public string        $ip,
-        public Location      $location,
+        public string $uuid,
+        public string $ip,
+        public Location $location,
         public SessionStatus $status,
-        public string        $lastActivityAt,
-        public string        $startedAt,
-        public ?string       $finishedAt,
-        public Device        $device
+        public string $lastActivityAt,
+        public string $startedAt,
+        public ?string $finishedAt,
+        public Device $device
     ) {
     }
 

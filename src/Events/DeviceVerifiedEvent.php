@@ -10,7 +10,9 @@ use Ninja\DeviceTracker\Models\Device;
 
 final class DeviceVerifiedEvent
 {
-    use Dispatchable, InteractsWithSockets, SerializesModels;
+    use Dispatchable;
+    use InteractsWithSockets;
+    use SerializesModels;
 
     public function __construct(public readonly Device $device, public readonly Authenticatable $user)
     {
