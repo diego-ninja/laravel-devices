@@ -43,7 +43,7 @@ use Ramsey\Uuid\UuidInterface;
  * @property string                       $device_type            string
  * @property string                       $device_family          string
  * @property string                       $device_model           string
- * @property string                       $mobile_grade           string
+ * @property string                       $grade                  string
  * @property string                       $source                 string
  * @property string                       $ip                     string
  * @property Carbon                       $created_at             datetime
@@ -69,7 +69,7 @@ class Device extends Model
         'device_type',
         'device_family',
         'device_model',
-        'mobile_grade',
+        'grade',
         'ip',
         'source',
     ];
@@ -171,7 +171,7 @@ class Device extends Model
             'device_type' => $data->device->type,
             'device_family' => $data->device->family,
             'device_model' => $data->device->model,
-            'mobile_grade' => $data->grade,
+            'grade' => $data->grade,
             'ip' => request()->ip(),
             'source' => $data->userAgent,
         ]);

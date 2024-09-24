@@ -37,7 +37,7 @@ final readonly class Device implements JsonSerializable, Stringable
                 "type" => $device->device_type
             ]),
             ip: $device->ip,
-            grade: $device->mobile_grade,
+            grade: $device->grade,
             userAgent: $device->source
         );
     }
@@ -49,7 +49,7 @@ final readonly class Device implements JsonSerializable, Stringable
             platform: Platform::fromArray($data['platform']),
             device: DeviceType::fromArray($data['device']),
             ip: $data['ip_address'],
-            grade: $data['mobile_grade'],
+            grade: $data['grade'],
             userAgent: $data['user_agent']
         );
     }

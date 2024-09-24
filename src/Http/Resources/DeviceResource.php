@@ -26,7 +26,7 @@ final class DeviceResource extends JsonResource
                 "family" => $this->resource->platform_family,
             ],
             "device" => [
-                "family" => $this->resource->device,
+                "family" => $this->resource->device_family,
                 "model" => $this->resource->device_model,
                 "type" => $this->resource->device_type,
             ],
