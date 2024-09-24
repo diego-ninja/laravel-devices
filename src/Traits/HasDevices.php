@@ -5,6 +5,7 @@ namespace Ninja\DeviceTracker\Traits;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Session as SessionFacade;
+use Ninja\DeviceTracker\Enums\SessionStatus;
 use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Models\Session;
 use Ramsey\Uuid\Uuid;
@@ -25,6 +26,18 @@ trait HasDevices
         }
 
         return $query;
+    }
+
+    public function signout(bool $logoutCurrentSession = false): void
+    {
+        if ($logoutCurrentSession) {
+            $this->currentSession()->finish();
+        }
+
+        $this->sessions()->update([
+            'finished_at' => now(),
+            'status' => SessionStatus::Finished
+        ]);
     }
 
     public function recentSession(): Session

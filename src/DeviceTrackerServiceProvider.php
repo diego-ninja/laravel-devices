@@ -16,7 +16,7 @@ class DeviceTrackerServiceProvider extends ServiceProvider
         $this->registerMiddlewares();
 
         if (Config::get('devices.load_routes')) {
-            $this->registerRoutes();
+            $this->loadRoutesFrom(__DIR__ . '/../routes/devices.php');
         }
     }
 
@@ -41,36 +41,6 @@ class DeviceTrackerServiceProvider extends ServiceProvider
         $router = $this->app['router'];
         $router->middleware('session', SessionTracker::class);
     }
-
-    private function registerRoutes(): void
-    {
-        $router = $this->app['router'];
-        $router->group([
-            'as' => 'device::',
-            'prefix' => 'api/devices',
-            'middleware' => Config::get('devices.auth_middleware')
-        ], function () use ($router) {
-            $router->get('/', 'Ninja\DeviceTracker\Http\Controllers\DeviceController@list')->name('list');
-            $router->get('/{id}', 'Ninja\DeviceTracker\Http\Controllers\DeviceController@show')->name('show');
-            $router->get('/{id}/verify', 'Ninja\DeviceTracker\Http\Controllers\DeviceController@verify')->name('verify');
-            $router->get('/{id}/hijack', 'Ninja\DeviceTracker\Http\Controllers\DeviceController@hijack')->name('hijack');
-            $router->get('/{id}/forget', 'Ninja\DeviceTracker\Http\Controllers\DeviceController@forget')->name('forget');
-        });
-
-        $router->group([
-            'as' => 'session::',
-            'prefix' => 'api/sessions',
-            'middleware' => Config::get('devices.auth_middleware')
-        ], function () use ($router) {
-            $router->get('/', 'Ninja\DeviceTracker\Http\Controllers\SessionController@list')->name('list');
-            $router->get('/{id}', 'Ninja\DeviceTracker\Http\Controllers\SessionController@show')->name('show');
-            $router->post('/{id}/end', 'Ninja\DeviceTracker\Http\Controllers\SessionController@end')->name('end');
-            $router->post('/{id}/lock', 'Ninja\DeviceTracker\Http\Controllers\SessionController@lock')->name('lock');
-            $router->post('/{id}/unlock', 'Ninja\DeviceTracker\Http\Controllers\SessionController@unlock')->name('unlock');
-            $router->post('/{id}/refresh', 'Ninja\DeviceTracker\Http\Controllers\SessionController@refresh')->name('refresh');
-        });
-    }
-
 
     private function registerFacades(): void
     {

@@ -106,6 +106,14 @@ final class SessionController extends Controller
         return response()->json(['message' => 'Session not found'], 404);
     }
 
+    public function signout(Request $request): JsonResponse
+    {
+        $user = $request->user(Config::get('devices.auth_guard'));
+        $user->signout(true);
+
+        return response()->json(['message' => 'Signout successful']);
+    }
+
     private function getUserSessions(Request $request)
     {
         return $request

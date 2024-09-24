@@ -8,11 +8,13 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cookie;
 use Jenssegers\Agent\Agent;
 use Ninja\DeviceTracker\Enums\DeviceStatus;
+use Ninja\DeviceTracker\Enums\SessionStatus;
 use Ninja\DeviceTracker\Events\DeviceCreatedEvent;
 use Ninja\DeviceTracker\Events\DeviceHijackedEvent;
 use Ninja\DeviceTracker\Events\DeviceVerifiedEvent;
@@ -93,6 +95,14 @@ class Device extends Model
         );
     }
 
+    public function activeSessions(): Collection
+    {
+        return $this
+            ->sessions()
+            ->where('status', SessionStatus::Active)
+            ->get();
+    }
+
     public function isCurrent(): bool
     {
         return $this->uuid->toString() === self::getDeviceUuid()?->toString();
@@ -136,7 +146,11 @@ class Device extends Model
 
     public function forget(): bool
     {
-        $this->sessions()->delete();
+        $this->sessions()->update([
+            'finished_at' => now(),
+            'status' => SessionStatus::Finished
+        ]);
+
         return $this->delete();
     }
 

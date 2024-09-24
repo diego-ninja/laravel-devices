@@ -7,6 +7,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Config;
 use Ninja\DeviceTracker\Http\Resources\DeviceResource;
 use Ninja\DeviceTracker\Models\Device;
+use Ninja\DeviceTracker\Models\Session;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 
@@ -68,6 +69,15 @@ final class DeviceController extends Controller
         }
 
         return response()->json(['message' => 'Device not found'], 404);
+    }
+
+    public function signout(Request $request, string $id)
+    {
+        $device = $this->getUserDevice($request, $id);
+        $sessions = $device->activeSessions();
+        $sessions->each(fn(Session $session) => $session->end());
+
+        return response()->json(['message' => 'All active sessions for device finished successfully.']);
     }
 
     private function getUserDevice(Request $request, string $id): ?Device
