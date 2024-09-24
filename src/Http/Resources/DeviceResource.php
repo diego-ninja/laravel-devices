@@ -15,12 +15,21 @@ final class DeviceResource extends JsonResource
         return [
             "uuid" => $this->resource->uuid,
             "status" => $this->resource->status,
-            "browser" => $this->resource->browser,
-            "browser_version" => $this->resource->browser_version,
-            "platform" => $this->resource->platform,
-            "platform_version" => $this->resource->platform_version,
-            "device" => $this->resource->device,
-            "device_type" => $this->resource->device_type,
+            "browser" => [
+                "name" => $this->resource->browser,
+                "version" => $this->resource->browser_version,
+                "family" => $this->resource->browser_family,
+            ],
+            "platform" => [
+                "name" => $this->resource->platform,
+                "version" => $this->resource->platform_version,
+                "family" => $this->resource->platform_family,
+            ],
+            "device" => [
+                "family" => $this->resource->device,
+                "model" => $this->resource->device_model,
+                "type" => $this->resource->device_type,
+            ],
             "is_current" => $this->resource->isCurrent(),
             "source" => $this->resource->source,
             "ip_address" => $this->resource->ip,

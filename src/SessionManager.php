@@ -28,10 +28,6 @@ final readonly class SessionManager
     public function start(): Session
     {
         $device = Device::current();
-        if (!$device) {
-            throw new DeviceNotFoundException('Device not found');
-        }
-
         if ($device->hijacked()) {
             throw new DeviceNotFoundException('Device is flagged as hijacked.');
         }

@@ -53,7 +53,7 @@ final class DeviceController extends Controller
 
         if ($device) {
             $device->hijack();
-            return response()->json(['message' => "Device {$id} flagged as hijacked"]);
+            return response()->json(['message' => sprintf('Device %s flagged as hijacked', $device->uuid)]);
         }
 
         return response()->json(['message' => 'Device not found'], 404);

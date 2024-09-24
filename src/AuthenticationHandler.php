@@ -10,7 +10,7 @@ final readonly class AuthenticationHandler
 {
     public function onLogin($event): void
     {
-        DeviceManager::addUserDevice(request()->userAgent());
+        DeviceManager::addUserDevice(request());
 
         if (SessionManager::forgot()) {
             SessionManager::start();

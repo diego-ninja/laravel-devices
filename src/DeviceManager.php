@@ -6,8 +6,11 @@ use Auth;
 use Config;
 use Cookie;
 use Illuminate\Foundation\Application;
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Ninja\DeviceTracker\Contracts\DeviceDetector;
 use Ninja\DeviceTracker\Models\Device;
+use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 
 final readonly class DeviceManager
@@ -19,34 +22,58 @@ final readonly class DeviceManager
         $this->app = $app;
     }
 
-    public function isUserDevice(UuidInterface $uuid): bool
+    public function isUserDevice(UuidInterface $deviceUuid): bool
     {
-        $device = Device::findByUuid($uuid);
-        return $device->user_id === Auth::id();
+        return Auth::user()?->hasDevice($deviceUuid);
     }
 
-    public function addUserDevice(?string $userAgent = null): bool
+    public function addUserDevice(Request $request): bool
     {
-        $cookieName = Config::get('devices.device_id_cookie_name');
-        if (Cookie::has($cookieName)) {
-            if (Auth::user()?->hasDevice(Device::getDeviceUuid())) {
+        $deviceUuid = self::deviceUuid();
+        if ($deviceUuid) {
+            if (Auth::user()?->hasDevice($deviceUuid)) {
                 return true;
             }
 
-            $device = Device::register($userAgent, Auth::user());
+            $device = Device::register(
+                deviceUuid: $deviceUuid,
+                data: app(DeviceDetector::class)->detect($request),
+                user: Auth::user(),
+            );
+
             return Auth::user()?->addDevice($device);
         }
 
         return false;
     }
 
-    public function getUserDevices(): Collection
+    public function userDevices(): Collection
     {
         return Auth::user()?->devices;
     }
 
-    public function getDeviceUuid(): ?UuidInterface
+    public function deviceUuid(): ?UuidInterface
     {
         return Device::getDeviceUuid();
+    }
+
+    public function tracked(): bool
+    {
+        return Cookie::has(Config::get('devices.device_id_cookie_name'));
+    }
+
+    public function track(): UuidInterface
+    {
+        $deviceUuid = Uuid::uuid7();
+        Cookie::queue(
+            Cookie::forever(
+                name: Config::get('devices.device_id_cookie_name'),
+                value: $deviceUuid->toString(),
+                secure: Config::get('session.secure', false),
+                httpOnly: Config::get('session.http_only', true)
+            )
+        );
+
+        return $deviceUuid;
     }
 }

@@ -270,13 +270,6 @@ class Session extends Model
         return false;
     }
 
-    public function finish(): void
-    {
-        $this->status = SessionStatus::Finished;
-        $this->finished_at = Carbon::now();
-        $this->save();
-    }
-
     /**
      * @throws SessionNotFoundException
      */

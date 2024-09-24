@@ -13,7 +13,8 @@
         "php": "^8.2",
         "jenssegers/agent": "^2",
         "laravel/framework": "^10|^11",
-        "nesbot/carbon": "^2|^3"
+        "nesbot/carbon": "^2|^3",
+        "hisorange/browser-detect": "^4.5"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^3.1",

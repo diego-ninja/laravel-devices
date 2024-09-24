@@ -12,7 +12,6 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cookie;
-use Jenssegers\Agent\Agent;
 use Ninja\DeviceTracker\Enums\DeviceStatus;
 use Ninja\DeviceTracker\Enums\SessionStatus;
 use Ninja\DeviceTracker\Events\DeviceCreatedEvent;
@@ -30,18 +29,21 @@ use Ramsey\Uuid\UuidInterface;
  * @mixin \Illuminate\Database\Query\Builder
  * @mixin \Illuminate\Database\Eloquent\Builder
  *
- * @property string                       $id                     unsigned string
+ * @property string                       $id                     unsigned int
  * @property UuidInterface                $uuid                   string
- * @property integer                      $user_id                unsigned string
+ * @property integer                      $user_id                unsigned int
  * @property DeviceStatus                 $status                 string
  * @property string                       $browser                string
  * @property string                       $browser_version        string
+ * @property string                       $browser_family         string
+ * @property string                       $browser_engine         string
  * @property string                       $platform               string
  * @property string                       $platform_version       string
- * @property boolean                      $mobile                 boolean
- * @property string                       $device                 string
+ * @property string                       $platform_family        string
  * @property string                       $device_type            string
- * @property boolean                      $robot                  boolean
+ * @property string                       $device_family          string
+ * @property string                       $device_model           string
+ * @property string                       $mobile_grade           string
  * @property string                       $source                 string
  * @property string                       $ip                     string
  * @property Carbon                       $created_at             datetime
@@ -59,12 +61,15 @@ class Device extends Model
         'user_id',
         'browser',
         'browser_version',
+        'browser_family',
+        'browser_engine',
         'platform',
         'platform_version',
-        'mobile',
-        'device',
+        'platform_family',
         'device_type',
-        'robot',
+        'device_family',
+        'device_model',
+        'mobile_grade',
         'ip',
         'source',
     ];
@@ -146,34 +151,29 @@ class Device extends Model
 
     public function forget(): bool
     {
-        $this->sessions()->update([
-            'finished_at' => now(),
-            'status' => SessionStatus::Finished
-        ]);
-
+        $this->sessions->each(fn(Session $session) => $session->end(forgetSession: true));
         return $this->delete();
     }
 
-    public static function register(string $source = null, Authenticatable $user = null): ?self
-    {
-        $agent = new Agent(
-            headers: request()->headers->all(),
-            userAgent: $source
-        );
-
+    public static function register(
+        UuidInterface $deviceUuid,
+        \Ninja\DeviceTracker\DTO\Device $data,
+        Authenticatable $user = null
+    ): ?self {
         $device = self::create([
-            'uuid' => Uuid::uuid7(),
+            'uuid' => $deviceUuid,
             'user_id' => $user->id,
-            'browser' => $agent->browser(),
-            'browser_version' => $agent->version($agent->browser()),
-            'platform' => $agent->platform(),
-            'platform_version' => $agent->version($agent->platform()),
-            'mobile' => $agent->isMobile(),
-            'device' => $agent->device(),
-            'device_type' => $agent->deviceType(),
-            'robot' => $agent->isRobot(),
+            'browser' => $data->browser->name,
+            'browser_version' => $data->browser->version,
+            'browser_family' => $data->browser->family,
+            'platform' => $data->platform->name,
+            'platform_version' => $data->platform->version,
+            'device_type' => $data->device->type,
+            'device_family' => $data->device->family,
+            'device_model' => $data->device->model,
+            'mobile_grade' => $data->grade,
             'ip' => request()->ip(),
-            'source' => $source
+            'source' => $data->userAgent,
         ]);
 
         if ($device) {
@@ -184,21 +184,21 @@ class Device extends Model
         return null;
     }
 
-    /**
-     * @throws DeviceNotFoundException
-     */
     public static function findByUuid(UuidInterface|string $uuid): ?self
     {
         if (is_string($uuid)) {
             $uuid = Uuid::fromString($uuid);
         }
 
-        $session = self::where('uuid', $uuid->toString())->first();
-        if (!$session) {
-            throw DeviceNotFoundException::withDevice($uuid);
-        }
+        return self::where('uuid', $uuid->toString())->first();
+    }
 
-        return $session;
+    /**
+     * @throws DeviceNotFoundException
+     */
+    public static function findByUuidOrFail(UuidInterface|string $uuid): self
+    {
+        return self::findByUuid($uuid) ?? throw DeviceNotFoundException::withDevice($uuid);
     }
 
     public static function current(): ?self

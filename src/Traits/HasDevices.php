@@ -31,13 +31,10 @@ trait HasDevices
     public function signout(bool $logoutCurrentSession = false): void
     {
         if ($logoutCurrentSession) {
-            $this->currentSession()->finish();
+            $this->currentSession()->end();
         }
 
-        $this->sessions()->update([
-            'finished_at' => now(),
-            'status' => SessionStatus::Finished
-        ]);
+        $this->sessions->each(fn (Session $session) => $session->end());
     }
 
     public function recentSession(): Session

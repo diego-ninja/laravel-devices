@@ -5,6 +5,7 @@ namespace Ninja\DeviceTracker;
 use Config;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
+use Ninja\DeviceTracker\Contracts\DeviceDetector;
 use Ninja\DeviceTracker\Contracts\LocationProvider;
 use Ninja\DeviceTracker\Middleware\SessionTracker;
 
@@ -30,6 +31,10 @@ class DeviceTrackerServiceProvider extends ServiceProvider
 
         $this->app->singleton(LocationProvider::class, function () {
             return new IpinfoLocationProvider();
+        });
+
+        $this->app->singleton(DeviceDetector::class, function () {
+            return new UserAgentDeviceDetector();
         });
 
         $this->registerFacades();
