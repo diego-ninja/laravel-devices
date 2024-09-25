@@ -18,7 +18,9 @@ final readonly class Platform implements JsonSerializable, Stringable
     {
         return new self(
             name: $data['name'],
-            version: Version::fromArray($data['version']),
+            version: is_array($data['version']) ?
+                Version::fromArray($data['version']) :
+                Version::fromString($data['version']),
             family: $data['family']
         );
     }
@@ -27,7 +29,7 @@ final readonly class Platform implements JsonSerializable, Stringable
     {
         return [
             "name" => $this->name,
-            "version" => $this->version,
+            "version" => $this->version->array(),
             "family" => $this->family,
             "label" => (string) $this
         ];

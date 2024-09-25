@@ -19,7 +19,9 @@ final readonly class Browser implements JsonSerializable, Stringable
     {
         return new self(
             name: $data['name'],
-            version: Version::fromArray($data['version']),
+            version: is_array($data['version']) ?
+                Version::fromArray($data['version']) :
+                Version::fromString($data['version']),
             family: $data['family'],
             engine: $data['engine']
         );

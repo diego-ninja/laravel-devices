@@ -9,6 +9,7 @@ use Ninja\DeviceTracker\DTO\Browser;
 use Ninja\DeviceTracker\DTO\Device;
 use Ninja\DeviceTracker\DTO\DeviceType;
 use Ninja\DeviceTracker\DTO\Platform;
+use Ninja\DeviceTracker\DTO\Version;
 
 final class UserAgentDeviceDetector implements Contracts\DeviceDetector
 {
@@ -34,7 +35,11 @@ final class UserAgentDeviceDetector implements Contracts\DeviceDetector
     {
         return new Browser(
             name: $this->parser()->browserName(),
-            version: $this->parser()->browserVersion(),
+            version: Version::fromArray([
+                "major" => $this->parser()->browserVersionMajor(),
+                "minor" => $this->parser()->browserVersionMinor(),
+                "patch" => $this->parser()->browserVersionPatch()
+            ]),
             family: $this->parser()->browserFamily(),
             engine: $this->parser()->browserEngine()
         );
@@ -44,7 +49,11 @@ final class UserAgentDeviceDetector implements Contracts\DeviceDetector
     {
         return new Platform(
             name: $this->parser()->platformName(),
-            version: $this->parser()->platformVersion(),
+            version: Version::fromArray([
+                "major" => $this->parser()->platformVersionMajor(),
+                "minor" => $this->parser()->platformVersionMinor(),
+                "patch" => $this->parser()->platformVersionPatch()
+            ]),
             family: $this->parser()->platformFamily()
         );
     }

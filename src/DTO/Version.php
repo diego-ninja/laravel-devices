@@ -23,6 +23,15 @@ final readonly class Version implements JsonSerializable, Stringable
         );
     }
 
+    public static function fromString(string $version): self
+    {
+        $versionParts = explode(".", $version);
+        return new self(
+            major: $versionParts[0] ?? '0',
+            minor: $versionParts[1] ?? '0',
+            patch: $versionParts[2] ?? '0'
+        );
+    }
     public function array(): array
     {
         return [
@@ -35,7 +44,6 @@ final readonly class Version implements JsonSerializable, Stringable
 
     public function jsonSerialize(): array
     {
-
         return $this->array();
     }
 

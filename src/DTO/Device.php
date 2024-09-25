@@ -21,13 +21,13 @@ final readonly class Device implements JsonSerializable, Stringable
         return new self(
             browser: Browser::fromArray([
                 "name" => $device->browser,
-                "version" => $device->browser_version,
+                "version" => Version::fromString($device->browser_version),
                 "family" => $device->browser_family,
                 "engine" => $device->browser_engine
             ]),
             platform: Platform::fromArray([
                 "name" => $device->platform,
-                "version" => $device->platform_version,
+                "version" => Version::fromString($device->platform_version),
                 "family" => $device->platform_family
             ]),
             device: DeviceType::fromArray([

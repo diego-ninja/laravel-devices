@@ -171,6 +171,7 @@ class Device extends Model
             'browser' => $data->browser->name,
             'browser_version' => $data->browser->version,
             'browser_family' => $data->browser->family,
+            'browser_engine' => $data->browser->engine,
             'platform' => $data->platform->name,
             'platform_version' => $data->platform->version,
             'platform_family' => $data->platform->family,
