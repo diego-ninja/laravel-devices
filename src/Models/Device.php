@@ -155,6 +155,11 @@ class Device extends Model
         return $this->delete();
     }
 
+    public function label(): string
+    {
+        return $this->device_family . ' ' . $this->device_model;
+    }
+
     public static function register(
         UuidInterface $deviceUuid,
         \Ninja\DeviceTracker\DTO\Device $data,
@@ -168,6 +173,7 @@ class Device extends Model
             'browser_family' => $data->browser->family,
             'platform' => $data->platform->name,
             'platform_version' => $data->platform->version,
+            'platform_family' => $data->platform->family,
             'device_type' => $data->device->type,
             'device_family' => $data->device->family,
             'device_model' => $data->device->model,

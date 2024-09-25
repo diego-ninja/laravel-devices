@@ -44,7 +44,8 @@ final readonly class Session implements JsonSerializable, Stringable
             "lastActivityAt" => $this->lastActivityAt,
             "startedAt" => $this->startedAt,
             "finishedAt" => $this->finishedAt,
-            "device" => $this->device->array()
+            "device" => $this->device->array(),
+            "label" => (string) $this
         ];
     }
 
@@ -55,7 +56,7 @@ final readonly class Session implements JsonSerializable, Stringable
 
     public function __toString(): string
     {
-        return $this->uuid;
+        return sprintf("%s %s %s", $this->ip, $this->location, $this->lastActivityAt);
     }
 
     public function jsonSerialize(): array

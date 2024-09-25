@@ -46,7 +46,8 @@ final readonly class Location implements JsonSerializable, Stringable
             "postal" => $this->postal,
             "latitude" => $this->latitude,
             "longitude" => $this->longitude,
-            "timezone" => $this->timezone
+            "timezone" => $this->timezone,
+            "label" => (string) $this
         ];
     }
 

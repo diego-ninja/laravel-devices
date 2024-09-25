@@ -3,7 +3,6 @@
 namespace Ninja\DeviceTracker\DTO;
 
 use JsonSerializable;
-use phpDocumentor\Reflection\Types\Boolean;
 use Stringable;
 
 final readonly class Device implements JsonSerializable, Stringable
@@ -62,13 +61,14 @@ final readonly class Device implements JsonSerializable, Stringable
             "device" => $this->device->array(),
             "ip_address" => $this->ip,
             "grade" => $this->grade,
-            "user_agent" => $this->userAgent
+            "user_agent" => $this->userAgent,
+            "label" => (string) $this
         ];
     }
 
     public function __toString(): string
     {
-        return sprintf("%s %s - %s %s", $this->platform->name, $this->platform->version, $this->browser->name, $this->browser->version);
+        return sprintf("%s at %s on %s", $this->browser, $this->device, $this->platform);
     }
 
     public function jsonSerialize(): array

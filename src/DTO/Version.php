@@ -5,42 +5,43 @@ namespace Ninja\DeviceTracker\DTO;
 use JsonSerializable;
 use Stringable;
 
-final readonly class Platform implements JsonSerializable, Stringable
+final readonly class Version implements JsonSerializable, Stringable
 {
     public function __construct(
-        public string $name,
-        public Version $version,
-        public string $family
+        public string $major,
+        public string $minor,
+        public string $patch,
     ) {
     }
 
     public static function fromArray(array $data): self
     {
         return new self(
-            name: $data['name'],
-            version: Version::fromArray($data['version']),
-            family: $data['family']
+            major: $data['major'],
+            minor: $data['minor'],
+            patch: $data['patch']
         );
     }
 
     public function array(): array
     {
         return [
-            "name" => $this->name,
-            "version" => $this->version,
-            "family" => $this->family,
+            "major" => $this->major,
+            "minor" => $this->minor,
+            "patch" => $this->patch,
             "label" => (string) $this
         ];
     }
 
     public function jsonSerialize(): array
     {
+
         return $this->array();
     }
 
     public function __toString(): string
     {
-        return sprintf("%s %s", $this->name, $this->version);
+        return sprintf("%s.%s.%s", $this->major, $this->minor, $this->patch);
     }
 
     public function json(): string

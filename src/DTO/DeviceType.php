@@ -28,7 +28,8 @@ final readonly class DeviceType implements JsonSerializable, Stringable
         return [
             "family" => $this->family,
             "model" => $this->model,
-            "type" => $this->type
+            "type" => $this->type,
+            "label" => (string) $this
         ];
     }
 
@@ -39,7 +40,7 @@ final readonly class DeviceType implements JsonSerializable, Stringable
 
     public function __toString(): string
     {
-        return sprintf("%s %s", $this->family, $this->model);
+        return sprintf("%s %s (%s)", $this->family, $this->model, $this->type);
     }
 
     public function json(): string

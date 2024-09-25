@@ -9,7 +9,7 @@ final readonly class Browser implements JsonSerializable, Stringable
 {
     public function __construct(
         public string $name,
-        public string $version,
+        public Version $version,
         public string $family,
         public string $engine
     ) {
@@ -19,7 +19,7 @@ final readonly class Browser implements JsonSerializable, Stringable
     {
         return new self(
             name: $data['name'],
-            version: $data['version'],
+            version: Version::fromArray($data['version']),
             family: $data['family'],
             engine: $data['engine']
         );
@@ -29,9 +29,10 @@ final readonly class Browser implements JsonSerializable, Stringable
     {
         return [
             "name" => $this->name,
-            "version" => $this->version,
+            "version" => $this->version->array(),
             "family" => $this->family,
-            "engine" => $this->engine
+            "engine" => $this->engine,
+            "label" => (string) $this
         ];
     }
 

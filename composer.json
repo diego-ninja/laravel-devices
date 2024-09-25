@@ -11,17 +11,17 @@
     ],
     "require": {
         "php": "^8.2",
-        "jenssegers/agent": "^2",
-        "laravel/framework": "^10|^11",
-        "nesbot/carbon": "^2|^3",
-        "hisorange/browser-detect": "^4.5"
+        "hisorange/browser-detect": "^4.5",
+        "laravel/framework": "^10 || ^11",
+        "nesbot/carbon": "^2 || ^3",
+        "ramsey/uuid": "^4.7"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^3.1",
         "friendsofphp/php-cs-fixer": "^3.21",
         "larastan/larastan": "^2",
         "mockery/mockery": "^1.4.4",
-        "pestphp/pest": "^2|^3",
+        "pestphp/pest": "^2 || ^3",
         "squizlabs/php_codesniffer": "^3.7"
     },
     "minimum-stability": "stable",

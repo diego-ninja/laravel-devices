@@ -3,6 +3,8 @@
 namespace Ninja\DeviceTracker\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
+use Ninja\DeviceTracker\DTO\Browser;
+use Ninja\DeviceTracker\DTO\Platform;
 use Ninja\DeviceTracker\Models\Device;
 
 /**
@@ -15,25 +17,41 @@ final class DeviceResource extends JsonResource
         return [
             "uuid" => $this->resource->uuid,
             "status" => $this->resource->status,
-            "browser" => [
-                "name" => $this->resource->browser,
-                "version" => $this->resource->browser_version,
-                "family" => $this->resource->browser_family,
-            ],
-            "platform" => [
-                "name" => $this->resource->platform,
-                "version" => $this->resource->platform_version,
-                "family" => $this->resource->platform_family,
-            ],
-            "device" => [
-                "family" => $this->resource->device_family,
-                "model" => $this->resource->device_model,
-                "type" => $this->resource->device_type,
-            ],
+            "browser" => $this->browser($this->resource),
+            "platform" => $this->platform($this->resource),
+            "device" => $this->device($this->resource),
             "is_current" => $this->resource->isCurrent(),
             "source" => $this->resource->source,
             "ip_address" => $this->resource->ip,
+            'grade' => $this->when($this->resource->grade !== null, $this->resource->grade),
             "sessions" => SessionResource::collection($this->whenLoaded('sessions')),
+        ];
+    }
+
+    private function browser(Device $device): array
+    {
+        return Browser::fromArray([
+            "name" => $device->browser,
+            "version" => $device->browser_version,
+            "family" => $device->browser_family,
+        ])->array();
+    }
+
+    private function platform(Device $device): array
+    {
+        return Platform::fromArray([
+            "name" => $device->platform,
+            "version" => $device->platform_version,
+            "family" => $device->platform_family,
+        ])->array();
+    }
+
+    private function device(Device $device): array
+    {
+        return [
+            "family" => $device->device_family,
+            "model" => $device->device_model,
+            "type" => $device->device_type,
         ];
     }
 }
