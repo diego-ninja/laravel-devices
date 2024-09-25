@@ -19,6 +19,8 @@ use Ninja\DeviceTracker\Events\SessionBlockedEvent;
 use Ninja\DeviceTracker\Events\SessionFinishedEvent;
 use Ninja\DeviceTracker\Events\SessionLockedEvent;
 use Ninja\DeviceTracker\Events\SessionStartedEvent;
+use Ninja\DeviceTracker\Events\SessionUnblockedEvent;
+use Ninja\DeviceTracker\Events\SessionUnlockedEvent;
 use Ninja\DeviceTracker\Exception\SessionNotFoundException;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
@@ -106,7 +108,7 @@ class Session extends Model
     {
         $now = Carbon::now();
         $ip = request()->ip();
-        $ip = '138.100.56.25';
+
         $location = app(LocationProvider::class)->locate($ip);
 
         if (!Config::get('devices.allow_device_multi_session')) {
@@ -162,6 +164,7 @@ class Session extends Model
     public function renew(): bool
     {
         $this->last_activity_at = Carbon::now();
+        $this->status = SessionStatus::Active;
         $this->finished_at = null;
 
         return $this->save();
@@ -204,6 +207,26 @@ class Session extends Model
 
         if ($this->save()) {
             SessionBlockedEvent::dispatch($this, $user);
+            return true;
+        }
+
+        return false;
+    }
+
+    public function unblock(?Authenticatable $user = null): bool
+    {
+        $user = $user ?? Auth::user();
+
+        if ($this->status !== SessionStatus::Blocked) {
+            return false;
+        }
+
+        $this->status = SessionStatus::Active;
+        $this->blocked_by = null;
+
+
+        if ($this->save()) {
+            SessionUnblockedEvent::dispatch($this, $user);
             return true;
         }
 
@@ -273,8 +296,14 @@ class Session extends Model
         if (strtoupper(sha1($code)) === $this->login_code) {
             $this->status = SessionStatus::Active;
             $this->login_code = null;
-            $this->save();
-            return true;
+
+            if ($this->save()) {
+                SessionUnlockedEvent::dispatch($this, Auth::user());
+                return true;
+            } else {
+                Log::error(sprintf('Unable to unlock session %s with code %s', $this->uuid, $code));
+                return false;
+            }
         }
 
         return false;

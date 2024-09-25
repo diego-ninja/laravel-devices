@@ -45,6 +45,43 @@ final class SessionController extends Controller
         return response()->json(['message' => 'Session not found'], 404);
     }
 
+    public function block(Request $request, string $id): JsonResponse
+    {
+        $session = $this->findUserSession($request, $id);
+
+        if ($session) {
+            $session->block();
+            return response()->json(['message' => 'Session blocked successfully']);
+        }
+
+        return response()->json(['message' => 'Session not found'], 404);
+    }
+
+    public function unblock(Request $request, string $id): JsonResponse
+    {
+        $session = $this->findUserSession($request, $id);
+
+        if ($session) {
+            $session->unblock();
+            return response()->json(['message' => 'Session unblocked successfully']);
+        }
+
+        return response()->json(['message' => 'Session not found'], 404);
+    }
+
+    public function renew(Request $request, string $id): JsonResponse
+    {
+        $session = $this->findUserSession($request, $id);
+
+        if ($session) {
+            $session->renew();
+            return response()->json(['message' => 'Session renewed successfully']);
+        }
+
+        return response()->json(['message' => 'Session not found'], 404);
+    }
+
+
     public function lock(Request $request, string $id): JsonResponse
     {
         $session = $this->findUserSession($request, $id);

@@ -8,6 +8,8 @@ use Ninja\DeviceTracker\Models\Session;
 
 /**
  * @property Session $resource
+ *
+ * @mixin Session
  */
 final class SessionResource extends JsonResource
 {

@@ -2,21 +2,26 @@
 
 namespace Ninja\DeviceTracker\Http\Resources;
 
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Ninja\DeviceTracker\DTO\Browser;
 use Ninja\DeviceTracker\DTO\Platform;
+use Ninja\DeviceTracker\Enums\DeviceStatus;
 use Ninja\DeviceTracker\Models\Device;
 
 /**
  * @property Device $resource
+ *
+ * @mixin Device
  */
 final class DeviceResource extends JsonResource
 {
-    public function toArray($request): array
+    public function toArray(Request $request): array
     {
         return [
             "uuid" => $this->resource->uuid,
             "status" => $this->resource->status,
+            "verified_at" => $this->when($this->resource->status === DeviceStatus::Verified, $this->resource->verified_at),
             "browser" => $this->browser($this->resource),
             "platform" => $this->platform($this->resource),
             "device" => $this->device($this->resource),
