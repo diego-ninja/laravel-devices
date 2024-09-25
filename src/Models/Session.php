@@ -186,7 +186,12 @@ class Session extends Model
 
     public function isInactive(): bool
     {
-        return abs(strtotime($this->last_activity_at) - strtotime(now())) > Config::get('devices.inactivity_seconds', 1200);
+        $seconds = Config::get('devices.inactivity_seconds', 1200);
+        if ($seconds === 0) {
+            return false;
+        }
+
+        return abs(strtotime($this->last_activity_at) - strtotime(now())) > $seconds;
     }
 
     public function block(?Authenticatable $user = null): bool
@@ -205,14 +210,19 @@ class Session extends Model
         return false;
     }
 
-    public function isBlocked(): bool
+    public function blocked(): bool
     {
         return $this->status === SessionStatus::Blocked;
     }
 
-    public function isLocked(): bool
+    public function locked(): bool
     {
         return $this->status === SessionStatus::Locked;
+    }
+
+    public function finished(): bool
+    {
+        return $this->status === SessionStatus::Finished;
     }
 
     /**

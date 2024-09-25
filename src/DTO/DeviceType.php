@@ -47,6 +47,4 @@ final readonly class DeviceType implements JsonSerializable, Stringable
     {
         return json_encode($this->array());
     }
-
-
 }

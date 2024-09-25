@@ -34,6 +34,7 @@ final class DeviceResource extends JsonResource
             "name" => $device->browser,
             "version" => $device->browser_version,
             "family" => $device->browser_family,
+            "engine" => $device->browser_engine
         ])->array();
     }
 

@@ -1,15 +1,15 @@
 <?php
 
-namespace Ninja\DeviceTracker\Middleware;
+namespace Ninja\DeviceTracker\Http\Middleware;
 
 use Auth;
 use Closure;
+use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Log;
 use Ninja\DeviceTracker\Models\Session;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 
@@ -24,11 +24,15 @@ final readonly class SessionTracker
         $session = Session::current();
 
         if ($session) {
-            if ($session->isLocked()) {
+            if ($session->locked()) {
                 return $this->manageLock($request);
             }
 
-            if ($session->isBlocked()) {
+            if ($session->blocked()) {
+                return $this->manageLogout($request);
+            }
+
+            if ($session->finished()) {
                 return $this->manageLogout($request);
             }
 

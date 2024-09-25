@@ -1,19 +1,19 @@
 # 📱🖥️ Laravel Devices
 This package provides session tracking functionalities, multi session management and user device management features for laravel applications.
 
-## Features
+
+## ❤️ Features
+* Authenticated User Devices
 * Session Management
-* Multiple session for users
-* User Devices
-* Locking sessions
+  * Session blocking
+  * Security code for session locking
+  * Session location tracking
 * Device verifying
 * Device hijacking detection (WIP)
-* Security code for session locking
-* Session location tracking
 * Application events
 * Ready to use middleware, routes, controllers and dtos and resources
 
-## Installation
+## 📦 Installation
 In composer.json:
 
     "require": {
@@ -36,7 +36,7 @@ Add the service provider to `bootstrap/providers.php` under `providers`:
     ]
 
 	
-Update config file to reference your login and logout route names:
+Update config file to fit your needs:
 
 	config/devices.php
 
@@ -53,16 +53,17 @@ Add the trait to your user model:
     }
 
 
-Add the DeviceCheck middleware in your bootstrap/app.php file:
+Add the DeviceTrack middleware in your bootstrap/app.php file. This middleware will track the user device, it will check the presence of a cookie with a device uuid and will create a new device uuid if it doesn't exist.
 
     protected $middleware = [
-    		'Ninja\DeviceTracker\Middleware\DeviceCheck',
+    		'Ninja\DeviceTracker\Http\Middleware\DeviceTrack',
     	];
 
 
-In Your routes.php file you should add 'session' middleware for routes which you want to keep track of:
+In your routes.php file you should add 'session-tracker' middleware for routes which you want to keep track of. This
+middleware will check if the user has a valid session and device. If not, it will redirect to the login page or return a 401 json response depending on your configuration.
 
-    Route::group(['middleware'=>'session'], function(){
+    Route::group(['middleware'=>'session-tracker'], function(){
         Route::get('your-route', 'YourController@yourAction');
     });
 
@@ -71,7 +72,7 @@ In Your routes.php file you should add 'session' middleware for routes which you
 WIP
     
 
-## Author
+## 🥷🏻 Author
 
 - [Diego Rin Martín](https://github.com/diego-ninja)
 

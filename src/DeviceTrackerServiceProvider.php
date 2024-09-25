@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Ninja\DeviceTracker\Contracts\DeviceDetector;
 use Ninja\DeviceTracker\Contracts\LocationProvider;
-use Ninja\DeviceTracker\Middleware\SessionTracker;
+use Ninja\DeviceTracker\Http\Middleware\SessionTracker;
 
 class DeviceTrackerServiceProvider extends ServiceProvider
 {
@@ -44,7 +44,7 @@ class DeviceTrackerServiceProvider extends ServiceProvider
     private function registerMiddlewares(): void
     {
         $router = $this->app['router'];
-        $router->middleware('session', SessionTracker::class);
+        $router->middleware('session-tracker', SessionTracker::class);
     }
 
     private function registerFacades(): void

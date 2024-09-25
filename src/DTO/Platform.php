@@ -42,7 +42,7 @@ final readonly class Platform implements JsonSerializable, Stringable
 
     public function __toString(): string
     {
-        return sprintf("%s %s", $this->name, $this->version);
+        return sprintf("%s", $this->name);
     }
 
     public function json(): string

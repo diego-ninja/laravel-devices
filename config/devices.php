@@ -61,10 +61,10 @@ return [
     |--------------------------------------------------------------------------
     |
     | This option allows you to easily specify the period of time in seconds that
-    | the session is considered inactive or idle.
+    | the session is considered inactive or idle. Set to zero to disable this feature.
     |
     */
-    'inactivity_seconds' => env('SESSION_LIFETIME', 1200),
+    'inactivity_seconds' => 0,
 
     /*
     |--------------------------------------------------------------------------
@@ -129,7 +129,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | This option allows you to easily specify the period of time in seconds that
-    | the security code of the sessions is considered as expired.
+    | the security code of the sessions is considered as expired. Set to zero to disable this feature.
     |
     */
     'security_code_lifetime' => 1200,

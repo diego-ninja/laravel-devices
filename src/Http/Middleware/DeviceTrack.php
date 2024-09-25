@@ -1,6 +1,6 @@
 <?php
 
-namespace Ninja\DeviceTracker\Middleware;
+namespace Ninja\DeviceTracker\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
