@@ -15,7 +15,9 @@
         "laravel/framework": "^10 || ^11",
         "nesbot/carbon": "^2 || ^3",
         "ramsey/uuid": "^4.7",
-        "matomo/device-detector": "^6.4"
+        "matomo/device-detector": "^6.4",
+        "pragmarx/google2fa": "^8.0",
+        "bacon/bacon-qr-code": "^3.0"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^3.1",

@@ -112,16 +112,36 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Login Code route name
+    | Google 2FA Window
     |--------------------------------------------------------------------------
     |
-    | This option allows you to easily specify the route name for login code page.
-    | Session Tracker uses this config item to redirect the request to login page.
-    | Note: Your login code route must have a name.
+    | This option allows you to easily specify the window of time in seconds that
+    | the security code of the Google 2FA is considered valid. Value: window * 30 seconds
     |
     */
-    'security_code_route_name' => 'app.securityCode',
+    'google_2fa_window' => 1, // 30 seconds
 
+    /*
+    |--------------------------------------------------------------------------
+    | Google 2FA Email
+    |--------------------------------------------------------------------------
+    |
+    | This option allows you to easily specify the email that will be used when
+    | generating QR image for Google 2FA.
+    |
+    */
+    'google_2fa_email' => 'yosoy@diego.ninja', // 30 seconds
+
+    /*
+    |--------------------------------------------------------------------------
+    | Google 2FA Company
+    |--------------------------------------------------------------------------
+    |
+    | This option allows you to easily specify the company name that will be used when
+    | generating QR image for Google 2FA.
+    |
+    */
+    'google_2fa_company' => 'diego.ninja', // 30 seconds
 
     /*
     |--------------------------------------------------------------------------
@@ -145,6 +165,18 @@ return [
     |
     */
     'authenticatable_class' => 'App\Models\User',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Authenticatable reference table
+    |--------------------------------------------------------------------------
+    | The class name of the authenticatable model.
+    | This option specifies the model class that should be used for authentication.
+    | Typically, this is the User model, but it can be customized to any model that
+    | implements the Authenticatable contract.
+    |
+    */
+    'authenticatable_table' => 'users',
 
     /*
     |--------------------------------------------------------------------------

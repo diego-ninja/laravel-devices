@@ -3,6 +3,10 @@
 namespace Ninja\DeviceTracker\Models;
 
 use App;
+use BaconQrCode\Renderer\Image\ImagickImageBackEnd;
+use BaconQrCode\Renderer\ImageRenderer;
+use BaconQrCode\Renderer\RendererStyle\RendererStyle;
+use BaconQrCode\Writer;
 use Carbon\Carbon;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -13,6 +17,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session as SessionFacade;
+use Ninja\DeviceTracker\Contracts\CodeGenerator;
 use Ninja\DeviceTracker\Contracts\LocationProvider;
 use Ninja\DeviceTracker\DTO\Location;
 use Ninja\DeviceTracker\Enums\SessionStatus;
@@ -23,6 +28,13 @@ use Ninja\DeviceTracker\Events\SessionStartedEvent;
 use Ninja\DeviceTracker\Events\SessionUnblockedEvent;
 use Ninja\DeviceTracker\Events\SessionUnlockedEvent;
 use Ninja\DeviceTracker\Exception\SessionNotFoundException;
+use Ninja\DeviceTracker\Traits\Has2FA;
+use PragmaRX\Google2FA\Exceptions\IncompatibleWithGoogleAuthenticatorException;
+use PragmaRX\Google2FA\Exceptions\InvalidAlgorithmException;
+use PragmaRX\Google2FA\Exceptions\InvalidCharactersException;
+use PragmaRX\Google2FA\Exceptions\SecretKeyTooShortException;
+use PragmaRX\Google2FA\Google2FA;
+use PragmaRX\Google2FA\Support\Constants;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 use Random\RandomException;
@@ -44,9 +56,12 @@ use Random\RandomException;
  * @property SessionStatus                $status                 string
  * @property boolean                      $block                  boolean
  * @property integer                      $blocked_by             unsigned int
- * @property string                       $login_code             string
+ * @property string                       $auth_secret            string
+ * @property integer                      $auth_timestamp         unsigned int
  * @property Carbon                       $started_at             datetime
  * @property Carbon                       $finished_at            datetime
+ * @property Carbon                       $blocked_at             datetime
+ * @property Carbon                       $unlocked_at            datetime
  * @property Carbon                       $last_activity_at       datetime
  *
  * @property Session                       $session
@@ -257,53 +272,55 @@ class Session extends Model
     }
 
     /**
-     * @throws RandomException
+     * @throws InvalidAlgorithmException
      */
-    public function lockByCode(?Authenticatable $user = null): ?int
+    public function lockWith2FA(?Authenticatable $user = null): bool
     {
-        if ($this->status !== SessionStatus::Active) {
-            return null;
-        }
-
         $user = $user ?? Auth::user();
 
-        $code = random_int(100000, 999999);
-        $this->login_code = strtoupper(sha1($code));
-        $this->status = SessionStatus::Locked;
-
-
-        if ($this->save()) {
-            SessionLockedEvent::dispatch($this, $code, $user);
-            return $code;
-        }
-
-        return null;
-    }
-
-    /**
-     * @throws RandomException
-     */
-    public function refreshCode(): ?int
-    {
-        // TODO: implement code generator class
-        $code = random_int(100000, 999999);
-        $this->login_code = strtoupper(sha1($code));
-        $this->started_at = Carbon::now();
-
-        $this->save();
-
-        return $code;
-    }
-
-    public function unlockByCode(int $code): bool
-    {
-        if (time() - strtotime($this->started_at) > Config::get('devices.security_code_lifetime', 1200)) {
+        if (in_array(Has2FA::class, class_uses($user)) === false) {
             return false;
         }
 
-        if (strtoupper(sha1($code)) === $this->login_code) {
+        if ($this->status !== SessionStatus::Active) {
+            return false;
+        }
+
+        $user->enable2FA(app(CodeGenerator::class)->generate());
+
+        $this->status = SessionStatus::Locked;
+
+        if ($this->save()) {
+            SessionLockedEvent::dispatch($this, $this->secret, $user);
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * @throws IncompatibleWithGoogleAuthenticatorException
+     * @throws InvalidCharactersException
+     * @throws SecretKeyTooShortException
+     */
+    public function unlock(int $code): bool
+    {
+
+        if ($this->status !== SessionStatus::Locked) {
+            return false;
+        }
+
+        $valid = app(Google2FA::class)
+            ->verifyKeyNewer(
+                secret: $this->user()->get2FASecret(),
+                key: $code,
+                oldTimestamp: $this->unlocked_at->timestamp,
+                window: 1
+            );
+
+        if ($valid !== false) {
+            $this->auth_timestamp = $valid;
             $this->status = SessionStatus::Active;
-            $this->login_code = null;
 
             if ($this->save()) {
                 SessionUnlockedEvent::dispatch($this, Auth::user());

@@ -8,6 +8,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Config;
 use Ninja\DeviceTracker\Http\Resources\SessionResource;
 use Ninja\DeviceTracker\Models\Session;
+use PragmaRX\Google2FA\Exceptions\InvalidAlgorithmException;
 use Ramsey\Uuid\Uuid;
 use Random\RandomException;
 
@@ -82,21 +83,26 @@ final class SessionController extends Controller
     }
 
 
+    /**
+     * @throws InvalidAlgorithmException
+     */
     public function lock(Request $request, string $id): JsonResponse
     {
         $session = $this->findUserSession($request, $id);
 
         if ($session) {
-            $code = $session->lockByCode();
-            if ($code) {
+            if (!$session->locked() && $session->lockWith2FA()) {
                 return response()->json(
                     [
                         'message'    => 'Session locked successfully',
-                        'login_code' => $code
+                        '2fa_qr_image' => $session->user()->get2FAQRCode()
                     ]
                 );
             } else {
-                return response()->json(['message' => 'Session already locked'], 400);
+                return response()->json([
+                    'message' => 'Session already locked',
+                    '2fa_qr_image' => $session->get2FAQRCode()
+                ], 400);
             }
         }
 
@@ -106,10 +112,10 @@ final class SessionController extends Controller
     public function unlock(Request $request, string $id): JsonResponse
     {
         $session = $this->findUserSession($request, $id);
-        $code = $request->input('login_code');
+        $code = $request->input('code');
 
         if ($session) {
-            if ($session->unlockByCode($code)) {
+            if ($session->unlock($code)) {
                 return response()->json(['message' => 'Session unlocked successfully']);
             } else {
                 return response()->json(['message' => 'Invalid code'], 401);

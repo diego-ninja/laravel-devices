@@ -10,6 +10,9 @@ use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Models\Session;
 use Ninja\DeviceTracker\Traits\HasDevices;
+use PragmaRX\Google2FA\Exceptions\IncompatibleWithGoogleAuthenticatorException;
+use PragmaRX\Google2FA\Exceptions\InvalidCharactersException;
+use PragmaRX\Google2FA\Exceptions\SecretKeyTooShortException;
 use Ramsey\Uuid\UuidInterface;
 use Random\RandomException;
 
@@ -97,13 +100,18 @@ final readonly class SessionManager
     public function lock(UuidInterface $sessionId): ?int
     {
         $session = Session::get($sessionId);
-        return $session->lockByCode();
+        return $session->lockWith2FA();
     }
 
+    /**
+     * @throws IncompatibleWithGoogleAuthenticatorException
+     * @throws SecretKeyTooShortException
+     * @throws InvalidCharactersException
+     */
     public function unlock(UuidInterface $sessionId, int $code): bool
     {
         $session = Session::get($sessionId);
-        return $session->unlockByCode($code);
+        return $session->unlock($code);
     }
 
     public function forgot(): bool

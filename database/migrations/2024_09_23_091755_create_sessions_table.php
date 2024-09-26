@@ -16,11 +16,14 @@ return new class extends Migration {
             $table->string('ip')->nullable();
             $table->json('location')->nullable();
             $table->string('status')->default(SessionStatus::Active->value);
-            $table->integer('blocked_by')->nullable();
-            $table->string('login_code')->nullable();
+            $table->string('auth_secret')->nullable();
+            $table->integer('auth_timestamp')->nullable();
             $table->timestamp('started_at')->nullable();
             $table->timestamp('finished_at')->nullable();
             $table->timestamp('last_activity_at')->nullable();
+            $table->timestamp('blocked_at')->nullable();
+            $table->timestamp('unlocked_at')->nullable();
+            $table->integer('blocked_by')->nullable();
         });
     }
 

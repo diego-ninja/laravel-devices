@@ -5,9 +5,13 @@ namespace Ninja\DeviceTracker;
 use Config;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
+use Ninja\DeviceTracker\Contracts\CodeGenerator;
 use Ninja\DeviceTracker\Contracts\DeviceDetector;
 use Ninja\DeviceTracker\Contracts\LocationProvider;
+use Ninja\DeviceTracker\Generators\Google2FACodeGenerator;
 use Ninja\DeviceTracker\Http\Middleware\SessionTracker;
+use PragmaRX\Google2FA\Google2FA;
+use PragmaRX\Google2FA\Support\Constants;
 
 class DeviceTrackerServiceProvider extends ServiceProvider
 {
@@ -35,6 +39,18 @@ class DeviceTrackerServiceProvider extends ServiceProvider
 
         $this->app->singleton(DeviceDetector::class, function () {
             return new UserAgentDeviceDetector();
+        });
+
+        $this->app->singleton(CodeGenerator::class, function () {
+            return new Google2FACodeGenerator(app(Google2FA::class));
+        });
+
+        $this->app->singleton(Google2FA::class, function () {
+            $google2fa = new Google2FA();
+            $google2fa->setAlgorithm(Constants::SHA512);
+            $google2fa->setWindow(Config::get('devices.google_2fa_window', 1));
+
+            return $google2fa;
         });
 
         $this->registerFacades();
