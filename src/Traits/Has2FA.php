@@ -7,9 +7,7 @@ use BaconQrCode\Renderer\ImageRenderer;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
 use BaconQrCode\Writer;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Config;
 use PragmaRX\Google2FA\Google2FA;
-use PragmaRX\Google2FA\Support\Constants;
 
 /**
  * Class Session
@@ -38,7 +36,7 @@ trait Has2FA
         return $this->two_factor_secret;
     }
 
-    public function is2FAConfirmed(): ?Carbon
+    public function last2FASuccess(): ?Carbon
     {
         return $this->two_factor_confirmed_at;
     }
@@ -54,9 +52,12 @@ trait Has2FA
         $this->two_factor_confirmed_at = null;
     }
 
-    public function confirm2FA(): void
+    public function confirm2FA(): Carbon
     {
         $this->two_factor_confirmed_at = Carbon::now();
+        $this->save();
+
+        return $this->two_factor_confirmed_at;
     }
 
     public function get2FAQRCode(string $company, string $email): string

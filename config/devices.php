@@ -112,6 +112,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Google 2FA Enabled
+    |--------------------------------------------------------------------------
+    |
+    | This option allows you to easily enable or disable the Google 2FA feature.
+    |
+    |
+    */
+    'google_2fa_enabled' => true,
+
+    /*
+    |--------------------------------------------------------------------------
     | Google 2FA Window
     |--------------------------------------------------------------------------
     |
@@ -119,7 +130,7 @@ return [
     | the security code of the Google 2FA is considered valid. Value: window * 30 seconds
     |
     */
-    'google_2fa_window' => 1, // 30 seconds
+    'google_2fa_window' => 1,
 
     /*
     |--------------------------------------------------------------------------
@@ -130,7 +141,7 @@ return [
     | generating QR image for Google 2FA.
     |
     */
-    'google_2fa_email' => 'yosoy@diego.ninja', // 30 seconds
+    'google_2fa_email' => 'yosoy@diego.ninja',
 
     /*
     |--------------------------------------------------------------------------

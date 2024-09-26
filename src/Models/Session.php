@@ -278,26 +278,30 @@ class Session extends Model
      */
     public function lockWith2FA(?Authenticatable $user = null): bool
     {
-        $user = $user ?? Auth::user();
+        if (Config::get('devices.2fa.enabled')) {
+            $user = $user ?? Auth::user();
 
-        if (in_array(Has2FA::class, class_uses($user)) === false) {
-            throw new TwoFactorAuthenticationNotEnabled();
-        }
+            if (in_array(Has2FA::class, class_uses($user)) === false) {
+                throw new TwoFactorAuthenticationNotEnabled('Authenticatable class not using Has2FA trait');
+            }
 
-        if ($this->status !== SessionStatus::Active) {
+            if ($this->status !== SessionStatus::Active) {
+                return false;
+            }
+
+            $user->enable2FA(app(CodeGenerator::class)->generate());
+
+            $this->status = SessionStatus::Locked;
+
+            if ($this->save()) {
+                SessionLockedEvent::dispatch($this, $this->secret, $user);
+                return true;
+            }
+
             return false;
         }
 
-        $user->enable2FA(app(CodeGenerator::class)->generate());
-
-        $this->status = SessionStatus::Locked;
-
-        if ($this->save()) {
-            SessionLockedEvent::dispatch($this, $this->secret, $user);
-            return true;
-        }
-
-        return false;
+        throw new TwoFactorAuthenticationNotEnabled("2FA is not enabled");
     }
 
     /**
@@ -308,36 +312,39 @@ class Session extends Model
      */
     public function unlock(int $code): bool
     {
-        if (in_array(Has2FA::class, class_uses(Auth::user())) === false) {
-            throw new TwoFactorAuthenticationNotEnabled();
-        }
+        if (Config::get('devices.2fa.enabled')) {
+            if (in_array(Has2FA::class, class_uses(Auth::user())) === false) {
+                throw new TwoFactorAuthenticationNotEnabled('Authenticatable class not using Has2FA trait');
+            }
 
-        if ($this->status !== SessionStatus::Locked) {
+            if ($this->status !== SessionStatus::Locked) {
+                return false;
+            }
+
+            $valid = app(Google2FA::class)
+                ->verifyKeyNewer(
+                    secret: $this->user()->get2FASecret(),
+                    key: $code,
+                    oldTimestamp: $this->user()->last2FASuccess()?->timestamp ?? 0
+                );
+
+            if ($valid !== false) {
+                $this->user()->confirm2FA();
+                $this->status = SessionStatus::Active;
+
+                if ($this->save()) {
+                    SessionUnlockedEvent::dispatch($this, Auth::user());
+                    return true;
+                } else {
+                    Log::error(sprintf('Unable to unlock session %s with code %s', $this->uuid, $code));
+                    return false;
+                }
+            }
+
             return false;
         }
 
-        $valid = app(Google2FA::class)
-            ->verifyKeyNewer(
-                secret: $this->user()->get2FASecret(),
-                key: $code,
-                oldTimestamp: $this->unlocked_at->timestamp,
-                window: 1
-            );
-
-        if ($valid !== false) {
-            $this->auth_timestamp = $valid;
-            $this->status = SessionStatus::Active;
-
-            if ($this->save()) {
-                SessionUnlockedEvent::dispatch($this, Auth::user());
-                return true;
-            } else {
-                Log::error(sprintf('Unable to unlock session %s with code %s', $this->uuid, $code));
-                return false;
-            }
-        }
-
-        return false;
+        throw new TwoFactorAuthenticationNotEnabled("2FA is not enabled");
     }
 
     /**
