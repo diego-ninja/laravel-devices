@@ -101,7 +101,7 @@ final class SessionController extends Controller
             } else {
                 return response()->json([
                     'message' => 'Session already locked',
-                    '2fa_qr_image' => $session->get2FAQRCode()
+                    '2fa_qr_image' => $session->user()->get2FAQRCode()
                 ], 400);
             }
         }
