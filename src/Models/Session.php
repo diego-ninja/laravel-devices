@@ -28,6 +28,7 @@ use Ninja\DeviceTracker\Events\SessionStartedEvent;
 use Ninja\DeviceTracker\Events\SessionUnblockedEvent;
 use Ninja\DeviceTracker\Events\SessionUnlockedEvent;
 use Ninja\DeviceTracker\Exception\SessionNotFoundException;
+use Ninja\DeviceTracker\Exception\TwoFactorAuthenticationNotEnabled;
 use Ninja\DeviceTracker\Traits\Has2FA;
 use PragmaRX\Google2FA\Exceptions\IncompatibleWithGoogleAuthenticatorException;
 use PragmaRX\Google2FA\Exceptions\InvalidAlgorithmException;
@@ -273,13 +274,14 @@ class Session extends Model
 
     /**
      * @throws InvalidAlgorithmException
+     * @throws TwoFactorAuthenticationNotEnabled
      */
     public function lockWith2FA(?Authenticatable $user = null): bool
     {
         $user = $user ?? Auth::user();
 
         if (in_array(Has2FA::class, class_uses($user)) === false) {
-            return false;
+            throw new TwoFactorAuthenticationNotEnabled();
         }
 
         if ($this->status !== SessionStatus::Active) {
@@ -302,9 +304,13 @@ class Session extends Model
      * @throws IncompatibleWithGoogleAuthenticatorException
      * @throws InvalidCharactersException
      * @throws SecretKeyTooShortException
+     * @throws TwoFactorAuthenticationNotEnabled
      */
     public function unlock(int $code): bool
     {
+        if (in_array(Has2FA::class, class_uses(Auth::user())) === false) {
+            throw new TwoFactorAuthenticationNotEnabled();
+        }
 
         if ($this->status !== SessionStatus::Locked) {
             return false;
