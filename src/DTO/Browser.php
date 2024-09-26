@@ -11,7 +11,8 @@ final readonly class Browser implements JsonSerializable, Stringable
         public string $name,
         public Version $version,
         public string $family,
-        public string $engine
+        public string $engine,
+        public ?string $type
     ) {
     }
 
@@ -23,7 +24,8 @@ final readonly class Browser implements JsonSerializable, Stringable
                 Version::fromArray($data['version']) :
                 Version::fromString($data['version']),
             family: $data['family'],
-            engine: $data['engine']
+            engine: $data['engine'],
+            type: $data['type'] ?? null
         );
     }
 
@@ -34,6 +36,7 @@ final readonly class Browser implements JsonSerializable, Stringable
             "version" => $this->version->array(),
             "family" => $this->family,
             "engine" => $this->engine,
+            "type" => $this->type,
             "label" => (string) $this
         ];
     }

@@ -2,6 +2,7 @@
 
 namespace Ninja\DeviceTracker\Models;
 
+use App;
 use Carbon\Carbon;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -107,12 +108,19 @@ class Session extends Model
     public static function start(Device $device): Session
     {
         $now = Carbon::now();
-        $ip = request()->ip();
+
+        if (App::environment("local")) {
+            $development_ips = Config::get('devices.development_ip_pool', []);
+            shuffle($development_ips);
+            $ip = $development_ips[0];
+        } else {
+            $ip = request()->ip();
+        }
 
         $location = app(LocationProvider::class)->locate($ip);
 
         if (!Config::get('devices.allow_device_multi_session')) {
-            self::endPreviousSessions($device->uuid, $device->user->id);
+            self::endPreviousSessions($device, $device->user);
         }
 
         $session = self::create([

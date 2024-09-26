@@ -2,13 +2,15 @@
 
 namespace Ninja\DeviceTracker;
 
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout;
 use Illuminate\Events\Dispatcher;
 use Ninja\DeviceTracker\Facades\DeviceManager;
 use Ninja\DeviceTracker\Facades\SessionManager;
 
 final readonly class AuthenticationHandler
 {
-    public function onLogin($event): void
+    public function onLogin(Login $event): void
     {
         DeviceManager::addUserDevice(request());
 
@@ -19,9 +21,12 @@ final readonly class AuthenticationHandler
         }
     }
 
-    public function onLogout($event): void
+    public function onLogout(Logout $event): void
     {
-        SessionManager::end(forgetSession: true);
+        SessionManager::end(
+            forgetSession: true,
+            user: $event->user,
+        );
     }
 
     public function subscribe(Dispatcher $events): void

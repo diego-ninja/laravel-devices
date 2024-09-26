@@ -12,6 +12,8 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\Log;
+use Ninja\DeviceTracker\DeviceManager;
 use Ninja\DeviceTracker\Enums\DeviceStatus;
 use Ninja\DeviceTracker\Enums\SessionStatus;
 use Ninja\DeviceTracker\Events\DeviceCreatedEvent;
@@ -216,6 +218,6 @@ class Device extends Model
     public static function getDeviceUuid(): ?UuidInterface
     {
         $cookieName = Config::get('devices.device_id_cookie_name');
-        return Cookie::has($cookieName) ? Uuid::fromString(Cookie::get($cookieName)) : null;
+        return Cookie::has($cookieName) ? Uuid::fromString(Cookie::get($cookieName)) : DeviceManager::$deviceUuid;
     }
 }

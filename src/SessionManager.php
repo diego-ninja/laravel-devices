@@ -35,14 +35,17 @@ final readonly class SessionManager
         return Session::start(device: $device);
     }
 
-    public function end(?UuidInterface $sessionId = null, bool $forgetSession = false): bool
+    public function end(?UuidInterface $sessionId = null, ?Authenticatable $user = null, bool $forgetSession = false): bool
     {
         $session = Session::get($sessionId);
         if (!$session) {
             return false;
         }
 
-        return $session->end($forgetSession);
+        return $session->end(
+            forgetSession: $forgetSession,
+            user: $user,
+        );
     }
 
     public function renew(): bool

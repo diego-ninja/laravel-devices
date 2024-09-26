@@ -14,7 +14,8 @@
         "hisorange/browser-detect": "^4.5",
         "laravel/framework": "^10 || ^11",
         "nesbot/carbon": "^2 || ^3",
-        "ramsey/uuid": "^4.7"
+        "ramsey/uuid": "^4.7",
+        "matomo/device-detector": "^6.4"
     },
     "require-dev": {
         "barryvdh/laravel-ide-helper": "^3.1",

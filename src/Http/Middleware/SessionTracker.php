@@ -49,7 +49,10 @@ final readonly class SessionTracker
     private function manageLogout(Request $request): JsonResponse|RedirectResponse
     {
         if ($request->ajax() || !Config::get('devices.use_redirects')) {
-            Auth::guard(Config::get('devices.auth_guard'))->logout();
+            if (Auth::guard(Config::get('devices.auth_guard'))->check()) {
+                Auth::guard(Config::get('devices.auth_guard'))->logout();
+            }
+
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 

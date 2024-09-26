@@ -9,13 +9,16 @@ use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Ninja\DeviceTracker\Contracts\DeviceDetector;
+use Ninja\DeviceTracker\Events\DeviceTrackedEvent;
 use Ninja\DeviceTracker\Models\Device;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 
-final readonly class DeviceManager
+final class DeviceManager
 {
     public Application $app;
+
+    public static UuidInterface $deviceUuid;
 
     public function __construct(Application $app)
     {
@@ -64,16 +67,18 @@ final readonly class DeviceManager
 
     public function track(): UuidInterface
     {
-        $deviceUuid = Uuid::uuid7();
+        self::$deviceUuid = Uuid::uuid7();
         Cookie::queue(
             Cookie::forever(
                 name: Config::get('devices.device_id_cookie_name'),
-                value: $deviceUuid->toString(),
+                value: self::$deviceUuid->toString(),
                 secure: Config::get('session.secure', false),
                 httpOnly: Config::get('session.http_only', true)
             )
         );
 
-        return $deviceUuid;
+        DeviceTrackedEvent::dispatch(self::$deviceUuid);
+
+        return self::$deviceUuid;
     }
 }
