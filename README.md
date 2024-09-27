@@ -6,7 +6,7 @@ This package provides session tracking functionalities, multi session management
 * Authenticated User Devices
 * Session Management
   * Session blocking
-  * Google 2FA support for session locking
+  * Google 2FA support
   * Session location tracking
 * Device verifying
 * Device hijacking detection (WIP)
