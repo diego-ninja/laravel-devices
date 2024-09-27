@@ -80,38 +80,16 @@ final readonly class SessionManager
         return $session->block();
     }
 
-    public function isBlocked(UuidInterface $sessionId): bool
+    public function blocked(UuidInterface $sessionId): bool
     {
         $session = Session::get($sessionId);
-        return $session->isBlocked();
+        return $session->blocked();
     }
 
-
-
-    public function isLocked(UuidInterface $sessionId): bool
+    public function locked(UuidInterface $sessionId): bool
     {
         $session = Session::get($sessionId);
-        return $session->isLocked();
-    }
-
-    /**
-     * @throws RandomException
-     */
-    public function lock(UuidInterface $sessionId): ?int
-    {
-        $session = Session::get($sessionId);
-        return $session->lockWith2FA();
-    }
-
-    /**
-     * @throws IncompatibleWithGoogleAuthenticatorException
-     * @throws SecretKeyTooShortException
-     * @throws InvalidCharactersException
-     */
-    public function unlock(UuidInterface $sessionId, int $code): bool
-    {
-        $session = Session::get($sessionId);
-        return $session->unlock($code);
+        return $session->locked();
     }
 
     public function forgot(): bool
@@ -131,20 +109,5 @@ final readonly class SessionManager
             Session::destroy($this->sessionId());
             SessionFacade::forget(Session::DEVICE_SESSION_ID);
         }
-    }
-
-    public function securityCode(UuidInterface $sessionId): ?string
-    {
-        $session = Session::get($sessionId);
-        return $session->login_code;
-    }
-
-    /**
-     * @throws RandomException
-     */
-    public function refreshSecurityCode(UuidInterface $sessionId): ?int
-    {
-        $session = Session::get($sessionId);
-        return $session->refreshCode();
     }
 }

@@ -68,15 +68,15 @@ final readonly class SessionTracker
     private function manageLock(Request $request): JsonResponse|RedirectResponse
     {
         if ($request->ajax() || !Config::get('devices.use_redirects')) {
-            return response()->json(['message' => 'Session locked'], 401);
+            return response()->json(['message' => 'Session locked'], 423);
         }
 
         try {
-            return redirect()->route(Config::get('devices.security_code_route_name'));
+            return redirect()->route(Config::get('devices.2fa_route_name'));
         } catch (RouteNotFoundException $e) {
-            Log::error('Route not found', ['route' => Config::get('devices.logout_route_name'), 'exception' => $e]);
+            Log::error('Route not found', ['route' => Config::get('devices.2fa_route_name'), 'exception' => $e]);
         }
 
-        return response()->json(['message' => 'Session locked'], 401);
+        return response()->json(['message' => 'Session locked'], 423);
     }
 }

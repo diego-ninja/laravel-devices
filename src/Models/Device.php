@@ -31,7 +31,7 @@ use Ramsey\Uuid\UuidInterface;
  * @mixin \Illuminate\Database\Query\Builder
  * @mixin \Illuminate\Database\Eloquent\Builder
  *
- * @property string                       $id                     unsigned int
+ * @property int                        $id                     unsigned int
  * @property UuidInterface                $uuid                   string
  * @property integer                      $user_id                unsigned int
  * @property DeviceStatus                 $status                 string
@@ -127,6 +127,8 @@ class Device extends Model
 
     public function verified(): bool
     {
+        $this->sessions->each(fn(Session $session) => $session->unlock());
+
         return $this->status === DeviceStatus::Verified;
     }
 

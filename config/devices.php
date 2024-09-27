@@ -134,17 +134,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Google 2FA Email
-    |--------------------------------------------------------------------------
-    |
-    | This option allows you to easily specify the email that will be used when
-    | generating QR image for Google 2FA.
-    |
-    */
-    'google_2fa_email' => 'yosoy@diego.ninja',
-
-    /*
-    |--------------------------------------------------------------------------
     | Google 2FA Company
     |--------------------------------------------------------------------------
     |
@@ -152,7 +141,17 @@ return [
     | generating QR image for Google 2FA.
     |
     */
-    'google_2fa_company' => 'diego.ninja', // 30 seconds
+    'google_2fa_company' => env('APP_NAME', 'diego.ninja'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Google 2FA Route
+    |--------------------------------------------------------------------------
+    |
+    | This option allows you to easily specify the route name for Google 2FA form.
+    | This route should show the form to enter the Google 2FA code and QR code.
+    */
+    'google_2fa_route_name' => 'app.2fa',
 
     /*
     |--------------------------------------------------------------------------

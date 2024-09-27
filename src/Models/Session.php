@@ -3,10 +3,6 @@
 namespace Ninja\DeviceTracker\Models;
 
 use App;
-use BaconQrCode\Renderer\Image\ImagickImageBackEnd;
-use BaconQrCode\Renderer\ImageRenderer;
-use BaconQrCode\Renderer\RendererStyle\RendererStyle;
-use BaconQrCode\Writer;
 use Carbon\Carbon;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -17,28 +13,17 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session as SessionFacade;
-use Ninja\DeviceTracker\Contracts\CodeGenerator;
 use Ninja\DeviceTracker\Contracts\LocationProvider;
 use Ninja\DeviceTracker\DTO\Location;
 use Ninja\DeviceTracker\Enums\SessionStatus;
 use Ninja\DeviceTracker\Events\SessionBlockedEvent;
 use Ninja\DeviceTracker\Events\SessionFinishedEvent;
-use Ninja\DeviceTracker\Events\SessionLockedEvent;
 use Ninja\DeviceTracker\Events\SessionStartedEvent;
 use Ninja\DeviceTracker\Events\SessionUnblockedEvent;
 use Ninja\DeviceTracker\Events\SessionUnlockedEvent;
 use Ninja\DeviceTracker\Exception\SessionNotFoundException;
-use Ninja\DeviceTracker\Exception\TwoFactorAuthenticationNotEnabled;
-use Ninja\DeviceTracker\Traits\Has2FA;
-use PragmaRX\Google2FA\Exceptions\IncompatibleWithGoogleAuthenticatorException;
-use PragmaRX\Google2FA\Exceptions\InvalidAlgorithmException;
-use PragmaRX\Google2FA\Exceptions\InvalidCharactersException;
-use PragmaRX\Google2FA\Exceptions\SecretKeyTooShortException;
-use PragmaRX\Google2FA\Google2FA;
-use PragmaRX\Google2FA\Support\Constants;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
-use Random\RandomException;
 
 /**
  * Class Session
@@ -145,7 +130,7 @@ class Session extends Model
             'device_uuid' => $device->uuid,
             'ip' => $ip,
             'location' => $location,
-            'status' => SessionStatus::Active,
+            'status' => self::initialStatus($device),
             'started_at' => $now,
             'last_activity_at' => $now,
         ]);
@@ -154,6 +139,15 @@ class Session extends Model
         SessionStartedEvent::dispatch($session, $device->user);
 
         return $session;
+    }
+
+    private static function initialStatus(Device $device): SessionStatus
+    {
+        if ($device->user->google2fa->enabled()) {
+            return $device->verified() ? SessionStatus::Active : SessionStatus::Locked;
+        }
+
+        return SessionStatus::Active;
     }
 
     private static function endPreviousSessions(Device $device, Authenticatable $user): void
@@ -272,79 +266,16 @@ class Session extends Model
         return $this->status === SessionStatus::Finished;
     }
 
-    /**
-     * @throws InvalidAlgorithmException
-     * @throws TwoFactorAuthenticationNotEnabled
-     */
-    public function lockWith2FA(?Authenticatable $user = null): bool
+    public function unlock(): void
     {
-        if (Config::get('devices.2fa.enabled')) {
-            $user = $user ?? Auth::user();
-
-            if (in_array(Has2FA::class, class_uses($user)) === false) {
-                throw new TwoFactorAuthenticationNotEnabled('Authenticatable class not using Has2FA trait');
-            }
-
-            if ($this->status !== SessionStatus::Active) {
-                return false;
-            }
-
-            $user->enable2FA(app(CodeGenerator::class)->generate());
-
-            $this->status = SessionStatus::Locked;
+        if ($this->status === SessionStatus::Locked) {
+            $this->status = SessionStatus::Active;
+            $this->unlocked_at = Carbon::now();
 
             if ($this->save()) {
-                SessionLockedEvent::dispatch($this, $this->secret, $user);
-                return true;
+                SessionUnlockedEvent::dispatch($this, Auth::user());
             }
-
-            return false;
         }
-
-        throw new TwoFactorAuthenticationNotEnabled("2FA is not enabled");
-    }
-
-    /**
-     * @throws IncompatibleWithGoogleAuthenticatorException
-     * @throws InvalidCharactersException
-     * @throws SecretKeyTooShortException
-     * @throws TwoFactorAuthenticationNotEnabled
-     */
-    public function unlock(int $code): bool
-    {
-        if (Config::get('devices.2fa.enabled')) {
-            if (in_array(Has2FA::class, class_uses(Auth::user())) === false) {
-                throw new TwoFactorAuthenticationNotEnabled('Authenticatable class not using Has2FA trait');
-            }
-
-            if ($this->status !== SessionStatus::Locked) {
-                return false;
-            }
-
-            $valid = app(Google2FA::class)
-                ->verifyKeyNewer(
-                    secret: $this->user()->get2FASecret(),
-                    key: $code,
-                    oldTimestamp: $this->user()->last2FASuccess()?->timestamp ?? 0
-                );
-
-            if ($valid !== false) {
-                $this->user()->confirm2FA();
-                $this->status = SessionStatus::Active;
-
-                if ($this->save()) {
-                    SessionUnlockedEvent::dispatch($this, Auth::user());
-                    return true;
-                } else {
-                    Log::error(sprintf('Unable to unlock session %s with code %s', $this->uuid, $code));
-                    return false;
-                }
-            }
-
-            return false;
-        }
-
-        throw new TwoFactorAuthenticationNotEnabled("2FA is not enabled");
     }
 
     /**

@@ -2,81 +2,63 @@
 
 namespace Ninja\DeviceTracker\Traits;
 
+use BaconQrCode\Renderer\Color\Rgb;
 use BaconQrCode\Renderer\Image\ImagickImageBackEnd;
+use BaconQrCode\Renderer\Image\SvgImageBackEnd;
 use BaconQrCode\Renderer\ImageRenderer;
+use BaconQrCode\Renderer\RendererStyle\Fill;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
 use BaconQrCode\Writer;
-use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use PragmaRX\Google2FA\Google2FA;
 
-/**
- * Class Session
- *
- * @package Ninja\DeviceManager\Traits
- *
- * @mixin \Illuminate\Database\Query\Builder
- * @mixin \Illuminate\Database\Eloquent\Builder
- *
- * @property string                       $auth_secret            string
- * @property integer                      $auth_timestamp         unsigned int
- */
 trait Has2FA
 {
-    public function enable2FA(string $secret): bool
+    public function google2fa(): HasOne
     {
-        if (!$this->is2FAEnabled()) {
-            $this->set2FASecret($secret);
-        }
-
-        return $this->save();
+        return $this->hasOne(\Ninja\DeviceTracker\Models\Google2FA::class, 'user_id');
     }
 
-    public function get2FASecret(): ?string
+
+    public function google2faQrCode(string $format = "SVG"): string
     {
-        return $this->two_factor_secret;
+        return $format === "SVG"
+            ? $this->createSvgQrCode($this->google2faQrCodeUrl())
+            : $this->createPngQrCode($this->google2faQrCodeUrl());
     }
 
-    public function last2FASuccess(): ?Carbon
-    {
-        return $this->two_factor_confirmed_at;
-    }
-
-    public function is2FAEnabled(): bool
-    {
-        return $this->twoFactorSecret() !== null;
-    }
-
-    public function set2FASecret(string $secret): void
-    {
-        $this->two_factor_secret = $secret;
-        $this->two_factor_confirmed_at = null;
-    }
-
-    public function confirm2FA(): Carbon
-    {
-        $this->two_factor_confirmed_at = Carbon::now();
-        $this->save();
-
-        return $this->two_factor_confirmed_at;
-    }
-
-    public function get2FAQRCode(string $company, string $email): string
+    public function google2faQrCodeUrl(): string
     {
         $google2fa = app(Google2FA::class);
 
-        $url = $google2fa->getQRCodeUrl(
-            company: $company,
-            holder: $email,
-            secret: $this->get2FASecret()
+        return $google2fa->getQRCodeUrl(
+            company: config('app.name'),
+            holder: $this->email,
+            secret: $this->google2fa->secret()
         );
+    }
 
-        $writer = new Writer(
+    private function createSvgQrCode(string $url): string
+    {
+        $svg =  (new Writer(
             new ImageRenderer(
-                new RendererStyle(400),
+                new RendererStyle(192, 0, null, null, Fill::uniformColor(new Rgb(255, 255, 255), new Rgb(45, 55, 72))),
+                new SvgImageBackEnd()
+            )
+        ))->writeString($url);
+
+        return trim(substr($svg, strpos($svg, "\n") + 1));
+    }
+
+    private function createPngQrCode(string $url): string
+    {
+        $png = (new Writer(
+            new ImageRenderer(
+                new RendererStyle(192, 0, null, null, Fill::uniformColor(new Rgb(255, 255, 255), new Rgb(45, 55, 72))),
                 new ImagickImageBackEnd()
             )
-        );
+        ))->writeString($url);
 
-        return base64_encode($writer->writeString($url));
+        return base64_encode($png);
     }
 }

@@ -16,8 +16,6 @@ return new class extends Migration {
             $table->string('ip')->nullable();
             $table->json('location')->nullable();
             $table->string('status')->default(SessionStatus::Active->value);
-            $table->string('auth_secret')->nullable();
-            $table->integer('auth_timestamp')->nullable();
             $table->timestamp('started_at')->nullable();
             $table->timestamp('finished_at')->nullable();
             $table->timestamp('last_activity_at')->nullable();
