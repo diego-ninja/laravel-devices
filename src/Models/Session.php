@@ -143,7 +143,11 @@ class Session extends Model
 
     private static function initialStatus(Device $device): SessionStatus
     {
-        if ($device->user->google2fa->enabled()) {
+        if ($device->user->google2fa === null) {
+            return SessionStatus::Active;
+        }
+
+        if ($device->user?->google2fa->enabled()) {
             return $device->verified() ? SessionStatus::Active : SessionStatus::Locked;
         }
 

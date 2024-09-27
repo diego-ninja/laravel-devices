@@ -3,10 +3,10 @@
 namespace Ninja\DeviceTracker\Http\Controllers;
 
 use Config;
-use Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 use Ninja\DeviceTracker\Models\Session;
 use PragmaRX\Google2FA\Exceptions\IncompatibleWithGoogleAuthenticatorException;
 use PragmaRX\Google2FA\Exceptions\InvalidCharactersException;
@@ -22,7 +22,7 @@ final class TwoFactorController extends Controller
     {
         $user = auth(Config::get('devices.auth_guard'))->user();
 
-        if (!$user->google2fa->enabled()) {
+        if (!$user->google2faEnabled()) {
             return response()->json(['message' => 'Two factor authentication is not enabled for current user'], 400);
         }
 
@@ -41,7 +41,7 @@ final class TwoFactorController extends Controller
     {
         $user = auth(Config::get('devices.auth_guard'))->user();
 
-        if (!$user->google2fa->enabled()) {
+        if (!$user->google2faEnabled()) {
             return response()->json(['message' => 'Two factor authentication is not enabled for current user'], 400);
         }
 
@@ -54,12 +54,12 @@ final class TwoFactorController extends Controller
             ->verifyKeyNewer(
                 secret: $user->google2fa->secret(),
                 key: $code,
-                oldTimestamp: $user->google2fa->lastSuccessAt()->timestamp ?? 0
+                oldTimestamp: $user->google2fa->last_sucess_at->timestamp ?? 0
             );
 
         if ($valid !== false) {
             $user->google2fa->success();
-            $user->device->verify();
+            Session::current()->device->verify();
             Session::current()->unlock();
 
             return response()->json(['message' => 'Two factor authentication successful']);
@@ -72,7 +72,7 @@ final class TwoFactorController extends Controller
     {
         $user = auth(Config::get('devices.auth_guard'))->user();
 
-        if (!$user->google2fa->enabled()) {
+        if (!$user->google2faEnabled()) {
             return response()->json(['message' => 'Two factor authentication is not enabled for current user'], 400);
         }
 
@@ -85,11 +85,11 @@ final class TwoFactorController extends Controller
     {
         $user = auth(Config::get('devices.auth_guard'))->user();
 
-        if ($user->google2fa->enabled()) {
+        if ($user->google2faEnabled()) {
             return response()->json(['message' => 'Two factor authentication already for current user']);
         }
 
-        $user->google2fa->enable(
+        $user->enable2fa(
             secret: app(Google2FA::class)->generateSecretKey()
         );
 

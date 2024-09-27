@@ -31,7 +31,7 @@ final class UserAgentDeviceDetector implements Contracts\DeviceDetector
         $this->request = $request;
 
         $this->dd = new DeviceDetector(
-            userAgent: $request->header('User-Agent'),
+            userAgent: $request->header('User-Agent', ''),
             clientHints: ClientHints::factory($_SERVER)
         );
 

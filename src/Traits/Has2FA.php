@@ -27,6 +27,20 @@ trait Has2FA
             : $this->createPngQrCode($this->google2faQrCodeUrl());
     }
 
+    public function google2faEnabled(): bool
+    {
+        return $this->google2fa && $this->google2fa->enabled;
+    }
+
+    public function enable2fa(string $secret): void
+    {
+        $google2fa = new \Ninja\DeviceTracker\Models\Google2FA();
+        $google2fa->user_id = $this->id;
+        $google2fa->enable($secret);
+
+        $this->save();
+    }
+
     public function google2faQrCodeUrl(): string
     {
         $google2fa = app(Google2FA::class);
