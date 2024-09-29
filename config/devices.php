@@ -68,6 +68,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Session inactivity behavior
+    |--------------------------------------------------------------------------
+    |
+    | This option allows you to easily specify the behavior when the period of time
+    | that the session is considered inactive or idle is reached.
+    |
+    | Options: 'terminate', 'ignore'
+    |
+    */
+    'inactivity_session_behaviour' => 'terminate',
+
+
+    /*
+    |--------------------------------------------------------------------------
     | Login route name
     |--------------------------------------------------------------------------
     |
@@ -153,16 +167,6 @@ return [
     */
     'google_2fa_route_name' => 'app.2fa',
 
-    /*
-    |--------------------------------------------------------------------------
-    | Security Code lifetime seconds
-    |--------------------------------------------------------------------------
-    |
-    | This option allows you to easily specify the period of time in seconds that
-    | the security code of the sessions is considered as expired. Set to zero to disable this feature.
-    |
-    */
-    'security_code_lifetime' => 1200,
 
     /*
     |--------------------------------------------------------------------------

@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Ninja\DeviceTracker\Facades\DeviceManager;
 
-final readonly class DeviceTrack
+final readonly class DeviceTracker
 {
     public function handle(Request $request, Closure $next)
     {

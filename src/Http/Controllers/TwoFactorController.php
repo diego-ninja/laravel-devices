@@ -7,6 +7,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Ninja\DeviceTracker\Events\Google2FAFailed;
+use Ninja\DeviceTracker\Events\Google2FASuccess;
 use Ninja\DeviceTracker\Models\Session;
 use PragmaRX\Google2FA\Exceptions\IncompatibleWithGoogleAuthenticatorException;
 use PragmaRX\Google2FA\Exceptions\InvalidCharactersException;
@@ -59,11 +61,11 @@ final class TwoFactorController extends Controller
 
         if ($valid !== false) {
             $user->google2fa->success();
-            Session::current()->device->verify();
-            Session::current()->unlock();
+            Google2FASuccess::dispatch($user);
 
             return response()->json(['message' => 'Two factor authentication successful']);
         } else {
+            Google2FAFailed::dispatch($user);
             return response()->json(['message' => 'Two factor authentication failed'], 400);
         }
     }

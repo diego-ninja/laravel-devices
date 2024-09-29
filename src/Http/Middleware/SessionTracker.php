@@ -37,7 +37,7 @@ final readonly class SessionTracker
             }
 
             if ($session->isInactive()) {
-                return $this->manageLogout($request);
+                return $this->manageInactivity($request, $next);
             }
 
             $session->restart($request);
@@ -63,6 +63,15 @@ final readonly class SessionTracker
         }
 
         return response()->json(['message' => 'Unauthorized'], 401);
+    }
+
+    private function manageInactivity(Request $request, Closure $next): JsonResponse|RedirectResponse
+    {
+        if (Config::get("devices.inactivity_session_behaviour") === "terminate") {
+            return $this->manageLogout($request);
+        }
+
+        return $next($request);
     }
 
     private function manageLock(Request $request): JsonResponse|RedirectResponse
