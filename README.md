@@ -8,7 +8,7 @@
 
 This package provides session tracking functionalities, multi session management and user device management features for Laravel applications. This package is slightly based on [laravel-session-tracker](https://github.com/hamedmehryar/laravel-session-tracker) but updated with new features, and, important note, intended to use with recent Laravel versions, 10 and 11.
 
-This is a work in progress, and could not be ready for production use.  Help is needed to improve the project, so if you are interested in contributing, please read the [contributing guide](./docs/contributing.md).
+This is a work in progress, use it in production environments with care.  Help is needed to improve the project, so if you are interested in contributing, please read the [contributing guide](./.github/CONTRIBUTING.md).
 
 ## ❤️ Features
 

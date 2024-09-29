@@ -36,7 +36,7 @@ final readonly class SessionTracker
                 return $this->manageLogout($request);
             }
 
-            if ($session->isInactive()) {
+            if ($session->inactive()) {
                 return $this->manageInactivity($request, $next);
             }
 

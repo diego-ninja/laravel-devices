@@ -209,16 +209,6 @@ class Session extends Model
             && $request->route()->methods()[0] == $ignore['method'];
     }
 
-    public function isInactive(): bool
-    {
-        $seconds = Config::get('devices.inactivity_seconds', 1200);
-        if ($seconds === 0) {
-            return false;
-        }
-
-        return abs(strtotime($this->last_activity_at) - strtotime(now())) > $seconds;
-    }
-
     public function block(?Authenticatable $user = null): bool
     {
         $user = $user ?? Auth::user();
@@ -253,6 +243,16 @@ class Session extends Model
         }
 
         return false;
+    }
+
+    public function inactive(): bool
+    {
+        $seconds = Config::get('devices.inactivity_seconds', 1200);
+        if ($seconds === 0) {
+            return false;
+        }
+
+        return abs(strtotime($this->last_activity_at) - strtotime(now())) > $seconds;
     }
 
     public function blocked(): bool
