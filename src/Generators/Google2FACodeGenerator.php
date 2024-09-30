@@ -10,7 +10,6 @@ use PragmaRX\Google2FA\Google2FA;
 
 final readonly class Google2FACodeGenerator implements CodeGenerator
 {
-
     public function __construct(private Google2FA $google2FA)
     {
     }

@@ -39,5 +39,4 @@ final readonly class SessionId implements StorableId
     {
         return $this->toString();
     }
-
 }
