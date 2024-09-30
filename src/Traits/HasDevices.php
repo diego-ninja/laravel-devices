@@ -6,9 +6,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Session as SessionFacade;
 use Ninja\DeviceTracker\Enums\SessionStatus;
+use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Models\Session;
-use Ramsey\Uuid\Uuid;
 
 trait HasDevices
 {
@@ -30,7 +30,7 @@ trait HasDevices
     public function signout(bool $logoutCurrentSession = false): void
     {
         if ($logoutCurrentSession) {
-            $this->currentSession()->end();
+            $this->session()->end();
         }
 
         $this->sessions->each(fn (Session $session) => $session->end());
@@ -51,26 +51,26 @@ trait HasDevices
         return $this->hasMany(Device::class, 'user_id');
     }
 
-    public function currentDevice(): Device
+    public function device(): ?Device
     {
         return $this->devices->where(
             key: 'uuid',
             operator: '=',
-            value: Device::getDeviceUuid()
+            value: (string) Device::getDeviceUuid()
         )->first();
     }
 
-    public function currentSession(): Session
+    public function session(): Session
     {
         return $this->sessions->where(
             key: 'uuid',
             operator: '=',
-            value: SessionFacade::get(Session::DEVICE_SESSION_ID)
+            value: (string) SessionFacade::get(Session::DEVICE_SESSION_ID)
         )->first();
     }
     public function hasDevice(Device|string $device): bool
     {
-        $deviceId = $device instanceof Device ? $device->uuid : Uuid::fromString($device);
+        $deviceId = $device instanceof Device ? $device->uuid : DeviceIdFactory::from($device);
         return in_array($deviceId, $this->devicesUids());
     }
 
@@ -86,7 +86,7 @@ trait HasDevices
         return true;
     }
 
-    public function isInactive(): bool
+    public function inactive(): bool
     {
         if ($this->sessions()->count() > 0) {
             $lastActivity = $this->recentSession()->last_activity_at;

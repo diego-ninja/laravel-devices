@@ -34,11 +34,8 @@ final readonly class AuthenticationHandler
     public function onGoogle2FASuccess(Google2FASuccess $event): void
     {
         $user = $event->user;
-        $user->currentSession()->device->verify();
-        $user->currentSession()->unlock();
-
-        //Session::current()->device->verify();
-        //Session::current()->unlock();
+        $user->session()->device->verify();
+        $user->session()->unlock();
     }
 
     public function subscribe(Dispatcher $events): void
@@ -48,3 +45,4 @@ final readonly class AuthenticationHandler
         $events->listen('Ninja\DeviceTracker\Events\Google2FASuccess', 'Ninja\DeviceTracker\AuthenticationHandler@onGoogle2FASuccess');
     }
 }
+

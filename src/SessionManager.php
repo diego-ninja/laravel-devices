@@ -60,11 +60,11 @@ final readonly class SessionManager
     /**
      * @throws \Exception
      */
-    public function isInactive(Authenticatable $user = null): bool
+    public function inactive(Authenticatable $user = null): bool
     {
         $uses = in_array(HasDevices::class, class_uses($user));
         if ($uses) {
-            return $user?->isInactive() ?? false;
+            return $user?->inactive() ?? false;
         }
 
         throw new \Exception('Authenticatable instance must use HasDevices trait');
