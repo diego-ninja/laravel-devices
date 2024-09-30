@@ -6,15 +6,11 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session as SessionFacade;
+use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Models\Session;
 use Ninja\DeviceTracker\Traits\HasDevices;
-use PragmaRX\Google2FA\Exceptions\IncompatibleWithGoogleAuthenticatorException;
-use PragmaRX\Google2FA\Exceptions\InvalidCharactersException;
-use PragmaRX\Google2FA\Exceptions\SecretKeyTooShortException;
-use Ramsey\Uuid\UuidInterface;
-use Random\RandomException;
 
 final readonly class SessionManager
 {
@@ -38,7 +34,7 @@ final readonly class SessionManager
         return Session::start(device: $device);
     }
 
-    public function end(?UuidInterface $sessionId = null, ?Authenticatable $user = null, bool $forgetSession = false): bool
+    public function end(?StorableId $sessionId = null, ?Authenticatable $user = null, bool $forgetSession = false): bool
     {
         $session = Session::get($sessionId);
         if (!$session) {
@@ -74,19 +70,19 @@ final readonly class SessionManager
         throw new \Exception('Authenticatable instance must use HasDevices trait');
     }
 
-    public function block(UuidInterface $sessionId): bool
+    public function block(StorableId $sessionId): bool
     {
         $session = Session::get($sessionId);
         return $session->block();
     }
 
-    public function blocked(UuidInterface $sessionId): bool
+    public function blocked(StorableId $sessionId): bool
     {
         $session = Session::get($sessionId);
         return $session->blocked();
     }
 
-    public function locked(UuidInterface $sessionId): bool
+    public function locked(StorableId $sessionId): bool
     {
         $session = Session::get($sessionId);
         return $session->locked();

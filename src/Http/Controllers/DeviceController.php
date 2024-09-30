@@ -5,11 +5,10 @@ namespace Ninja\DeviceTracker\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Config;
+use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Http\Resources\DeviceResource;
 use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Models\Session;
-use Ramsey\Uuid\Uuid;
-use Ramsey\Uuid\UuidInterface;
 
 /**
  * @authenticated
@@ -85,7 +84,7 @@ final class DeviceController extends Controller
         return $request
             ->user(Config::get('devices.auth_guard'))
             ->devices()
-            ->where('uuid', Uuid::fromString($id))
+            ->where('uuid', DeviceIdFactory::from($id))
             ->firstOrFail();
     }
 }

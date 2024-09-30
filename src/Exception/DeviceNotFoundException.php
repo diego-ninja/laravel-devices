@@ -3,11 +3,11 @@
 namespace Ninja\DeviceTracker\Exception;
 
 use Exception;
-use Ramsey\Uuid\UuidInterface;
+use Ninja\DeviceTracker\Contracts\StorableId;
 
 final class DeviceNotFoundException extends Exception
 {
-    public static function withDevice(UuidInterface $uuid): self
+    public static function withDevice(StorableId $uuid): self
     {
         return new self("Device with id {$uuid->toString()} not found");
     }

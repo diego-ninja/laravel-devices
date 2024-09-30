@@ -5,6 +5,7 @@ namespace Ninja\DeviceTracker\Traits;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Session as SessionFacade;
+use Ninja\DeviceTracker\Enums\SessionStatus;
 use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Models\Session;
 use Ramsey\Uuid\Uuid;
@@ -15,8 +16,7 @@ trait HasDevices
     {
         $query =  $this->sessions()
             ->where('finished_at', null)
-            ->where('block', false)
-            ->where('login_code', null);
+            ->where('status', SessionStatus::Active);
 
         if ($exceptSelf) {
             if (SessionFacade::has(Session::DEVICE_SESSION_ID)) {
@@ -54,15 +54,17 @@ trait HasDevices
     public function currentDevice(): Device
     {
         return $this->devices->where(
-            'uuid',
-            Device::getDeviceUuid()
+            key: 'uuid',
+            operator: '=',
+            value: Device::getDeviceUuid()
         )->first();
     }
 
     public function currentSession(): Session
     {
-        return $this->sessions()->where(
-            column: 'uuid',
+        return $this->sessions->where(
+            key: 'uuid',
+            operator: '=',
             value: SessionFacade::get(Session::DEVICE_SESSION_ID)
         )->first();
     }

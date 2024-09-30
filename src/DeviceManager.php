@@ -9,23 +9,24 @@ use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Ninja\DeviceTracker\Contracts\DeviceDetector;
+use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Events\DeviceTrackedEvent;
+use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Models\Device;
-use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 
 final class DeviceManager
 {
     public Application $app;
 
-    public static UuidInterface $deviceUuid;
+    public static StorableId $deviceUuid;
 
     public function __construct(Application $app)
     {
         $this->app = $app;
     }
 
-    public function isUserDevice(UuidInterface $deviceUuid): bool
+    public function isUserDevice(StorableId $deviceUuid): bool
     {
         return Auth::user()?->hasDevice($deviceUuid);
     }
@@ -55,7 +56,7 @@ final class DeviceManager
         return Auth::user()?->devices;
     }
 
-    public function deviceUuid(): ?UuidInterface
+    public function deviceUuid(): ?StorableId
     {
         return Device::getDeviceUuid();
     }
@@ -65,9 +66,9 @@ final class DeviceManager
         return Cookie::has(Config::get('devices.device_id_cookie_name'));
     }
 
-    public function track(): UuidInterface
+    public function track(): StorableId
     {
-        self::$deviceUuid = Uuid::uuid7();
+        self::$deviceUuid = DeviceIdFactory::generate();
         Cookie::queue(
             Cookie::forever(
                 name: Config::get('devices.device_id_cookie_name'),

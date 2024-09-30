@@ -5,7 +5,7 @@ namespace Ninja\DeviceTracker\Events;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
-use Ramsey\Uuid\UuidInterface;
+use Ninja\DeviceTracker\Contracts\StorableId;
 
 class DeviceTrackedEvent
 {
@@ -13,7 +13,7 @@ class DeviceTrackedEvent
     use InteractsWithSockets;
     use SerializesModels;
 
-    public function __construct(public readonly UuidInterface $deviceUuid)
+    public function __construct(public readonly StorableId $deviceUuid)
     {
     }
 }

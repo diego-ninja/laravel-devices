@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session as SessionFacade;
 use Ninja\DeviceTracker\Contracts\LocationProvider;
+use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\DTO\Location;
 use Ninja\DeviceTracker\Enums\SessionStatus;
 use Ninja\DeviceTracker\Events\SessionBlockedEvent;
@@ -22,8 +23,7 @@ use Ninja\DeviceTracker\Events\SessionStartedEvent;
 use Ninja\DeviceTracker\Events\SessionUnblockedEvent;
 use Ninja\DeviceTracker\Events\SessionUnlockedEvent;
 use Ninja\DeviceTracker\Exception\SessionNotFoundException;
-use Ramsey\Uuid\Uuid;
-use Ramsey\Uuid\UuidInterface;
+use Ninja\DeviceTracker\Factories\SessionIdFactory;
 
 /**
  * Class Session
@@ -34,9 +34,9 @@ use Ramsey\Uuid\UuidInterface;
  * @mixin \Illuminate\Database\Eloquent\Builder
  *
  * @property integer                      $id                     unsigned int
- * @property UuidInterface                $uuid                   uuid
+ * @property StorableId                   $uuid                   uuid
  * @property integer                      $user_id                unsigned int
- * @property UuidInterface                $device_uuid            string
+ * @property StorableId                   $device_uuid            string
  * @property string                       $ip                     string
  * @property Location                     $location               json
  * @property SessionStatus                $status                 string
@@ -85,8 +85,8 @@ class Session extends Model
     public function uuid(): Attribute
     {
         return Attribute::make(
-            get: fn(string $value) => Uuid::fromString($value),
-            set: fn(UuidInterface $value) => $value->toString(),
+            get: fn(string $value) => SessionIdFactory::from($value),
+            set: fn(StorableId $value) => (string) $value
         );
     }
 
@@ -126,7 +126,7 @@ class Session extends Model
 
         $session = self::create([
             'user_id' => $device->user->id,
-            'uuid' => Uuid::uuid7(),
+            'uuid' => SessionIdFactory::generate(),
             'device_uuid' => $device->uuid,
             'ip' => $ip,
             'location' => $location,
@@ -285,10 +285,10 @@ class Session extends Model
     /**
      * @throws SessionNotFoundException
      */
-    public static function findByUuid(UuidInterface|string $uuid): ?self
+    public static function findByUuid(StorableId|string $uuid): ?self
     {
         if (is_string($uuid)) {
-            $uuid = Uuid::fromString($uuid);
+            $uuid = SessionIdFactory::from($uuid);
         }
 
         $session = self::where('uuid', $uuid->toString())->first();
@@ -304,7 +304,7 @@ class Session extends Model
         return self::get();
     }
 
-    public static function get(?UuidInterface $sessionId = null): ?Session
+    public static function get(?StorableId $sessionId = null): ?Session
     {
         $sessionId = $sessionId ?? self::sessionId();
         if (!$sessionId) {
@@ -324,9 +324,9 @@ class Session extends Model
         }
     }
 
-    private static function sessionId(): ?UuidInterface
+    private static function sessionId(): ?StorableId
     {
         $id = SessionFacade::get(self::DEVICE_SESSION_ID);
-        return $id ? Uuid::fromString($id) : null;
+        return $id ? SessionIdFactory::from($id) : null;
     }
 }

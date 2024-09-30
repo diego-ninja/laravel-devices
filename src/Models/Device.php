@@ -12,7 +12,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cookie;
-use Illuminate\Support\Facades\Log;
+use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\DeviceManager;
 use Ninja\DeviceTracker\Enums\DeviceStatus;
 use Ninja\DeviceTracker\Enums\SessionStatus;
@@ -20,8 +20,7 @@ use Ninja\DeviceTracker\Events\DeviceCreatedEvent;
 use Ninja\DeviceTracker\Events\DeviceHijackedEvent;
 use Ninja\DeviceTracker\Events\DeviceVerifiedEvent;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
-use Ramsey\Uuid\Uuid;
-use Ramsey\Uuid\UuidInterface;
+use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 
 /**
  * Class DeviceManager
@@ -31,8 +30,8 @@ use Ramsey\Uuid\UuidInterface;
  * @mixin \Illuminate\Database\Query\Builder
  * @mixin \Illuminate\Database\Eloquent\Builder
  *
- * @property int                        $id                     unsigned int
- * @property UuidInterface                $uuid                   string
+ * @property int                          $id                     unsigned int
+ * @property StorableId                   $uuid                   string
  * @property integer                      $user_id                unsigned int
  * @property DeviceStatus                 $status                 string
  * @property string                       $browser                string
@@ -89,8 +88,8 @@ class Device extends Model
     public function uuid(): Attribute
     {
         return Attribute::make(
-            get: fn(string $value) => Uuid::fromString($value),
-            set: fn(UuidInterface $value) => $value->toString()
+            get: fn(string $value) => DeviceIdFactory::from($value),
+            set: fn(StorableId $value) => (string) $value
         );
     }
 
@@ -165,7 +164,7 @@ class Device extends Model
     }
 
     public static function register(
-        UuidInterface $deviceUuid,
+        StorableId $deviceUuid,
         \Ninja\DeviceTracker\DTO\Device $data,
         Authenticatable $user = null
     ): ?self {
@@ -195,10 +194,10 @@ class Device extends Model
         return null;
     }
 
-    public static function findByUuid(UuidInterface|string $uuid): ?self
+    public static function findByUuid(StorableId|string $uuid): ?self
     {
         if (is_string($uuid)) {
-            $uuid = Uuid::fromString($uuid);
+            $uuid = DeviceIdFactory::from($uuid);
         }
 
         return self::where('uuid', $uuid->toString())->first();
@@ -207,7 +206,7 @@ class Device extends Model
     /**
      * @throws DeviceNotFoundException
      */
-    public static function findByUuidOrFail(UuidInterface|string $uuid): self
+    public static function findByUuidOrFail(StorableId|string $uuid): self
     {
         return self::findByUuid($uuid) ?? throw DeviceNotFoundException::withDevice($uuid);
     }
@@ -217,9 +216,9 @@ class Device extends Model
         return self::findByUuid(self::getDeviceUuid());
     }
 
-    public static function getDeviceUuid(): ?UuidInterface
+    public static function getDeviceUuid(): ?StorableId
     {
         $cookieName = Config::get('devices.device_id_cookie_name');
-        return Cookie::has($cookieName) ? Uuid::fromString(Cookie::get($cookieName)) : DeviceManager::$deviceUuid;
+        return Cookie::has($cookieName) ? DeviceIdFactory::from(Cookie::get($cookieName)) : DeviceManager::$deviceUuid;
     }
 }

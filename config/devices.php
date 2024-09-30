@@ -4,13 +4,34 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Cookie name for current user deice tracking
+    | Cookie name for current user device tracking
     |--------------------------------------------------------------------------
     | This option specifies the name of the cookie that will be used to store
     | the device id of the current user.
     |
     */
     'device_id_cookie_name' => 'device_id',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Device ID class
+    |--------------------------------------------------------------------------
+    | This option specifies the class that will be used to store
+    | and serialize the device id. Must implement the StorableId interface.
+    |
+    */
+    'device_id_storable_class' => \Ninja\DeviceTracker\ValueObject\DeviceId::class,
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Session ID class
+    |--------------------------------------------------------------------------
+    | This option specifies the class that will be used to store
+    | and serialize the device id. Must implement the StorableId interface.
+    |
+    */
+    'session_id_storable_class' => \Ninja\DeviceTracker\ValueObject\SessionId::class,
 
     /*
     |--------------------------------------------------------------------------
