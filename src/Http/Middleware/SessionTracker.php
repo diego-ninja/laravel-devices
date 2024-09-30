@@ -53,6 +53,8 @@ final readonly class SessionTracker
                 Auth::guard(Config::get('devices.auth_guard'))->logout();
             }
 
+            \Session::flush();
+
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 
