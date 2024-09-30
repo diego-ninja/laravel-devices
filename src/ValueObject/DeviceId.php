@@ -15,8 +15,12 @@ final readonly class DeviceId implements StorableId
         $this->id = $id;
     }
 
-    public static function fromString(string $id): StorableId
+    public static function from(StorableId|string $id): StorableId
     {
+        if ($id instanceof StorableId) {
+            return $id;
+        }
+
         return new self(Uuid::fromString($id));
     }
 

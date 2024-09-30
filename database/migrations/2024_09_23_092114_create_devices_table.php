@@ -11,7 +11,7 @@ return new class extends Migration
     {
         Schema::create('devices', function (Blueprint $table) {
             $table->increments('id');
-            $table->uuid()->unique();
+            $table->string('uuid')->unique();
             $table->integer('user_id');
             $table->string('status')->default(DeviceStatus::Unverified->value);
             $table->string('browser')->nullable();

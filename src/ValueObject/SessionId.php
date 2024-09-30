@@ -15,7 +15,7 @@ final readonly class SessionId implements StorableId
         $this->id = $id;
     }
 
-    public static function fromString(string $id): StorableId
+    public static function from(StorableId|string $id): StorableId
     {
         return new self(Uuid::fromString($id));
     }

@@ -6,5 +6,5 @@ use Stringable;
 
 interface StorableId extends Stringable
 {
-    public static function fromString(string $id): StorableId;
+    public static function from(StorableId|string $id): StorableId;
 }

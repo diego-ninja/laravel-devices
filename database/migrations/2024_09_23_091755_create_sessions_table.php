@@ -10,9 +10,9 @@ return new class extends Migration {
     {
         Schema::create('device_sessions', function (Blueprint $table) {
             $table->increments('id');
-            $table->uuid()->unique();
+            $table->string('uuid')->unique();
             $table->integer('user_id');
-            $table->uuid('device_uuid');
+            $table->string('device_uuid');
             $table->string('ip')->nullable();
             $table->json('location')->nullable();
             $table->string('status')->default(SessionStatus::Active->value);
