@@ -24,9 +24,9 @@ final readonly class DeviceId implements StorableId
         return new self(Uuid::fromString($id));
     }
 
-    public static function generate(): self
+    public static function build(): self
     {
-        return new self(Uuid::uuid4());
+        return new self(Uuid::uuid7());
     }
 
     public function toString(): string

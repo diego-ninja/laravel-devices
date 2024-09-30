@@ -23,13 +23,13 @@ abstract class AbstractStorableIdFactory
     public static function generate(): StorableId
     {
         $idClass = self::instance()->getIdClass();
-        return $idClass::generate();
+        return $idClass::build();
     }
 
     public static function from(string $id): StorableId
     {
         $idClass = self::instance()->getIdClass();
-        return $idClass::fromString($id);
+        return $idClass::from($id);
     }
 
     abstract protected function getIdClass(): string;
