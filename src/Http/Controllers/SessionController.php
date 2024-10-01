@@ -8,6 +8,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Config;
 use Ninja\DeviceTracker\Cache\SessionCache;
 use Ninja\DeviceTracker\Exception\TwoFactorAuthenticationNotEnabled;
+use Ninja\DeviceTracker\Factories\SessionIdFactory;
 use Ninja\DeviceTracker\Http\Resources\SessionResource;
 use Ninja\DeviceTracker\Models\Session;
 use Ninja\DeviceTracker\ValueObject\SessionId;
@@ -104,6 +105,6 @@ final class SessionController extends Controller
         $user = $request->user(Config::get('devices.auth_guard'));
 
         $sessions = SessionCache::userSessions($user);
-        return $sessions->where('uuid', SessionId::from($id))->first();
+        return $sessions->where('uuid', SessionIdFactory::from($id))->first();
     }
 }

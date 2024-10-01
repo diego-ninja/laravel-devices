@@ -11,7 +11,7 @@ use Psr\SimpleCache\InvalidArgumentException;
 
 abstract class AbstractCache
 {
-    protected static ?self $instance = null;
+    protected static array $instances = [];
 
     protected ?Repository $cache = null;
 
@@ -26,11 +26,11 @@ abstract class AbstractCache
 
     public static function instance(): self
     {
-        if (self::$instance === null) {
-            self::$instance = new static();
+        if (!isset(self::$instances[static::class])) {
+            self::$instances[static::class] = new static();
         }
 
-        return self::$instance;
+        return self::$instances[static::class];
     }
 
     /**

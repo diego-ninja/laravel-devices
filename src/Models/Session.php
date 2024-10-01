@@ -88,7 +88,7 @@ class Session extends Model implements Cacheable
     {
         return Attribute::make(
             get: fn(string $value) => SessionIdFactory::from($value),
-            set: fn(StorableId $value) => (string) $value
+            set: fn(StorableId $value) => (string) $value,
         );
     }
 
@@ -303,56 +303,38 @@ class Session extends Model implements Cacheable
             $uuid = SessionIdFactory::from($uuid);
         }
 
-        $session = self::where('uuid', $uuid->toString())->first();
-        if (!$session) {
-            throw SessionNotFoundException::withSession($uuid);
-        }
+        return SessionCache::remember($uuid->toString(), function () use ($uuid) {
+            return self::where('uuid', $uuid->toString())->first();
+        });
+    }
 
-        return $session;
+    public static function findByUuidOrFail(StorableId|string $uuid): self
+    {
+        return self::findByUuid($uuid) ?? throw SessionNotFoundException::withSession($uuid);
     }
 
     public static function current(): ?Session
     {
-        return self::get();
-    }
-
-    public static function get(?StorableId $sessionId = null): ?Session
-    {
-        $sessionId = $sessionId ?? self::sessionId();
-        if (!$sessionId) {
-            return null;
-        }
-
-        try {
-            return self::findByUuid($sessionId);
-        } catch (SessionNotFoundException $e) {
-            SessionFacade::forget(self::DEVICE_SESSION_ID);
-
-            Log::warning(
-                sprintf('Session %s not found: %s', $sessionId, $e->getMessage()),
-            );
-
-            return null;
-        }
+        return self::findByUuid(self::sessionUuid());
     }
 
     public static function boot(): void
     {
         parent::boot();
 
-        static::created(function (Device $device) {
-            SessionCache::forget($device);
-            SessionCache::put($device);
+        static::created(function (Session $session) {
+            SessionCache::forget($session);
+            SessionCache::put($session);
         });
 
-        static::updated(function (Device $device) {
-            SessionCache::forget($device);
-            SessionCache::put($device);
+        static::updated(function (Session $session) {
+            SessionCache::forget($session);
+            SessionCache::put($session);
         });
     }
 
 
-    private static function sessionId(): ?StorableId
+    public static function sessionUuid(): ?StorableId
     {
         $id = SessionFacade::get(self::DEVICE_SESSION_ID);
         return $id ? SessionIdFactory::from($id) : null;

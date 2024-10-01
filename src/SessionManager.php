@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Session as SessionFacade;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
+use Ninja\DeviceTracker\Exception\SessionNotFoundException;
 use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Models\Session;
 use Ninja\DeviceTracker\Traits\HasDevices;
@@ -36,7 +37,7 @@ final readonly class SessionManager
 
     public function end(?StorableId $sessionId = null, ?Authenticatable $user = null, bool $forgetSession = false): bool
     {
-        $session = Session::get($sessionId);
+        $session = Session::findByUuid($sessionId);
         if (!$session) {
             return false;
         }
@@ -70,21 +71,30 @@ final readonly class SessionManager
         throw new \Exception('Authenticatable instance must use HasDevices trait');
     }
 
+    /**
+     * @throws SessionNotFoundException
+     */
     public function block(StorableId $sessionId): bool
     {
-        $session = Session::get($sessionId);
+        $session = Session::findByUuidOrFail($sessionId);
         return $session->block();
     }
 
+    /**
+     * @throws SessionNotFoundException
+     */
     public function blocked(StorableId $sessionId): bool
     {
-        $session = Session::get($sessionId);
+        $session = Session::findByUuidOrFail($sessionId);
         return $session->blocked();
     }
 
+    /**
+     * @throws SessionNotFoundException
+     */
     public function locked(StorableId $sessionId): bool
     {
-        $session = Session::get($sessionId);
+        $session = Session::findByUuidOrFail($sessionId);
         return $session->locked();
     }
 
@@ -93,16 +103,16 @@ final readonly class SessionManager
         return !SessionFacade::has(Session::DEVICE_SESSION_ID);
     }
 
-    public function sessionId(): ?int
+    public function sessionUuid(): ?StorableId
     {
-        return SessionFacade::get(Session::DEVICE_SESSION_ID);
+        return Session::sessionUuid();
     }
 
     public function delete(): void
     {
 
-        if ($this->sessionId() != null) {
-            Session::destroy($this->sessionId());
+        if ($this->sessionUuid() !== null) {
+            Session::destroy($this->sessionUuid());
             SessionFacade::forget(Session::DEVICE_SESSION_ID);
         }
     }
