@@ -9,7 +9,6 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Ninja\DeviceTracker\Events\Google2FAFailed;
 use Ninja\DeviceTracker\Events\Google2FASuccess;
-use Ninja\DeviceTracker\Models\Session;
 use PragmaRX\Google2FA\Exceptions\IncompatibleWithGoogleAuthenticatorException;
 use PragmaRX\Google2FA\Exceptions\InvalidCharactersException;
 use PragmaRX\Google2FA\Exceptions\SecretKeyTooShortException;

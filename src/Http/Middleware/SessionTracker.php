@@ -4,6 +4,7 @@ namespace Ninja\DeviceTracker\Http\Middleware;
 
 use Auth;
 use Closure;
+use Illuminate\Auth\Events\Logout;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -48,9 +49,12 @@ final readonly class SessionTracker
 
     private function manageLogout(Request $request): JsonResponse|RedirectResponse
     {
+        $guard = Config::get('devices.auth_guard');
         if ($request->ajax() || !Config::get('devices.use_redirects')) {
-            if (Auth::guard(Config::get('devices.auth_guard'))->check()) {
-                Auth::guard(Config::get('devices.auth_guard'))->logout();
+            if (Auth::guard($guard)->check()) {
+                Auth::guard($guard)->logout();
+
+                event(new Logout($guard, Auth::user()));
             }
 
             \Session::flush();

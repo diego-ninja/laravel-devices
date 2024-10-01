@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cookie;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\DeviceManager;
+use Ninja\DeviceTracker\DTO\Device as DeviceDTO;
 use Ninja\DeviceTracker\Enums\DeviceStatus;
 use Ninja\DeviceTracker\Enums\SessionStatus;
 use Ninja\DeviceTracker\Events\DeviceCreatedEvent;
@@ -163,9 +164,21 @@ class Device extends Model
         return $this->device_family . ' ' . $this->device_model;
     }
 
+    public function equals(DeviceDTO $dto): bool
+    {
+        return $this->browser === $dto->browser->name
+            && $this->browser_family === $dto->browser->family
+            && $this->browser_engine === $dto->browser->engine
+            && $this->platform === $dto->platform->name
+            && $this->platform_family === $dto->platform->family
+            && $this->device_type === $dto->device->type
+            && $this->device_family === $dto->device->family
+            && $this->device_model === $dto->device->model;
+    }
+
     public static function register(
         StorableId $deviceUuid,
-        \Ninja\DeviceTracker\DTO\Device $data,
+        DeviceDTO $data,
         Authenticatable $user = null
     ): ?self {
         $device = self::create([

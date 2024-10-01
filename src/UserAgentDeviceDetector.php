@@ -31,7 +31,7 @@ final class UserAgentDeviceDetector implements Contracts\DeviceDetector
         $this->request = $request;
 
         $this->dd = new DeviceDetector(
-            userAgent: $request->header('User-Agent', ''),
+            userAgent: $request->header('User-Agent', $this->fakeUA()),
             clientHints: ClientHints::factory($_SERVER)
         );
 
@@ -84,5 +84,17 @@ final class UserAgentDeviceDetector implements Contracts\DeviceDetector
         }
 
         return $this->parser;
+    }
+
+    private function fakeUA(): string
+    {
+        if (app()->environment('local')) {
+            $uas = config('devices.development_ua_pool');
+            shuffle($uas);
+
+            return $uas[0];
+        }
+
+        return '';
     }
 }
