@@ -10,10 +10,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session as SessionFacade;
+use Ninja\DeviceTracker\Cache\SessionCache;
 use Ninja\DeviceTracker\Contracts\Cacheable;
 use Ninja\DeviceTracker\Contracts\LocationProvider;
 use Ninja\DeviceTracker\Contracts\StorableId;
@@ -340,18 +340,14 @@ class Session extends Model implements Cacheable
     {
         parent::boot();
 
-        static::created(function (Session $session) {
-            Cache::store(Config::get('devices.cache_store'))->forget($session->getCacheKey());
-            Cache::store(Config::get('devices.cache_store'))->forget('sessions:' . $session->user->id);
-
-            Cache::store(Config::get('devices.cache_store'))->put($session->getCacheKey(), $session, Config::get('devices.cache_ttl'));
+        static::created(function (Device $device) {
+            SessionCache::forget($device);
+            SessionCache::put($device);
         });
 
-        static::updated(function (Session $session) {
-            Cache::store(Config::get('devices.cache_store'))->forget($session->getCacheKey());
-            Cache::store(Config::get('devices.cache_store'))->forget('sessions:' . $session->user->id);
-
-            Cache::store(Config::get('devices.cache_store'))->put($session->getCacheKey(), $session, Config::get('devices.cache_ttl'));
+        static::updated(function (Device $device) {
+            SessionCache::forget($device);
+            SessionCache::put($device);
         });
     }
 
