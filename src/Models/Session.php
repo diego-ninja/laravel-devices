@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session as SessionFacade;
+use Ninja\DeviceTracker\Contracts\Cacheable;
 use Ninja\DeviceTracker\Contracts\LocationProvider;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\DTO\Location;
@@ -53,7 +54,7 @@ use Ninja\DeviceTracker\Factories\SessionIdFactory;
  *
  * @property Session                       $session
  */
-class Session extends Model
+class Session extends Model implements Cacheable
 {
     public const  DEVICE_SESSION_ID = 'session.id';
 
@@ -281,6 +282,16 @@ class Session extends Model
                 SessionUnlockedEvent::dispatch($this, Auth::user());
             }
         }
+    }
+
+    public function key(): string
+    {
+        return 'session:' . $this->uuid;
+    }
+
+    public function ttl(): int
+    {
+        return Config::get('devices.cache_ttl');
     }
 
     /**

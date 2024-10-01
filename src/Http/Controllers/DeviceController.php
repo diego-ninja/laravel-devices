@@ -19,10 +19,7 @@ final class DeviceController extends Controller
     public function list(Request $request)
     {
         $user = $request->user(Config::get('devices.auth_guard'));
-
-        $devices = DeviceCache::remember('devices:user:' . $user->id, function () use ($user) {
-            return $user->devices;
-        });
+        $devices = DeviceCache::userDevices($user);
 
         return response()->json(DeviceResource::collection($devices));
     }

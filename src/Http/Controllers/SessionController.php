@@ -6,9 +6,11 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Config;
+use Ninja\DeviceTracker\Cache\SessionCache;
 use Ninja\DeviceTracker\Exception\TwoFactorAuthenticationNotEnabled;
 use Ninja\DeviceTracker\Http\Resources\SessionResource;
 use Ninja\DeviceTracker\Models\Session;
+use Ninja\DeviceTracker\ValueObject\SessionId;
 use PragmaRX\Google2FA\Exceptions\InvalidAlgorithmException;
 use Ramsey\Uuid\Uuid;
 use Random\RandomException;
@@ -93,20 +95,15 @@ final class SessionController extends Controller
 
     private function getUserSessions(Request $request)
     {
-        return $request
-            ->user(Config::get('devices.auth_guard'))
-            ->sessions()
-            ->with("device")
-            ->get();
+        $user = $request->user(Config::get('devices.auth_guard'));
+        return SessionCache::userSessions($user);
     }
 
     private function findUserSession(Request $request, string $id): ?Session
     {
-        return $request
-            ->user(Config::get('devices.auth_guard'))
-            ->sessions()
-            ->with("device")
-            ->where('uuid', Uuid::fromString($id))
-            ->first();
+        $user = $request->user(Config::get('devices.auth_guard'));
+
+        $sessions = SessionCache::userSessions($user);
+        return $sessions->where('uuid', SessionId::from($id))->first();
     }
 }

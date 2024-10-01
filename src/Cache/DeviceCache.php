@@ -3,6 +3,7 @@
 namespace Ninja\DeviceTracker\Cache;
 
 use Config;
+use Illuminate\Contracts\Auth\Authenticatable;
 use InvalidArgumentException;
 use Ninja\DeviceTracker\Contracts\Cacheable;
 use Ninja\DeviceTracker\Models\Device;
@@ -11,7 +12,7 @@ final class DeviceCache extends AbstractCache
 {
     protected function enabled(): bool
     {
-        return in_array('devices', Config::get('devices.cache_enabled_for', []));
+        return in_array('device', Config::get('devices.cache_enabled_for', []));
     }
 
     protected function forgetItem(Cacheable $item): void
@@ -25,6 +26,17 @@ final class DeviceCache extends AbstractCache
         }
 
         $this->cache->forget($item->key());
-        $this->cache->forget("devices:user:" . $item->user->id);
+        $this->cache->forget("user:devices:" . $item->user->id);
+    }
+
+    public static function userDevices(Authenticatable $user)
+    {
+        if (!self::instance()->enabled()) {
+            return $user->devices;
+        }
+
+        return self::remember('user:devices:' . $user->id, function () use ($user) {
+            return $user->devices;
+        });
     }
 }
