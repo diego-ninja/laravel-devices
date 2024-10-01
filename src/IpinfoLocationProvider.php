@@ -2,6 +2,7 @@
 
 namespace Ninja\DeviceTracker;
 
+use Ninja\DeviceTracker\Cache\LocationCache;
 use Ninja\DeviceTracker\DTO\Location;
 
 class IpinfoLocationProvider implements Contracts\LocationProvider
@@ -12,17 +13,19 @@ class IpinfoLocationProvider implements Contracts\LocationProvider
 
     public function locate(string $ip): Location
     {
-        $url = sprintf(self::API_URL, $ip);
-        $locationData = json_decode(file_get_contents($url), true);
+        return LocationCache::remember('location:' . $ip, function () use ($ip) {
+            $url = sprintf(self::API_URL, $ip);
+            $locationData = json_decode(file_get_contents($url), true);
 
-        [$lat, $long] = explode(",", $locationData['loc']);
+            [$lat, $long] = explode(",", $locationData['loc']);
 
-        $locationData['latitude'] = $lat;
-        $locationData['longitude'] = $long;
+            $locationData['latitude'] = $lat;
+            $locationData['longitude'] = $long;
 
-        $this->location = Location::fromArray($locationData);
+            $this->location = Location::fromArray($locationData);
 
-        return $this->location;
+            return $this->location;
+        });
     }
 
     public function country(): string

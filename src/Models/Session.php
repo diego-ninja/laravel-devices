@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session as SessionFacade;
 use Ninja\DeviceTracker\Cache\SessionCache;
 use Ninja\DeviceTracker\Contracts\Cacheable;

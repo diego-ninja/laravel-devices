@@ -48,6 +48,10 @@ abstract class AbstractCache
 
     public static function remember(string $key, callable $callback): mixed
     {
+        if (!self::instance()->enabled()) {
+            return $callback();
+        }
+
         return self::instance()->cache->remember($key, Config::get('devices.cache_ttl'), $callback);
     }
 
