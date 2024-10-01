@@ -103,6 +103,41 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Enable cache
+    |--------------------------------------------------------------------------
+    |
+    | This option allows you to enable or disable the cache for the device, location and session.
+    |
+    | Options: 'device', 'location', 'session', 'user-agent'
+    |
+    */
+    'cache_enabled_for' => ['device', 'location', 'session', 'user-agent'],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cache store
+    |--------------------------------------------------------------------------
+    |
+    | This option allows you to easily specify the cache driver that should be used
+    | for caching
+    |
+    */
+    'cache_store' => 'file',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cache TTL
+    |--------------------------------------------------------------------------
+    |
+    | This option allows you to easily specify the time in seconds that the cache
+    | should be stored.
+    |
+    */
+    'cache_ttl' => 3600,
+
+
+    /*
+    |--------------------------------------------------------------------------
     | Login route name
     |--------------------------------------------------------------------------
     |

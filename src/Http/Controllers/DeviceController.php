@@ -5,6 +5,7 @@ namespace Ninja\DeviceTracker\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Config;
+use Ninja\DeviceTracker\Cache\DeviceCache;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Http\Resources\DeviceResource;
 use Ninja\DeviceTracker\Models\Device;
@@ -17,8 +18,11 @@ final class DeviceController extends Controller
 {
     public function list(Request $request)
     {
-        $devices = $request
-            ->user(Config::get('devices.auth_guard'))->devices;
+        $user = $request->user(Config::get('devices.auth_guard'));
+
+        $devices = DeviceCache::remember('devices:user:' . $user->id, function () use ($user) {
+            return $user->devices;
+        });
 
         return response()->json(DeviceResource::collection($devices));
     }
@@ -81,10 +85,9 @@ final class DeviceController extends Controller
 
     private function getUserDevice(Request $request, string $id): ?Device
     {
-        return $request
-            ->user(Config::get('devices.auth_guard'))
-            ->devices()
-            ->where('uuid', DeviceIdFactory::from($id))
-            ->firstOrFail();
+        $user = $request->user(Config::get('devices.auth_guard'));
+        return DeviceCache::remember('device:' . $id, function () use ($user, $id) {
+            return $user->devices()->where('uuid', DeviceIdFactory::from($id))->first();
+        });
     }
 }

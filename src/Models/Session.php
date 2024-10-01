@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session as SessionFacade;
@@ -323,6 +324,26 @@ class Session extends Model
             return null;
         }
     }
+
+    public static function boot(): void
+    {
+        parent::boot();
+
+        static::created(function (Session $session) {
+            Cache::store(Config::get('devices.cache_store'))->forget($session->getCacheKey());
+            Cache::store(Config::get('devices.cache_store'))->forget('sessions:' . $session->user->id);
+
+            Cache::store(Config::get('devices.cache_store'))->put($session->getCacheKey(), $session, Config::get('devices.cache_ttl'));
+        });
+
+        static::updated(function (Session $session) {
+            Cache::store(Config::get('devices.cache_store'))->forget($session->getCacheKey());
+            Cache::store(Config::get('devices.cache_store'))->forget('sessions:' . $session->user->id);
+
+            Cache::store(Config::get('devices.cache_store'))->put($session->getCacheKey(), $session, Config::get('devices.cache_ttl'));
+        });
+    }
+
 
     private static function sessionId(): ?StorableId
     {
