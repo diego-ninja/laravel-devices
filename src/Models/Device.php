@@ -110,8 +110,8 @@ class Device extends Model implements Cacheable
     public function metadata(): Attribute
     {
         return Attribute::make(
-            get: fn(string $value) => Metadata::from(json_decode($value, true)),
-            set: fn(Metadata $value) => $value->asArray()
+            get: fn(?string $value) => $value ? Metadata::from(json_decode($value, true)) : new Metadata([]),
+            set: fn(Metadata $value) => $value->json()
         );
     }
 
@@ -219,7 +219,7 @@ class Device extends Model implements Cacheable
             'device_model' => $data->device->model,
             'grade' => $data->grade,
             'ip' => request()->ip(),
-            'metadata' => [],
+            'metadata' => new Metadata([]),
             'source' => $data->userAgent,
         ]);
 

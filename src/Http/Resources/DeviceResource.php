@@ -29,6 +29,7 @@ final class DeviceResource extends JsonResource
             "source" => $this->resource->source,
             "ip_address" => $this->resource->ip,
             'grade' => $this->when($this->resource->grade !== null, $this->resource->grade),
+            "metadata" => $this->resource->metadata,
             "sessions" => SessionResource::collection($this->whenLoaded('sessions')),
         ];
     }

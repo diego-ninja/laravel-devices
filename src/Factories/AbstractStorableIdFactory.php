@@ -6,7 +6,7 @@ use Ninja\DeviceTracker\Contracts\StorableId;
 
 abstract class AbstractStorableIdFactory
 {
-    protected static ?self $instance = null;
+    protected static array $instances = [];
 
     private function __construct()
     {
@@ -14,10 +14,12 @@ abstract class AbstractStorableIdFactory
 
     public static function instance(): self
     {
-        if (static::$instance === null) {
-            static::$instance = new static();
+        $class = static::class;
+        if (!isset(self::$instances[$class])) {
+            self::$instances[$class] = new static();
         }
-        return static::$instance;
+
+        return self::$instances[$class];
     }
 
     public static function generate(): StorableId
