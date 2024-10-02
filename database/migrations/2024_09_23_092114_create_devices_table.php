@@ -27,6 +27,7 @@ return new class extends Migration
             $table->string('grade')->nullable();
             $table->string('source')->nullable();
             $table->string('ip');
+            $table->json('metadata')->nullable();
             $table->timestamps();
             $table->timestamp('verified_at')->nullable();
             $table->timestamp('hijacked_at')->nullable();

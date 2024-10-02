@@ -17,6 +17,7 @@ use Ninja\DeviceTracker\Contracts\Cacheable;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\DeviceManager;
 use Ninja\DeviceTracker\DTO\Device as DeviceDTO;
+use Ninja\DeviceTracker\DTO\Metadata;
 use Ninja\DeviceTracker\Enums\DeviceStatus;
 use Ninja\DeviceTracker\Enums\SessionStatus;
 use Ninja\DeviceTracker\Events\DeviceCreatedEvent;
@@ -50,6 +51,7 @@ use Ninja\DeviceTracker\Factories\DeviceIdFactory;
  * @property string                       $grade                  string
  * @property string                       $source                 string
  * @property string                       $ip                     string
+ * @property Metadata                     $metadata               json
  * @property Carbon                       $created_at             datetime
  * @property Carbon                       $updated_at             datetime
  * @property Carbon                       $verified_at            datetime
@@ -75,6 +77,7 @@ class Device extends Model implements Cacheable
         'device_model',
         'grade',
         'ip',
+        'metadata',
         'source',
     ];
 
@@ -101,6 +104,14 @@ class Device extends Model implements Cacheable
         return Attribute::make(
             get: fn(string $value) => DeviceStatus::from($value),
             set: fn(DeviceStatus $value) => $value->value
+        );
+    }
+
+    public function metadata(): Attribute
+    {
+        return Attribute::make(
+            get: fn(string $value) => Metadata::from(json_decode($value, true)),
+            set: fn(Metadata $value) => $value->asArray()
         );
     }
 
@@ -208,6 +219,7 @@ class Device extends Model implements Cacheable
             'device_model' => $data->device->model,
             'grade' => $data->grade,
             'ip' => request()->ip(),
+            'metadata' => [],
             'source' => $data->userAgent,
         ]);
 
