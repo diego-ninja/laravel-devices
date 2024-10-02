@@ -10,9 +10,11 @@ use Ninja\DeviceTracker\Models\Session;
 
 final class SessionCache extends AbstractCache
 {
+    public const KEY_PREFIX = 'session';
+
     protected function enabled(): bool
     {
-        return in_array('session', Config::get('devices.cache_enabled_for', []));
+        return in_array(self::KEY_PREFIX, Config::get('devices.cache_enabled_for', []));
     }
 
     protected function forgetItem(Cacheable $item): void

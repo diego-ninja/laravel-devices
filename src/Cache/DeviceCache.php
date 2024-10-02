@@ -10,9 +10,11 @@ use Ninja\DeviceTracker\Models\Device;
 
 final class DeviceCache extends AbstractCache
 {
+    public const KEY_PREFIX = 'device';
+
     protected function enabled(): bool
     {
-        return in_array('device', Config::get('devices.cache_enabled_for', []));
+        return in_array(self::KEY_PREFIX, Config::get('devices.cache_enabled_for', []));
     }
 
     protected function forgetItem(Cacheable $item): void

@@ -13,7 +13,9 @@ class IpinfoLocationProvider implements Contracts\LocationProvider
 
     public function locate(string $ip): Location
     {
-        return LocationCache::remember('location:' . $ip, function () use ($ip) {
+        $key = sprintf('%s:%s', LocationCache::KEY_PREFIX, $ip);
+
+        return LocationCache::remember($key, function () use ($ip) {
             $url = sprintf(self::API_URL, $ip);
             $locationData = json_decode(file_get_contents($url), true);
 

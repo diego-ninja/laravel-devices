@@ -180,12 +180,12 @@ class Device extends Model implements Cacheable
 
     public function key(): string
     {
-        return 'device:' . $this->uuid->toString();
+        return sprintf('%s:%s', DeviceCache::KEY_PREFIX, $this->uuid->toString());
     }
 
-    public function ttl(): int
+    public function ttl(): ?int
     {
-        return Config::get('devices.cache_ttl');
+        return null;
     }
 
     public static function register(

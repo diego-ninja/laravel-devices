@@ -52,7 +52,7 @@ abstract class AbstractCache
             return $callback();
         }
 
-        return self::instance()->cache->remember($key, Config::get('devices.cache_ttl'), $callback);
+        return self::instance()->cache->remember($key, self::instance()->ttl(), $callback);
     }
 
     public static function forget(Cacheable $item): void
@@ -78,7 +78,7 @@ abstract class AbstractCache
             return;
         }
 
-        $this->cache->put($item->key(), $item, $item->ttl());
+        $this->cache->put($item->key(), $item, $item->ttl() ?? $this->ttl());
     }
 
     protected function forgetItem(Cacheable $item): void
@@ -88,6 +88,11 @@ abstract class AbstractCache
         }
 
         $this->cache->forget($item->key());
+    }
+
+    protected function ttl(): int
+    {
+        return Config::get('devices.cache_ttl')[static::KEY_PREFIX];
     }
 
     abstract protected function enabled(): bool;

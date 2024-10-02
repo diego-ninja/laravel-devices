@@ -285,12 +285,12 @@ class Session extends Model implements Cacheable
 
     public function key(): string
     {
-        return 'session:' . $this->uuid;
+        return sprintf('%s:%s', SessionCache::KEY_PREFIX, $this->uuid);
     }
 
-    public function ttl(): int
+    public function ttl(): ?int
     {
-        return Config::get('devices.cache_ttl');
+        return null;
     }
 
     /**

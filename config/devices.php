@@ -106,12 +106,13 @@ return [
     | Enable cache
     |--------------------------------------------------------------------------
     |
-    | This option allows you to enable or disable the cache for the device, location and session.
+    | This option allows you to enable or disable the cache for the device, location, session
+    | and user agent.
     |
-    | Options: 'device', 'location', 'session', 'user-agent'
+    | Options: 'device', 'location', 'session', 'ua'
     |
     */
-    'cache_enabled_for' => ['device', 'location', 'session', 'user-agent'],
+    'cache_enabled_for' => ['device', 'location', 'session', 'ua'],
 
     /*
     |--------------------------------------------------------------------------
@@ -133,8 +134,12 @@ return [
     | should be stored.
     |
     */
-    'cache_ttl' => 3600,
-
+    'cache_ttl' => [
+        \Ninja\DeviceTracker\Cache\SessionCache::KEY_PREFIX => 60 * 60,
+        \Ninja\DeviceTracker\Cache\DeviceCache::KEY_PREFIX => 60 * 60,
+        \Ninja\DeviceTracker\Cache\LocationCache::KEY_PREFIX => 60 * 60 * 24 * 30,
+        \Ninja\DeviceTracker\Cache\UserAgentCache::KEY_PREFIX => 60 * 60 * 24 * 30,
+    ],
 
     /*
     |--------------------------------------------------------------------------

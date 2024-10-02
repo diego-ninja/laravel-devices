@@ -6,8 +6,10 @@ use Config;
 
 final class UserAgentCache extends AbstractCache
 {
+    public const KEY_PREFIX = 'ua';
+
     protected function enabled(): bool
     {
-        return in_array('user-agent', Config::get('devices.cache_enabled_for', []));
+        return in_array(self::KEY_PREFIX, Config::get('devices.cache_enabled_for', []));
     }
 }
