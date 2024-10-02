@@ -12,6 +12,8 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cookie;
+use Ninja\DeviceTracker\Cache\DeviceCache;
+use Ninja\DeviceTracker\Contracts\Cacheable;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\DeviceManager;
 use Ninja\DeviceTracker\DTO\Device as DeviceDTO;
@@ -54,7 +56,7 @@ use Ninja\DeviceTracker\Factories\DeviceIdFactory;
  * @property Carbon                       $hijacked_at            datetime
  *
  */
-class Device extends Model
+class Device extends Model implements Cacheable
 {
     protected $table = 'devices';
 
@@ -176,6 +178,16 @@ class Device extends Model
             && $this->device_model === $dto->device->model;
     }
 
+    public function key(): string
+    {
+        return sprintf('%s:%s', DeviceCache::KEY_PREFIX, $this->uuid->toString());
+    }
+
+    public function ttl(): ?int
+    {
+        return null;
+    }
+
     public static function register(
         StorableId $deviceUuid,
         DeviceDTO $data,
@@ -213,7 +225,7 @@ class Device extends Model
             $uuid = DeviceIdFactory::from($uuid);
         }
 
-        return self::where('uuid', $uuid->toString())->first();
+        return DeviceCache::remember($uuid->toString(), fn() => self::where('uuid', $uuid->toString())->first());
     }
 
     /**
@@ -233,5 +245,19 @@ class Device extends Model
     {
         $cookieName = Config::get('devices.device_id_cookie_name');
         return Cookie::has($cookieName) ? DeviceIdFactory::from(Cookie::get($cookieName)) : DeviceManager::$deviceUuid;
+    }
+    public static function boot(): void
+    {
+        parent::boot();
+
+        static::created(function (Device $device) {
+            DeviceCache::forget($device);
+            DeviceCache::put($device);
+        });
+
+        static::updated(function (Device $device) {
+            DeviceCache::forget($device);
+            DeviceCache::put($device);
+        });
     }
 }

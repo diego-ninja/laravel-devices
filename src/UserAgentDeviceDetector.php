@@ -9,6 +9,7 @@ use DeviceDetector\Parser\Device\AbstractDeviceParser;
 use hisorange\BrowserDetect\Contracts\ResultInterface;
 use hisorange\BrowserDetect\Parser;
 use Illuminate\Http\Request;
+use Ninja\DeviceTracker\Cache\UserAgentCache;
 use Ninja\DeviceTracker\DTO\Browser;
 use Ninja\DeviceTracker\DTO\Device;
 use Ninja\DeviceTracker\DTO\DeviceType;
@@ -30,21 +31,26 @@ final class UserAgentDeviceDetector implements Contracts\DeviceDetector
     {
         $this->request = $request;
 
-        $this->dd = new DeviceDetector(
-            userAgent: $request->header('User-Agent', $this->fakeUA()),
-            clientHints: ClientHints::factory($_SERVER)
-        );
+        $ua = $request->header('User-Agent', $this->fakeUA());
+        $key = 'ua:' . md5($ua);
 
-        $this->dd->parse();
+        return UserAgentCache::remember($key, function () use ($ua, $request) {
+            $this->dd = new DeviceDetector(
+                userAgent: $request->header('User-Agent', $ua),
+                clientHints: ClientHints::factory($_SERVER)
+            );
 
-        return new Device(
-            browser: $this->browser(),
-            platform: $this->platform(),
-            device: $this->device(),
-            ip: $request->ip(),
-            grade: $this->parser()->mobileGrade() === '' ? null : $this->parser()->mobileGrade(),
-            userAgent: $this->dd->getUserAgent()
-        );
+            $this->dd->parse();
+
+            return new Device(
+                browser: $this->browser(),
+                platform: $this->platform(),
+                device: $this->device(),
+                ip: $request->ip(),
+                grade: $this->parser()->mobileGrade() === '' ? null : $this->parser()->mobileGrade(),
+                userAgent: $this->dd->getUserAgent()
+            );
+        });
     }
 
     private function browser(): Browser

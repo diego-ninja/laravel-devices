@@ -2,10 +2,13 @@
 
 namespace Ninja\DeviceTracker\DTO;
 
+use Config;
 use JsonSerializable;
+use Ninja\DeviceTracker\Cache\LocationCache;
+use Ninja\DeviceTracker\Contracts\Cacheable;
 use Stringable;
 
-final readonly class Location implements JsonSerializable, Stringable
+final readonly class Location implements JsonSerializable, Stringable, Cacheable
 {
     public function __construct(
         public ?string $ip,
@@ -64,5 +67,16 @@ final readonly class Location implements JsonSerializable, Stringable
     public function json(): string
     {
         return json_encode($this->array());
+    }
+
+    public function key(): string
+    {
+
+        return sprintf('%s:%s', LocationCache::KEY_PREFIX, $this->ip);
+    }
+
+    public function ttl(): ?int
+    {
+        return null;
     }
 }

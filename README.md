@@ -19,8 +19,10 @@ This is a work in progress, use it in production environments with care.  Help i
   * Session location tracking
 * Device verifying
 * Device hijacking detection (WIP)
-* Application events
-* Ready to use middleware, routes, controllers, dtos and resources
+* Domain events
+* Ready to use middleware, routes, controllers, dtos, value objects and resources
+* Ready to use Google 2FA integration
+* Cache support for devices, sessions, locations and user agents
 
 ## 📦 Installation
 

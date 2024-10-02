@@ -11,8 +11,9 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session as SessionFacade;
+use Ninja\DeviceTracker\Cache\SessionCache;
+use Ninja\DeviceTracker\Contracts\Cacheable;
 use Ninja\DeviceTracker\Contracts\LocationProvider;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\DTO\Location;
@@ -52,7 +53,7 @@ use Ninja\DeviceTracker\Factories\SessionIdFactory;
  *
  * @property Session                       $session
  */
-class Session extends Model
+class Session extends Model implements Cacheable
 {
     public const  DEVICE_SESSION_ID = 'session.id';
 
@@ -86,7 +87,7 @@ class Session extends Model
     {
         return Attribute::make(
             get: fn(string $value) => SessionIdFactory::from($value),
-            set: fn(StorableId $value) => (string) $value
+            set: fn(StorableId $value) => (string) $value,
         );
     }
 
@@ -282,6 +283,16 @@ class Session extends Model
         }
     }
 
+    public function key(): string
+    {
+        return sprintf('%s:%s', SessionCache::KEY_PREFIX, $this->uuid);
+    }
+
+    public function ttl(): ?int
+    {
+        return null;
+    }
+
     /**
      * @throws SessionNotFoundException
      */
@@ -291,40 +302,38 @@ class Session extends Model
             $uuid = SessionIdFactory::from($uuid);
         }
 
-        $session = self::where('uuid', $uuid->toString())->first();
-        if (!$session) {
-            throw SessionNotFoundException::withSession($uuid);
-        }
+        return SessionCache::remember($uuid->toString(), function () use ($uuid) {
+            return self::where('uuid', $uuid->toString())->first();
+        });
+    }
 
-        return $session;
+    public static function findByUuidOrFail(StorableId|string $uuid): self
+    {
+        return self::findByUuid($uuid) ?? throw SessionNotFoundException::withSession($uuid);
     }
 
     public static function current(): ?Session
     {
-        return self::get();
+        return self::findByUuid(self::sessionUuid());
     }
 
-    public static function get(?StorableId $sessionId = null): ?Session
+    public static function boot(): void
     {
-        $sessionId = $sessionId ?? self::sessionId();
-        if (!$sessionId) {
-            return null;
-        }
+        parent::boot();
 
-        try {
-            return self::findByUuid($sessionId);
-        } catch (SessionNotFoundException $e) {
-            SessionFacade::forget(self::DEVICE_SESSION_ID);
+        static::created(function (Session $session) {
+            SessionCache::forget($session);
+            SessionCache::put($session);
+        });
 
-            Log::warning(
-                sprintf('Session %s not found: %s', $sessionId, $e->getMessage()),
-            );
-
-            return null;
-        }
+        static::updated(function (Session $session) {
+            SessionCache::forget($session);
+            SessionCache::put($session);
+        });
     }
 
-    private static function sessionId(): ?StorableId
+
+    public static function sessionUuid(): ?StorableId
     {
         $id = SessionFacade::get(self::DEVICE_SESSION_ID);
         return $id ? SessionIdFactory::from($id) : null;
