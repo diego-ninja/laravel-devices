@@ -13,7 +13,6 @@ use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Events\DeviceTrackedEvent;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Models\Device;
-use Ramsey\Uuid\UuidInterface;
 
 final class DeviceManager
 {
@@ -81,5 +80,10 @@ final class DeviceManager
         DeviceTrackedEvent::dispatch(self::$deviceUuid);
 
         return self::$deviceUuid;
+    }
+
+    public function current(): ?Device
+    {
+        return Device::current();
     }
 }

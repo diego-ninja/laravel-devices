@@ -51,7 +51,7 @@ use Ninja\DeviceTracker\Factories\SessionIdFactory;
  * @property Carbon                       $unlocked_at            datetime
  * @property Carbon                       $last_activity_at       datetime
  *
- * @property Session                       $session
+ * @property Session                      $session
  */
 class Session extends Model implements Cacheable
 {
