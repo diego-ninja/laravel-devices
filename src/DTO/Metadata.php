@@ -12,12 +12,14 @@ final class Metadata implements JsonSerializable
 
     public function __call($name, $arguments): mixed
     {
+        $property = $this->underscorize(substr($name, 3));
+
         if (str_starts_with($name, 'get')) {
-            return $this->get(lcfirst(substr($name, 3)));
+            return $this->get($property);
         }
 
         if (str_starts_with($name, 'set')) {
-            $this->set(lcfirst(substr($name, 3)), $arguments[0]);
+            $this->set($property, $arguments[0]);
         }
 
         if (isset($this->data[$name])) {
@@ -25,6 +27,11 @@ final class Metadata implements JsonSerializable
         }
 
         return null;
+    }
+
+    public function has(string $key): bool
+    {
+        return isset($this->data[$key]);
     }
 
     public function get(string $key): mixed
@@ -37,9 +44,14 @@ final class Metadata implements JsonSerializable
         $this->data[$key] = $value;
     }
 
-    public function asArray(): array
+    public function array(): array
     {
         return $this->data;
+    }
+
+    public function json(): string
+    {
+        return json_encode($this->data);
     }
 
     public static function from(array $data): self
@@ -49,6 +61,16 @@ final class Metadata implements JsonSerializable
 
     public function jsonSerialize(): array
     {
-        return $this->asArray();
+        return $this->array();
+    }
+
+    private function camelize(string $str): string
+    {
+        return lcfirst(str_replace(' ', '', ucwords(str_replace(['-', '_'], ' ', $str))));
+    }
+
+    private function underscorize(string $str): string
+    {
+        return strtolower(preg_replace('/([a-z])([A-Z])/', '$1_$2', $str));
     }
 }
