@@ -228,6 +228,15 @@ return [
     */
     'google_2fa_route_name' => 'app.2fa',
 
+    /*
+    |--------------------------------------------------------------------------
+    | Google 2FA QR Format
+    |--------------------------------------------------------------------------
+    |
+    | This option allows you to easily specify the format of the QR image for Google 2FA.
+    | Options: 'base64', 'svg'
+    */
+    'google_2fa_qr_format' => 'base64',
 
     /*
     |--------------------------------------------------------------------------

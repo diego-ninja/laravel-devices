@@ -28,8 +28,7 @@ final class TwoFactorController extends Controller
         }
 
         return response()->json([
-            'svg' => $user->google2faQrCode("svg"),
-            'base64' => $user->google2faQrCode("base64"),
+            'code' => $user->google2faQrCode(Config::get('devices.google_2fa_qr_format'))
         ]);
     }
 

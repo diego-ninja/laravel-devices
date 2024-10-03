@@ -314,6 +314,10 @@ class Session extends Model implements Cacheable
 
     public static function current(): ?Session
     {
+        if (!self::sessionUuid()) {
+            return null;
+        }
+
         return self::findByUuid(self::sessionUuid());
     }
 
