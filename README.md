@@ -8,7 +8,7 @@
 
 This package provides session tracking functionalities, multi session management and user device management features for Laravel applications. This package is slightly based on [laravel-session-tracker](https://github.com/hamedmehryar/laravel-session-tracker) but updated with new features, and, important note, intended to use with recent Laravel versions, 10 and 11.
 
-This is a work in progress, use it in production environments with care.  Help is needed to improve the project, so if you are interested in contributing, please read the [contributing guide](./.github/CONTRIBUTING.md).
+This is a work in progress, and maybe or maybe not be ready for production use.  Help is needed to improve the project, so if you are interested in contributing, please read the [contributing guide](./docs/contributing.md).
 
 ## ❤️ Features
 
@@ -19,7 +19,8 @@ This is a work in progress, use it in production environments with care.  Help i
   * Session location tracking
 * Device verifying
 * Device hijacking detection (WIP)
-* Domain events
+* Custom id format for sessions and devices
+* Application events
 * Ready to use middleware, routes, controllers, dtos, value objects and resources
 * Ready to use Google 2FA integration
 * Cache support for devices, sessions, locations and user agents
@@ -81,7 +82,7 @@ class User extends Model {
 }  
 ```  
 
-Add the DeviceTrack middleware in your bootstrap/app.php file. This middleware will track the user device, it will check the presence of a cookie with a device uuid and will create a new device uuid if it doesn't exist.
+Add the DeviceTrack middleware in your bootstrap/app.php file. This middleware will track the user device, it will check the presence of a cookie with a device uuid and will create a new device id if it doesn't exist.
 
 ```php
 protected $middleware = [
@@ -99,16 +100,23 @@ In your routes.php file you should add 'session-tracker' middleware for routes w
 	});
 ```
 
+## 🎛️ Configuration
+
+[Config file](https://github.com/diego-ninja/laravel-devices/blob/6e3373936cbe3ba9e9c24c97fa29b8798ec23992/config/devices.php) is fully commented and self-explanatory. Please check detailed instructions on every aspect there.
+
 ## ⚙️ How it works
+
+This package tracks user devices and sessions. It requires a current Laravel session to be active to work properly, so you need to start a session before using it, this is achieved by adding the StartSession middleware before the SessionTracker one.
+
 ### 📱 Device management
 #### Tracking
-When a user accesses a route with DeviceTracker middleware enabled, the middleware checks for the presence of a cookie (devices.device_id_cookie_name), if the cookie is already set, the middleware does nothing, if not, the middleware generates a new uuid version 7, sets the cookie and forwards the request. Note that, in this step, there isn't a proper Device model created yet. The DeviceTracked event is fired after setting the cookie to the user.
+When a user accesses a route with DeviceTracker middleware enabled, the middleware checks for the presence of a cookie (devices.device_id_cookie_name), if the cookie is already set, the middleware does nothing, if not, the middleware generates a new configured uuid, sets the cookie and forwards the request. Note that, in this step, there isn't a proper Device model created yet. The DeviceTracked event is fired after setting the cookie to the user.
 #### Creating
 When a user logs in to the application,  the AuthenticationHandler listening to the Login auth event, checks for the presence of the device uuid, either in application memory if this is the first time the device is tracked, or in the cookie in subsequent requests. If the device uuid is available, it tries to create a new device if it does not already exist, by default this can be changed in the configuration, the new device is flagged as unverified. The DeviceCreated event is fired after this action.
 #### Verifying
 The initial status for a device is unverified, this means the device has been created but we don't have any valid user interaction from the user verifying the device, by default we don't consider the user login sufficient to verify the device. A device can be verified in two main ways, either by unlocking a session using a 2FA method, or by the user marking the device as verified using the controller action. The DeviceVerified event is fired when a device is flagged as verified.
 
-By default while a device is unverified, all the sessions from that device will be created in a locked state, and will be need to unlock to be able to use the api from that session.
+By default while a device is unverified, all the sessions from that device will be created in a locked state if the 2FA is enabled, both globally and for the logged user, and will be need to unlock to be able to use the api from that session.
 #### Hijacking
 A device can be flagged as hijacked at any time, now by controller and model, and in the near future with an automatic mechanism (WIP) to detect possible device or session hijacking attempts. This is a work in progress. A hijacked device can no longer create sessions. When a device is flagged as hijacked, the DeviceHijacked event is fired and all sessions associated with the device are blocked. At the moment, the hijacked state is a final state, this mean that flagging a device as hijacked is a non-back operation, there isn't a way to set back the device as verified.
 
@@ -118,6 +126,8 @@ Every time a user logs in to the application, the AuthenticationHandler, right a
 The SessionStarted event is dispatched after the session is created.
 #### Location tracking
 Every time a new session is created, the ip address location is tracked and the geographical information is added to the session. You can develop your own LocationProviders implementing the LocationProvider contract. An IpInfo location provider is configured and used by default.
+
+IP address location resolutions are suitable to be cached. You can configure cache in the [config file](https://github.com/diego-ninja/laravel-devices/blob/6e3373936cbe3ba9e9c24c97fa29b8798ec23992/config/devices.php).
 
 The following information is stored associated to the session, you can use this information to detect hijacking attempts, or at least notify the user about suspicious activity if the session initial location differs a lot from request location.
 
