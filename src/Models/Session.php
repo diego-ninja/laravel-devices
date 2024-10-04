@@ -144,7 +144,7 @@ class Session extends Model implements Cacheable
 
     private static function initialStatus(Device $device): SessionStatus
     {
-        if (!$device->user?->google2fa->enabled()) {
+        if (!$device->user?->google2faEnabled()) {
             return SessionStatus::Active;
         } else {
             return $device->verified() ? SessionStatus::Active : SessionStatus::Locked;
