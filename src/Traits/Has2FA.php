@@ -10,6 +10,7 @@ use BaconQrCode\Renderer\RendererStyle\Fill;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
 use BaconQrCode\Writer;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\Config;
 use PragmaRX\Google2FA\Google2FA;
 
 trait Has2FA
@@ -29,7 +30,13 @@ trait Has2FA
 
     public function google2faEnabled(): bool
     {
-        return $this->google2fa && $this->google2fa->enabled;
+        if (!Config::get("devices.google_2fa_enabled")) {
+            return false;
+        }
+
+        return
+            $this->google2fa &&
+            $this->google2fa->enabled();
     }
 
     public function enable2fa(string $secret): void

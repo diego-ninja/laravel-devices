@@ -60,6 +60,17 @@ return [
     */
     'allow_device_multi_session' => true,
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Start new session on login
+    |--------------------------------------------------------------------------
+    | This option specifies if the user should start a new session when they login
+    | or if they should continue refreshing the current session.
+    |
+    */
+    'start_new_session_on_login' => false,
+
     /*
     |--------------------------------------------------------------------------
     | Ignore routes for restarting the session

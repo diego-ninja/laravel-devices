@@ -2,25 +2,34 @@
 
 namespace Ninja\DeviceTracker;
 
+use Config;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Events\Dispatcher;
 use Ninja\DeviceTracker\Events\Google2FASuccess;
 use Ninja\DeviceTracker\Facades\DeviceManager;
 use Ninja\DeviceTracker\Facades\SessionManager;
-use Ninja\DeviceTracker\Models\Session;
 
 final readonly class AuthenticationHandler
 {
     public function onLogin(Login $event): void
     {
         DeviceManager::addUserDevice(request());
+        SessionManager::refresh();
 
-        if (SessionManager::forgot()) {
-            SessionManager::start();
+        /**
+        $current = SessionManager::current();
+
+        if ($current) {
+            if (Config::get('devices.start_new_session_on_login')) {
+                SessionManager::start();
+            } else {
+                SessionManager::restart(request());
+            }
         } else {
-            SessionManager::renew();
+            SessionManager::start();
         }
+        **/
     }
 
     public function onLogout(Logout $event): void
@@ -45,4 +54,3 @@ final readonly class AuthenticationHandler
         $events->listen('Ninja\DeviceTracker\Events\Google2FASuccess', 'Ninja\DeviceTracker\AuthenticationHandler@onGoogle2FASuccess');
     }
 }
-

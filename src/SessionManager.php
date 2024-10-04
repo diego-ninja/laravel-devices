@@ -2,6 +2,7 @@
 
 namespace Ninja\DeviceTracker;
 
+use Config;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
@@ -59,6 +60,26 @@ final readonly class SessionManager
     }
 
     /**
+     * @throws DeviceNotFoundException
+     */
+    public function refresh(): Session
+    {
+        $current = Session::current();
+        if (!$current) {
+            return $this->start();
+        }
+
+        if (Config::get('devices.start_new_session_on_login')) {
+            $current->end(true);
+            return $this->start();
+        }
+
+        $current->renew();
+
+        return $current;
+    }
+
+    /**
      * @throws \Exception
      */
     public function inactive(Authenticatable $user = null): bool
@@ -110,7 +131,6 @@ final readonly class SessionManager
 
     public function delete(): void
     {
-
         if ($this->sessionUuid() !== null) {
             Session::destroy($this->sessionUuid());
             SessionFacade::forget(Session::DEVICE_SESSION_ID);
