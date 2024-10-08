@@ -3,6 +3,7 @@
 namespace Ninja\DeviceTracker;
 
 use Config;
+use Exception;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
@@ -80,7 +81,7 @@ final readonly class SessionManager
     }
 
     /**
-     * @throws \Exception
+     * @throws Exception
      */
     public function inactive(Authenticatable $user = null): bool
     {
@@ -89,7 +90,7 @@ final readonly class SessionManager
             return $user?->inactive() ?? false;
         }
 
-        throw new \Exception('Authenticatable instance must use HasDevices trait');
+        throw new Exception('Authenticatable instance must use HasDevices trait');
     }
 
     /**
