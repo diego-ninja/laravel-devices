@@ -6,6 +6,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 ![GitHub last commit](https://img.shields.io/github/last-commit/diego-ninja/laravel-devices?color=blue)
 [![Hits-of-Code](https://hitsofcode.com/github/diego-ninja/laravel-devices?branch=main&label=Hits-of-Code)](https://hitsofcode.com/github/diego-ninja/laravel-devices/view?branch=main&label=Hits-of-Code&color=blue)
+[![wakatime](https://wakatime.com/badge/user/bd65f055-c9f3-4f73-92aa-3c9810f70cc3/project/94491bff-6b6c-4b9d-a5fd-5568319d3071.svg)](https://wakatime.com/badge/user/bd65f055-c9f3-4f73-92aa-3c9810f70cc3/project/94491bff-6b6c-4b9d-a5fd-5568319d3071)
 
 This package provides session tracking functionalities, multi session management and user device management features for Laravel applications. This package is slightly based on [laravel-session-tracker](https://github.com/hamedmehryar/laravel-session-tracker) but updated with new features, and, important note, intended to use with recent Laravel versions, 10 and 11.
 
@@ -33,10 +34,16 @@ In composer.json:
 "require": { "diego-ninja/laravel-devices": "^1" }  
 ```
 
-Run:
-```bash 
+and run:
+```bash
 composer update  
 ```
+
+or 
+```bash
+composer require diego-ninja/laravel-devices
+```
+
 
 Publish config and migrations:
 ```bash

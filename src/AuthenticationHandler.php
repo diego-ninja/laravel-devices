@@ -21,14 +21,10 @@ final readonly class AuthenticationHandler
 
     public function onLogout(Logout $event): void
     {
-        $current = Session::current();
-
-        if ($current) {
-            $current->end(
-                forgetSession: true,
-                user: $event->user,
-            );
-        }
+        Session::current()?->end(
+            forgetSession: true,
+            user: $event->user,
+        );
     }
 
     public function onGoogle2FASuccess(Google2FASuccess $event): void
