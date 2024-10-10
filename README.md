@@ -5,6 +5,7 @@
 ![PHP Version](https://img.shields.io/packagist/php-v/diego-ninja/cosmic.svg?style=flat&color=blue)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 ![GitHub last commit](https://img.shields.io/github/last-commit/diego-ninja/laravel-devices?color=blue)
+[![Hits-of-Code](https://hitsofcode.com/github/diego-ninja/laravel-devices?branch=main&label=Hits-of-Code)](https://hitsofcode.com/github/diego-ninja/laravel-devices/view?branch=main&label=Hits-of-Code&color=blue)
 
 This package provides session tracking functionalities, multi session management and user device management features for Laravel applications. This package is slightly based on [laravel-session-tracker](https://github.com/hamedmehryar/laravel-session-tracker) but updated with new features, and, important note, intended to use with recent Laravel versions, 10 and 11.
 
