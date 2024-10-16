@@ -7,14 +7,16 @@ trait PropertyProxy
     public function __call($method, $parameters): mixed
     {
         $property = $this->extract($method);
-        if ($this->metadata->has($property)) {
-            if ($this->getter($method)) {
+
+        if ($this->getter($method)) {
+            if ($this->metadata->has($property)) {
                 return $this->metadata->get($property);
             }
+        }
 
-            if ($this->setter($method)) {
-                $this->metadata->set($property, $parameters[0]);
-            }
+        if ($this->setter($method)) {
+            $this->metadata->set($property, $parameters[0]);
+            return $this;
         }
 
         return parent::__call($method, $parameters);
