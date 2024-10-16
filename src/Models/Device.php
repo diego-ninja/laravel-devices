@@ -25,6 +25,7 @@ use Ninja\DeviceTracker\Events\DeviceHijackedEvent;
 use Ninja\DeviceTracker\Events\DeviceVerifiedEvent;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
+use Ninja\DeviceTracker\Traits\PropertyProxy;
 
 /**
  * Class DeviceManager
@@ -60,6 +61,8 @@ use Ninja\DeviceTracker\Factories\DeviceIdFactory;
  */
 class Device extends Model implements Cacheable
 {
+    use PropertyProxy;
+
     protected $table = 'devices';
 
     protected $fillable = [

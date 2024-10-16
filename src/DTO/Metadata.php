@@ -41,7 +41,7 @@ final class Metadata implements JsonSerializable
 
     public function set(string $key, mixed $value): void
     {
-        $this->data[$key] = $value;
+        $this->data[$this->underscorize($key)] = $value;
     }
 
     public function array(): array
@@ -66,11 +66,11 @@ final class Metadata implements JsonSerializable
 
     private function camelize(string $str): string
     {
-        return lcfirst(str_replace(' ', '', ucwords(str_replace(['-', '_'], ' ', $str))));
+        return str($str)->camel()->ucfirst();
     }
 
     private function underscorize(string $str): string
     {
-        return strtolower(preg_replace('/([a-z])([A-Z])/', '$1_$2', $str));
+        return str($str)->lower()->snake();
     }
 }
