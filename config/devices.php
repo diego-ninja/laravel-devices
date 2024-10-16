@@ -22,7 +22,6 @@ return [
     */
     'device_id_storable_class' => \Ninja\DeviceTracker\ValueObject\DeviceId::class,
 
-
     /*
     |--------------------------------------------------------------------------
     | Session ID class
@@ -59,7 +58,6 @@ return [
     |
     */
     'allow_device_multi_session' => true,
-
 
     /*
     |--------------------------------------------------------------------------
@@ -111,6 +109,26 @@ return [
     */
     'inactivity_session_behaviour' => 'terminate',
 
+    /*
+    |--------------------------------------------------------------------------
+    | Enable fingerprinting
+    |--------------------------------------------------------------------------
+    |
+    | This option allows you to enable or disable client-side device fingerprinting.
+    |
+    */
+    'fingerprinting_enabled' => true,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Fingerprint key
+    |--------------------------------------------------------------------------
+    |
+    | This option allows you to easily specify the key that will be used to store
+    | the fingerprint in cookie/header set by the client.
+    |
+    */
+    'client_fingerprint_key' => 'x-device-fingerprint',
 
     /*
     |--------------------------------------------------------------------------

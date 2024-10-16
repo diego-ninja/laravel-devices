@@ -13,6 +13,7 @@ use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Events\DeviceTrackedEvent;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Models\Device;
+use RuntimeException;
 
 final class DeviceManager
 {
@@ -32,7 +33,7 @@ final class DeviceManager
 
     public function addUserDevice(Request $request): bool
     {
-        $deviceUuid = self::deviceUuid();
+        $deviceUuid = device_uuid();
         if ($deviceUuid) {
             if (Auth::user()?->hasDevice($deviceUuid)) {
                 return true;
@@ -41,7 +42,7 @@ final class DeviceManager
             $device = Device::register(
                 deviceUuid: $deviceUuid,
                 data: app(DeviceDetector::class)->detect($request),
-                user: Auth::user(),
+                user: Auth::user()
             );
 
             return Auth::user()?->addDevice($device);
@@ -53,11 +54,6 @@ final class DeviceManager
     public function userDevices(): Collection
     {
         return Auth::user()?->devices;
-    }
-
-    public function deviceUuid(): ?StorableId
-    {
-        return Device::getDeviceUuid();
     }
 
     public function tracked(): bool

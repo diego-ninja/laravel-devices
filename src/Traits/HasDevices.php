@@ -56,7 +56,7 @@ trait HasDevices
         return $this->devices->where(
             key: 'uuid',
             operator: '=',
-            value: (string) Device::getDeviceUuid()
+            value: (string) device_uuid()
         )->first();
     }
 

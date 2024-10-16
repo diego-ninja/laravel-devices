@@ -38,6 +38,7 @@ use Ninja\DeviceTracker\Traits\PropertyProxy;
  * @property int                          $id                     unsigned int
  * @property StorableId                   $uuid                   string
  * @property integer                      $user_id                unsigned int
+ * @property string                       $fingerprint            string
  * @property DeviceStatus                 $status                 string
  * @property string                       $browser                string
  * @property string                       $browser_version        string
@@ -68,6 +69,7 @@ class Device extends Model implements Cacheable
     protected $fillable = [
         'uuid',
         'user_id',
+        'fingerprint',
         'browser',
         'browser_version',
         'browser_family',
@@ -128,7 +130,7 @@ class Device extends Model implements Cacheable
 
     public function isCurrent(): bool
     {
-        return $this->uuid->toString() === self::getDeviceUuid()?->toString();
+        return $this->uuid->toString() === device_uuid()?->toString();
     }
 
     public function verify(): void
@@ -210,6 +212,7 @@ class Device extends Model implements Cacheable
         $device = self::create([
             'uuid' => $deviceUuid,
             'user_id' => $user->id,
+            'fingerprint' => fingerprint(),
             'browser' => $data->browser->name,
             'browser_version' => $data->browser->version,
             'browser_family' => $data->browser->family,
@@ -234,33 +237,43 @@ class Device extends Model implements Cacheable
         return null;
     }
 
-    public static function findByUuid(StorableId|string $uuid): ?self
+    public static function byUuid(StorableId|string $uuid): ?self
     {
         if (is_string($uuid)) {
             $uuid = DeviceIdFactory::from($uuid);
         }
 
-        return DeviceCache::remember($uuid->toString(), fn() => self::where('uuid', $uuid->toString())->first());
+        return DeviceCache::remember(
+            key: DeviceCache::key($uuid),
+            callback: fn() => self::where('uuid', $uuid->toString())->first()
+        );
     }
 
     /**
      * @throws DeviceNotFoundException
      */
-    public static function findByUuidOrFail(StorableId|string $uuid): self
+    public static function byUuidOrFail(StorableId|string $uuid): self
     {
-        return self::findByUuid($uuid) ?? throw DeviceNotFoundException::withDevice($uuid);
+        return self::byUuid($uuid) ?? throw DeviceNotFoundException::withDevice($uuid);
+    }
+
+    public static function byFingerprint(string $fingerprint): ?self
+    {
+        return DeviceCache::remember(
+            key: DeviceCache::key($fingerprint),
+            callback: fn() => self::where('fingerprint', $fingerprint)->first()
+        );
     }
 
     public static function current(): ?self
     {
-        return self::findByUuid(self::getDeviceUuid());
+        if (Config::get('devices.fingerprinting_enabled')) {
+            return self::byFingerprint(fingerprint());
+        }
+
+        return self::byUuid(device_uuid());
     }
 
-    public static function getDeviceUuid(): ?StorableId
-    {
-        $cookieName = Config::get('devices.device_id_cookie_name');
-        return Cookie::has($cookieName) ? DeviceIdFactory::from(Cookie::get($cookieName)) : DeviceManager::$deviceUuid;
-    }
     public static function boot(): void
     {
         parent::boot();

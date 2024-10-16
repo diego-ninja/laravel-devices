@@ -303,11 +303,17 @@ class Session extends Model implements Cacheable
         });
     }
 
+    /**
+     * @throws SessionNotFoundException
+     */
     public static function findByUuidOrFail(StorableId|string $uuid): self
     {
         return self::findByUuid($uuid) ?? throw SessionNotFoundException::withSession($uuid);
     }
 
+    /**
+     * @throws SessionNotFoundException
+     */
     public static function current(): ?Session
     {
         if (!self::sessionUuid()) {
