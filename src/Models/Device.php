@@ -6,16 +6,14 @@ use Carbon\Carbon;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Cookie;
 use Ninja\DeviceTracker\Cache\DeviceCache;
 use Ninja\DeviceTracker\Contracts\Cacheable;
 use Ninja\DeviceTracker\Contracts\StorableId;
-use Ninja\DeviceTracker\DeviceManager;
 use Ninja\DeviceTracker\DTO\Device as DeviceDTO;
 use Ninja\DeviceTracker\DTO\Metadata;
 use Ninja\DeviceTracker\Enums\DeviceStatus;
@@ -37,7 +35,6 @@ use Ninja\DeviceTracker\Traits\PropertyProxy;
  *
  * @property int                          $id                     unsigned int
  * @property StorableId                   $uuid                   string
- * @property integer                      $user_id                unsigned int
  * @property string                       $fingerprint            string
  * @property DeviceStatus                 $status                 string
  * @property string                       $browser                string
@@ -68,7 +65,6 @@ class Device extends Model implements Cacheable
 
     protected $fillable = [
         'uuid',
-        'user_id',
         'fingerprint',
         'browser',
         'browser_version',
@@ -91,9 +87,17 @@ class Device extends Model implements Cacheable
         return $this->hasMany(Session::class, 'device_uuid', 'uuid');
     }
 
-    public function user(): HasOne
+    public function users(): BelongsToMany
     {
-        return $this->hasOne(Config::get("devices.authenticatable_class"), 'id', 'user_id');
+        $table = sprintf('%s_devices', str(\config('devices.authenticatable_table'))->singular());
+        $field = sprintf('%s_id', str(\config('devices.authenticatable_table'))->singular());
+
+        return $this->belongsToMany(
+            related: Config::get("devices.authenticatable_class"),
+            table: $table,
+            foreignPivotKey: 'device_uuid',
+            relatedPivotKey: $field
+        );
     }
 
     public function uuid(): Attribute
@@ -206,12 +210,15 @@ class Device extends Model implements Cacheable
 
     public static function register(
         StorableId $deviceUuid,
-        DeviceDTO $data,
-        Authenticatable $user = null
+        DeviceDTO $data
     ): ?self {
+        $device = self::byUuid($deviceUuid);
+        if ($device) {
+            return $device;
+        }
+
         $device = self::create([
             'uuid' => $deviceUuid,
-            'user_id' => $user->id,
             'fingerprint' => fingerprint(),
             'browser' => $data->browser->name,
             'browser_version' => $data->browser->version,
@@ -230,7 +237,7 @@ class Device extends Model implements Cacheable
         ]);
 
         if ($device) {
-            DeviceCreatedEvent::dispatch($device, $user);
+            DeviceCreatedEvent::dispatch($device);
             return $device;
         }
 
