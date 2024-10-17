@@ -96,8 +96,10 @@ class Device extends Model implements Cacheable
             related: Config::get("devices.authenticatable_class"),
             table: $table,
             foreignPivotKey: 'device_uuid',
-            relatedPivotKey: $field
-        );
+            relatedPivotKey: $field,
+            parentKey: 'uuid',
+            relatedKey: 'id'
+        )->withTimestamps();
     }
 
     public function uuid(): Attribute

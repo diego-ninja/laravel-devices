@@ -55,9 +55,11 @@ trait HasDevices
         return $this->belongsToMany(
             related: Device::class,
             table: $table,
-            foreignPivotKey:$field,
-            relatedPivotKey: 'device_uuid'
-        );
+            foreignPivotKey: $field,
+            relatedPivotKey: 'device_uuid',
+            parentKey: 'id',
+            relatedKey: 'uuid'
+        )->withTimestamps();
     }
 
     public function device(): ?Device

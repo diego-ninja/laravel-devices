@@ -43,7 +43,8 @@ final class DeviceManager
                 data: app(DeviceDetector::class)->detect($request)
             );
 
-            return Auth::user()?->devices()->attach($deviceUuid);
+            Auth::user()?->devices()->attach($deviceUuid);
+            return true;
         }
 
         return false;

@@ -122,11 +122,11 @@ class Session extends Model implements Cacheable
         $location = app(LocationProvider::class)->locate($ip);
 
         if (!Config::get('devices.allow_device_multi_session')) {
-            self::endPreviousSessions($device, $device->user);
+            self::endPreviousSessions($device, Auth::user());
         }
 
         $session = self::create([
-            'user_id' => $device->user->id,
+            'user_id' => Auth::user()->id,
             'uuid' => SessionIdFactory::generate(),
             'device_uuid' => $device->uuid,
             'ip' => $ip,
@@ -137,14 +137,14 @@ class Session extends Model implements Cacheable
         ]);
 
         SessionFacade::put(self::DEVICE_SESSION_ID, $session->uuid);
-        SessionStartedEvent::dispatch($session, $device->user);
+        SessionStartedEvent::dispatch($session, Auth::user());
 
         return $session;
     }
 
     private static function initialStatus(Device $device): SessionStatus
     {
-        if (!$device->user?->google2faEnabled()) {
+        if (!Auth::user()?->google2faEnabled()) {
             return SessionStatus::Active;
         } else {
             return $device->verified() ? SessionStatus::Active : SessionStatus::Locked;

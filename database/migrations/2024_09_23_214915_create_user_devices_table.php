@@ -8,7 +8,7 @@ return new class extends Migration {
     {
         Schema::create($this->table(), function (Blueprint $table) {
             $table->id();
-            $table->string($this->field());
+            $table->bigInteger($this->field());
             $table->string('device_uuid');
             $table->timestamps();
             $table->foreign($this->field())
