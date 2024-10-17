@@ -107,7 +107,7 @@ class Device extends Model implements Cacheable
     public function status(): Attribute
     {
         return Attribute::make(
-            get: fn(string $value) => DeviceStatus::from($value),
+            get: fn(?string $value) => $value ? DeviceStatus::from($value) : DeviceStatus::Unverified,
             set: fn(DeviceStatus $value) => $value->value
         );
     }

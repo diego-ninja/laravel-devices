@@ -2,6 +2,8 @@
 
 namespace Ninja\DeviceTracker\Traits;
 
+use BadMethodCallException;
+
 trait PropertyProxy
 {
     public function __call($method, $parameters): mixed
@@ -19,7 +21,11 @@ trait PropertyProxy
             return $this;
         }
 
-        return parent::__call($method, $parameters);
+        try {
+            return parent::__call($method, $parameters);
+        } catch (BadMethodCallException $e) {
+            return null;
+        }
     }
 
     public function getter(string $method): bool

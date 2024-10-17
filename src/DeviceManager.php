@@ -13,7 +13,6 @@ use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Events\DeviceTrackedEvent;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Models\Device;
-use RuntimeException;
 
 final class DeviceManager
 {
