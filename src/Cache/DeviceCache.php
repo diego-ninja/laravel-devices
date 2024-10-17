@@ -28,7 +28,7 @@ final class DeviceCache extends AbstractCache
         }
 
         $this->cache->forget($item->key());
-        $this->cache->forget("user:devices:" . $item->user->id);
+        $item->users()->each(fn($user) => $this->cache->forget("user:devices:" . $user->id));
     }
 
     public static function userDevices(Authenticatable $user)
