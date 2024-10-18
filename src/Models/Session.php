@@ -107,7 +107,7 @@ class Session extends Model implements Cacheable
         );
     }
 
-    public static function start(Device $device): Session
+    public static function start(Device $device, ?Authenticatable $user = null): Session
     {
         $now = Carbon::now();
 
@@ -122,7 +122,7 @@ class Session extends Model implements Cacheable
         $location = app(LocationProvider::class)->locate($ip);
 
         if (!Config::get('devices.allow_device_multi_session')) {
-            self::endPreviousSessions($device, Auth::user());
+            self::endPreviousSessions($device, $user ?? Auth::user());
         }
 
         $session = self::create([

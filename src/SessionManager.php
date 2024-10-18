@@ -63,7 +63,7 @@ final readonly class SessionManager
     /**
      * @throws DeviceNotFoundException
      */
-    public function refresh(): Session
+    public function refresh(?Authenticatable $user = null): Session
     {
         $current = Session::current();
         if (!$current) {
@@ -71,7 +71,7 @@ final readonly class SessionManager
         }
 
         if (Config::get('devices.start_new_session_on_login')) {
-            $current->end(true);
+            $current->end(true, $user);
             return $this->start();
         }
 
