@@ -20,6 +20,7 @@ use Ninja\DeviceTracker\Enums\DeviceStatus;
 use Ninja\DeviceTracker\Enums\SessionStatus;
 use Ninja\DeviceTracker\Events\DeviceCreatedEvent;
 use Ninja\DeviceTracker\Events\DeviceHijackedEvent;
+use Ninja\DeviceTracker\Events\DeviceUpdatedEvent;
 use Ninja\DeviceTracker\Events\DeviceVerifiedEvent;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
@@ -239,7 +240,6 @@ class Device extends Model implements Cacheable
         ]);
 
         if ($device) {
-            DeviceCreatedEvent::dispatch($device);
             return $device;
         }
 
@@ -290,11 +290,15 @@ class Device extends Model implements Cacheable
         static::created(function (Device $device) {
             DeviceCache::forget($device);
             DeviceCache::put($device);
+
+            event(new DeviceCreatedEvent($device));
         });
 
         static::updated(function (Device $device) {
             DeviceCache::forget($device);
             DeviceCache::put($device);
+
+            event(new DeviceUpdatedEvent($device));
         });
     }
 }
