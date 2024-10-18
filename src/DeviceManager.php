@@ -30,7 +30,7 @@ final class DeviceManager
         return Auth::user()?->hasDevice($deviceUuid);
     }
 
-    public function addUserDevice(Request $request): bool
+    public function attach(): bool
     {
         $deviceUuid = device_uuid();
         if ($deviceUuid) {
@@ -38,12 +38,7 @@ final class DeviceManager
                 return true;
             }
 
-            $device = Device::register(
-                deviceUuid: $deviceUuid,
-                data: app(DeviceDetector::class)->detect($request)
-            );
-
-            Auth::user()?->devices()->attach($device->uuid);
+            Auth::user()?->devices()->attach($deviceUuid);
             return true;
         }
 
@@ -72,7 +67,12 @@ final class DeviceManager
             )
         );
 
-        DeviceTrackedEvent::dispatch(self::$deviceUuid);
+        event(new DeviceTrackedEvent(self::$deviceUuid));
+
+        Device::register(
+            deviceUuid: self::$deviceUuid,
+            data: app(DeviceDetector::class)->detect(\request())
+        );
 
         return self::$deviceUuid;
     }
