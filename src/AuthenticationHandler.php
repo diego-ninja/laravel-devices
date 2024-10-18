@@ -15,8 +15,8 @@ final readonly class AuthenticationHandler
 {
     public function onLogin(Login $event): void
     {
-        DeviceManager::addUserDevice(request());
-        SessionManager::refresh();
+        DeviceManager::attach();
+        SessionManager::refresh($event->user);
     }
 
     public function onLogout(Logout $event): void

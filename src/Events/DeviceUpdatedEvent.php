@@ -8,7 +8,7 @@ use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use Ninja\DeviceTracker\Models\Device;
 
-final class DeviceCreatedEvent
+final class DeviceUpdatedEvent
 {
     use Dispatchable;
     use InteractsWithSockets;

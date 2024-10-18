@@ -2,6 +2,7 @@
 
 namespace Ninja\DeviceTracker\Traits;
 
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Session as SessionFacade;
@@ -46,9 +47,19 @@ trait HasDevices
         return $this->hasMany(Session::class, 'user_id');
     }
 
-    public function devices(): HasMany
+    public function devices(): BelongsToMany
     {
-        return $this->hasMany(Device::class, 'user_id');
+        $table = sprintf('%s_devices', str(\config('devices.authenticatable_table'))->singular());
+        $field = sprintf('%s_id', str(\config('devices.authenticatable_table'))->singular());
+
+        return $this->belongsToMany(
+            related: Device::class,
+            table: $table,
+            foreignPivotKey: $field,
+            relatedPivotKey: 'device_uuid',
+            parentKey: 'id',
+            relatedKey: 'uuid'
+        )->withTimestamps();
     }
 
     public function device(): ?Device
@@ -56,7 +67,7 @@ trait HasDevices
         return $this->devices->where(
             key: 'uuid',
             operator: '=',
-            value: (string) Device::getDeviceUuid()
+            value: (string) device_uuid()
         )->first();
     }
 
@@ -80,8 +91,8 @@ trait HasDevices
             return true;
         }
 
-        $device->user_id = $this->id;
-        $device->save();
+        $this->devices()->attach($device->uuid);
+        $this->save();
 
         return true;
     }
@@ -98,7 +109,7 @@ trait HasDevices
 
     public function devicesUids(): array
     {
-        $query = $this->devices()->pluck('uuid');
+        $query = $this->devices()->pluck('device_uuid');
         return $query->all();
     }
 }

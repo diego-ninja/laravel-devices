@@ -30,21 +30,16 @@ final class DeviceManager
         return Auth::user()?->hasDevice($deviceUuid);
     }
 
-    public function addUserDevice(Request $request): bool
+    public function attach(): bool
     {
-        $deviceUuid = self::deviceUuid();
+        $deviceUuid = device_uuid();
         if ($deviceUuid) {
             if (Auth::user()?->hasDevice($deviceUuid)) {
                 return true;
             }
 
-            $device = Device::register(
-                deviceUuid: $deviceUuid,
-                data: app(DeviceDetector::class)->detect($request),
-                user: Auth::user(),
-            );
-
-            return Auth::user()?->addDevice($device);
+            Auth::user()?->devices()->attach($deviceUuid);
+            return true;
         }
 
         return false;
@@ -53,11 +48,6 @@ final class DeviceManager
     public function userDevices(): Collection
     {
         return Auth::user()?->devices;
-    }
-
-    public function deviceUuid(): ?StorableId
-    {
-        return Device::getDeviceUuid();
     }
 
     public function tracked(): bool
@@ -77,7 +67,12 @@ final class DeviceManager
             )
         );
 
-        DeviceTrackedEvent::dispatch(self::$deviceUuid);
+        event(new DeviceTrackedEvent(self::$deviceUuid));
+
+        Device::register(
+            deviceUuid: self::$deviceUuid,
+            data: app(DeviceDetector::class)->detect(\request())
+        );
 
         return self::$deviceUuid;
     }
