@@ -38,12 +38,12 @@ final class DeviceManager
                 return true;
             }
 
-            Device::register(
+            $device = Device::register(
                 deviceUuid: $deviceUuid,
                 data: app(DeviceDetector::class)->detect($request)
             );
 
-            Auth::user()?->devices()->attach($deviceUuid);
+            Auth::user()?->devices()->attach($device->uuid);
             return true;
         }
 
