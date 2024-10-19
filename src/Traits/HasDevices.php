@@ -39,7 +39,9 @@ trait HasDevices
 
     public function recentSession(): Session
     {
-        return $this->sessions()->orderBy('last_activity_at', 'desc')->first();
+        return $this->sessions()
+            ->where('status', SessionStatus::Active)
+            ->orderBy('last_activity_at', 'desc')->first();
     }
 
     public function sessions(): HasMany
