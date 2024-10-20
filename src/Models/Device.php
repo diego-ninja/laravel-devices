@@ -4,10 +4,10 @@ namespace Ninja\DeviceTracker\Models;
 
 use Carbon\Carbon;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
@@ -17,13 +17,13 @@ use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\DTO\Device as DeviceDTO;
 use Ninja\DeviceTracker\DTO\Metadata;
 use Ninja\DeviceTracker\Enums\DeviceStatus;
-use Ninja\DeviceTracker\Enums\SessionStatus;
 use Ninja\DeviceTracker\Events\DeviceCreatedEvent;
 use Ninja\DeviceTracker\Events\DeviceHijackedEvent;
 use Ninja\DeviceTracker\Events\DeviceUpdatedEvent;
 use Ninja\DeviceTracker\Events\DeviceVerifiedEvent;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
+use Ninja\DeviceTracker\Models\Relations\HasManySessions;
 use Ninja\DeviceTracker\Traits\PropertyProxy;
 
 /**
@@ -83,7 +83,12 @@ class Device extends Model implements Cacheable
         'source',
     ];
 
-    public function sessions(): HasMany
+    public function newHasMany(Builder $query, Model $parent, $foreignKey, $localKey): HasManySessions
+    {
+        return new HasManySessions($query, $parent, $foreignKey, $localKey);
+    }
+
+    public function sessions(): HasManySessions
     {
         return $this->hasMany(Session::class, 'device_uuid', 'uuid');
     }
@@ -130,8 +135,7 @@ class Device extends Model implements Cacheable
     public function activeSessions(): Collection
     {
         return $this
-            ->sessions()
-            ->where('status', SessionStatus::Active)
+            ->sessions()->active()
             ->get();
     }
 
