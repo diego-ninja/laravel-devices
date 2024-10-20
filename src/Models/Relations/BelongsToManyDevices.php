@@ -16,5 +16,4 @@ final class BelongsToManyDevices extends BelongsToMany
     {
         return $this->pluck('uuid')->toArray();
     }
-
 }

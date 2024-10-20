@@ -90,7 +90,14 @@ class Device extends Model implements Cacheable
 
     public function sessions(): HasManySessions
     {
-        return $this->hasMany(Session::class, 'device_uuid', 'uuid');
+        $instance = $this->newRelatedInstance(Session::class);
+
+        return new HasManySessions(
+            query: $instance->newQuery(),
+            parent: $this,
+            foreignKey: 'device_uuid',
+            localKey: 'uuid'
+        );
     }
 
     public function users(): BelongsToMany
@@ -134,9 +141,7 @@ class Device extends Model implements Cacheable
 
     public function activeSessions(): Collection
     {
-        return $this
-            ->sessions()->active()
-            ->get();
+        return $this->sessions()->active();
     }
 
     public function isCurrent(): bool
@@ -144,13 +149,15 @@ class Device extends Model implements Cacheable
         return $this->uuid->toString() === device_uuid()?->toString();
     }
 
-    public function verify(): void
+    public function verify(?Authenticatable $user = null): void
     {
+        $user = $user ?? Auth::user();
+
         $this->verified_at = now();
         $this->status = DeviceStatus::Verified;
 
         if ($this->save()) {
-            DeviceVerifiedEvent::dispatch($this, $this->user);
+            DeviceVerifiedEvent::dispatch($this, $user);
         }
     }
 
@@ -184,7 +191,7 @@ class Device extends Model implements Cacheable
 
     public function forget(): bool
     {
-        $this->sessions->each(fn(Session $session) => $session->end(forgetSession: true));
+        $this->sessions()->active()->each(fn(Session $session) => $session->end(forgetSession: true));
         return $this->delete();
     }
 

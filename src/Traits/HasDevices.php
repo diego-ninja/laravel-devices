@@ -13,9 +13,11 @@ trait HasDevices
 {
     public function sessions(): HasManySessions
     {
+        $instance = $this->newRelatedInstance(Session::class);
+
         return new HasManySessions(
-            query: $this->hasMany(Session::class, 'user_id'),
-            parent: Session::class,
+            query: $instance->newQuery(),
+            parent: $this,
             foreignKey: 'user_id',
             localKey: 'id'
         );
@@ -26,18 +28,11 @@ trait HasDevices
         $table = sprintf('%s_devices', str(\config('devices.authenticatable_table'))->singular());
         $field = sprintf('%s_id', str(\config('devices.authenticatable_table'))->singular());
 
-        $query = $this->belongsToMany(
-            related: Device::class,
-            table: $table,
-            foreignPivotKey: $field,
-            relatedPivotKey: 'device_uuid',
-            parentKey: 'id',
-            relatedKey: 'uuid'
-        )->withTimestamps();
+        $instance = $this->newRelatedInstance(Device::class);
 
         return new BelongsToManyDevices(
-            query: $query,
-            parent: Device::class,
+            query: $instance->newQuery(),
+            parent: $this,
             table: $table,
             foreignPivotKey: $field,
             relatedPivotKey: 'device_uuid',

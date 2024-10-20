@@ -41,4 +41,15 @@ final class SessionCache extends AbstractCache
             return $user->sessions()->with('device')->get();
         });
     }
+
+    public function activeSessions(Authenticatable $user)
+    {
+        if (!self::instance()->enabled()) {
+            return $user->sessions()->with('device')->active();
+        }
+
+        return self::remember('user:sessions:active:' . $user->id, function () use ($user) {
+            return $user->sessions()->with('device')->active();
+        });
+    }
 }

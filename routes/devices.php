@@ -21,6 +21,7 @@ Route::group([
     'middleware' => Config::get('devices.auth_middleware')
 ], function (): void {
     Route::get('/', 'Ninja\DeviceTracker\Http\Controllers\SessionController@list')->name('list');
+    Route::get('/active', 'Ninja\DeviceTracker\Http\Controllers\SessionController@active')->name('active');
     Route::get('/{id}', 'Ninja\DeviceTracker\Http\Controllers\SessionController@show')->name('show');
     Route::patch('/{id}/renew', 'Ninja\DeviceTracker\Http\Controllers\SessionController@renew')->name('renew');
     Route::delete('/{id}/end', 'Ninja\DeviceTracker\Http\Controllers\SessionController@end')->name('end');
