@@ -22,7 +22,6 @@ return [
     */
     'device_id_storable_class' => \Ninja\DeviceTracker\ValueObject\DeviceId::class,
 
-
     /*
     |--------------------------------------------------------------------------
     | Session ID class
@@ -53,13 +52,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Regenerate devices
+    |--------------------------------------------------------------------------
+    | This option specifies if missing devices should be regenerated. Useful to avoid errors
+    | when the device is not found in the database, but it is in the cookie.
+    */
+    'regenerate_devices' => false,
+
+
+    /*
+    |--------------------------------------------------------------------------
     | Allows multiple sessions per device
     |--------------------------------------------------------------------------
     | This option specifies if the user can have multiple active sessions per device
     |
     */
     'allow_device_multi_session' => true,
-
 
     /*
     |--------------------------------------------------------------------------
@@ -111,6 +119,38 @@ return [
     */
     'inactivity_session_behaviour' => 'terminate',
 
+    /*
+    |--------------------------------------------------------------------------
+    | Enable fingerprinting
+    |--------------------------------------------------------------------------
+    |
+    | This option allows you to enable or disable client-side device fingerprinting.
+    |
+    */
+    'fingerprinting_enabled' => true,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Fingerprint transport
+    |--------------------------------------------------------------------------
+    |
+    | This option allows you to specify the transport method for the fingerprint.
+    | Options: 'cookie', 'header'
+    |
+    */
+    'client_fingerprint_transport' => 'header',
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Fingerprint key
+    |--------------------------------------------------------------------------
+    |
+    | This option allows you to easily specify the key that will be used to store
+    | the fingerprint in cookie/header set by the client.
+    |
+    */
+    'client_fingerprint_key' => 'X-Device-Fingerprint',
 
     /*
     |--------------------------------------------------------------------------

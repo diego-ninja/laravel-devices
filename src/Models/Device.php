@@ -4,27 +4,28 @@ namespace Ninja\DeviceTracker\Models;
 
 use Carbon\Carbon;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Cookie;
 use Ninja\DeviceTracker\Cache\DeviceCache;
 use Ninja\DeviceTracker\Contracts\Cacheable;
 use Ninja\DeviceTracker\Contracts\StorableId;
-use Ninja\DeviceTracker\DeviceManager;
 use Ninja\DeviceTracker\DTO\Device as DeviceDTO;
 use Ninja\DeviceTracker\DTO\Metadata;
 use Ninja\DeviceTracker\Enums\DeviceStatus;
-use Ninja\DeviceTracker\Enums\SessionStatus;
 use Ninja\DeviceTracker\Events\DeviceCreatedEvent;
+use Ninja\DeviceTracker\Events\DeviceDeletedEvent;
 use Ninja\DeviceTracker\Events\DeviceHijackedEvent;
+use Ninja\DeviceTracker\Events\DeviceUpdatedEvent;
 use Ninja\DeviceTracker\Events\DeviceVerifiedEvent;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
+use Ninja\DeviceTracker\Models\Relations\HasManySessions;
+use Ninja\DeviceTracker\Traits\PropertyProxy;
 
 /**
  * Class DeviceManager
@@ -36,7 +37,7 @@ use Ninja\DeviceTracker\Factories\DeviceIdFactory;
  *
  * @property int                          $id                     unsigned int
  * @property StorableId                   $uuid                   string
- * @property integer                      $user_id                unsigned int
+ * @property string                       $fingerprint            string
  * @property DeviceStatus                 $status                 string
  * @property string                       $browser                string
  * @property string                       $browser_version        string
@@ -60,11 +61,13 @@ use Ninja\DeviceTracker\Factories\DeviceIdFactory;
  */
 class Device extends Model implements Cacheable
 {
+    use PropertyProxy;
+
     protected $table = 'devices';
 
     protected $fillable = [
         'uuid',
-        'user_id',
+        'fingerprint',
         'browser',
         'browser_version',
         'browser_family',
@@ -81,14 +84,36 @@ class Device extends Model implements Cacheable
         'source',
     ];
 
-    public function sessions(): HasMany
+    public function newHasMany(Builder $query, Model $parent, $foreignKey, $localKey): HasManySessions
     {
-        return $this->hasMany(Session::class, 'device_uuid', 'uuid');
+        return new HasManySessions($query, $parent, $foreignKey, $localKey);
     }
 
-    public function user(): HasOne
+    public function sessions(): HasManySessions
     {
-        return $this->hasOne(Config::get("devices.authenticatable_class"), 'id', 'user_id');
+        $instance = $this->newRelatedInstance(Session::class);
+
+        return new HasManySessions(
+            query: $instance->newQuery(),
+            parent: $this,
+            foreignKey: 'device_uuid',
+            localKey: 'uuid'
+        );
+    }
+
+    public function users(): BelongsToMany
+    {
+        $table = sprintf('%s_devices', str(\config('devices.authenticatable_table'))->singular());
+        $field = sprintf('%s_id', str(\config('devices.authenticatable_table'))->singular());
+
+        return $this->belongsToMany(
+            related: Config::get("devices.authenticatable_class"),
+            table: $table,
+            foreignPivotKey: 'device_uuid',
+            relatedPivotKey: $field,
+            parentKey: 'uuid',
+            relatedKey: 'id'
+        )->withTimestamps();
     }
 
     public function uuid(): Attribute
@@ -102,7 +127,7 @@ class Device extends Model implements Cacheable
     public function status(): Attribute
     {
         return Attribute::make(
-            get: fn(string $value) => DeviceStatus::from($value),
+            get: fn(?string $value) => $value ? DeviceStatus::from($value) : DeviceStatus::Unverified,
             set: fn(DeviceStatus $value) => $value->value
         );
     }
@@ -117,24 +142,23 @@ class Device extends Model implements Cacheable
 
     public function activeSessions(): Collection
     {
-        return $this
-            ->sessions()
-            ->where('status', SessionStatus::Active)
-            ->get();
+        return $this->sessions()->active();
     }
 
     public function isCurrent(): bool
     {
-        return $this->uuid->toString() === self::getDeviceUuid()?->toString();
+        return $this->uuid->toString() === device_uuid()?->toString();
     }
 
-    public function verify(): void
+    public function verify(?Authenticatable $user = null): void
     {
+        $user = $user ?? Auth::user();
+
         $this->verified_at = now();
         $this->status = DeviceStatus::Verified;
 
         if ($this->save()) {
-            DeviceVerifiedEvent::dispatch($this, $this->user);
+            DeviceVerifiedEvent::dispatch($this, $user);
         }
     }
 
@@ -168,7 +192,7 @@ class Device extends Model implements Cacheable
 
     public function forget(): bool
     {
-        $this->sessions->each(fn(Session $session) => $session->end(forgetSession: true));
+        $this->sessions()->active()->each(fn(Session $session) => $session->end(forgetSession: true));
         return $this->delete();
     }
 
@@ -201,12 +225,16 @@ class Device extends Model implements Cacheable
 
     public static function register(
         StorableId $deviceUuid,
-        DeviceDTO $data,
-        Authenticatable $user = null
+        DeviceDTO $data
     ): ?self {
+        $device = self::byUuid($deviceUuid, false);
+        if ($device) {
+            return $device;
+        }
+
         $device = self::create([
             'uuid' => $deviceUuid,
-            'user_id' => $user->id,
+            'fingerprint' => fingerprint(),
             'browser' => $data->browser->name,
             'browser_version' => $data->browser->version,
             'browser_family' => $data->browser->family,
@@ -224,40 +252,62 @@ class Device extends Model implements Cacheable
         ]);
 
         if ($device) {
-            DeviceCreatedEvent::dispatch($device, $user);
             return $device;
         }
 
         return null;
     }
 
-    public static function findByUuid(StorableId|string $uuid): ?self
+    public static function byUuid(StorableId|string $uuid, bool $cached = true): ?self
     {
         if (is_string($uuid)) {
             $uuid = DeviceIdFactory::from($uuid);
         }
 
-        return DeviceCache::remember($uuid->toString(), fn() => self::where('uuid', $uuid->toString())->first());
+        if (!$cached) {
+            return self::where('uuid', $uuid->toString())->first();
+        }
+
+        return DeviceCache::remember(
+            key: DeviceCache::key($uuid),
+            callback: fn() => self::where('uuid', $uuid->toString())->first()
+        );
     }
 
     /**
      * @throws DeviceNotFoundException
      */
-    public static function findByUuidOrFail(StorableId|string $uuid): self
+    public static function byUuidOrFail(StorableId|string $uuid): self
     {
-        return self::findByUuid($uuid) ?? throw DeviceNotFoundException::withDevice($uuid);
+        return self::byUuid($uuid) ?? throw DeviceNotFoundException::withDevice($uuid);
+    }
+
+    public static function byFingerprint(string $fingerprint): ?self
+    {
+        return DeviceCache::remember(
+            key: DeviceCache::key($fingerprint),
+            callback: fn() => self::where('fingerprint', $fingerprint)->first()
+        );
     }
 
     public static function current(): ?self
     {
-        return self::findByUuid(self::getDeviceUuid());
+        if (Config::get('devices.fingerprinting_enabled')) {
+            return self::byFingerprint(fingerprint());
+        }
+
+        return self::byUuid(device_uuid());
     }
 
-    public static function getDeviceUuid(): ?StorableId
+    public static function exists(StorableId|string $id): bool
     {
-        $cookieName = Config::get('devices.device_id_cookie_name');
-        return Cookie::has($cookieName) ? DeviceIdFactory::from(Cookie::get($cookieName)) : DeviceManager::$deviceUuid;
+        if (is_string($id)) {
+            $id = DeviceIdFactory::from($id);
+        }
+
+        return self::byUuid($id, false) !== null;
     }
+
     public static function boot(): void
     {
         parent::boot();
@@ -265,11 +315,21 @@ class Device extends Model implements Cacheable
         static::created(function (Device $device) {
             DeviceCache::forget($device);
             DeviceCache::put($device);
+
+            event(new DeviceCreatedEvent($device));
+        });
+
+        self::deleted(function (Device $device) {
+            DeviceCache::forget($device);
+
+            event(new DeviceDeletedEvent($device));
         });
 
         static::updated(function (Device $device) {
             DeviceCache::forget($device);
             DeviceCache::put($device);
+
+            event(new DeviceUpdatedEvent($device));
         });
     }
 }
