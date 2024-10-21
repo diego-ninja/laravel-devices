@@ -30,9 +30,9 @@ final class DeviceManager
         return Auth::user()?->hasDevice($deviceUuid);
     }
 
-    public function attach(): bool
+    public function attach(?StorableId $deviceUuid = null): bool
     {
-        $deviceUuid = device_uuid();
+        $deviceUuid = $deviceUuid ?? device_uuid();
         if ($deviceUuid) {
             if (Auth::user()?->hasDevice($deviceUuid)) {
                 return true;
