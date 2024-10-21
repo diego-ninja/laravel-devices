@@ -10,22 +10,22 @@ use Ninja\DeviceTracker\Models\Session;
 
 final class HasManySessions extends HasMany
 {
-    public function first(): Session
+    public function first(): ?Session
     {
         return $this->orderBy('started_at')->get()->first();
     }
 
-    public function last(): Session
+    public function last(): ?Session
     {
         return $this->orderByDesc('started_at')->get()->first();
     }
 
-    public function current(): Session
+    public function current(): ?Session
     {
         return $this->where('uuid', SessionFacade::get(Session::DEVICE_SESSION_ID))->get()->first();
     }
 
-    public function recent(): Session
+    public function recent(): ?Session
     {
         return $this
             ->where('status', SessionStatus::Active)
