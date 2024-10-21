@@ -7,7 +7,7 @@ use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use Ninja\DeviceTracker\Contracts\StorableId;
 
-class DeviceTrackedEvent
+final class DeviceTrackedEvent
 {
     use Dispatchable;
     use InteractsWithSockets;

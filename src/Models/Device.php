@@ -227,7 +227,7 @@ class Device extends Model implements Cacheable
         StorableId $deviceUuid,
         DeviceDTO $data
     ): ?self {
-        $device = self::byUuid($deviceUuid);
+        $device = self::byUuid($deviceUuid, false);
         if ($device) {
             return $device;
         }
@@ -258,10 +258,14 @@ class Device extends Model implements Cacheable
         return null;
     }
 
-    public static function byUuid(StorableId|string $uuid): ?self
+    public static function byUuid(StorableId|string $uuid, bool $cached = true): ?self
     {
         if (is_string($uuid)) {
             $uuid = DeviceIdFactory::from($uuid);
+        }
+
+        if (!$cached) {
+            return self::where('uuid', $uuid->toString())->first();
         }
 
         return DeviceCache::remember(
@@ -301,7 +305,7 @@ class Device extends Model implements Cacheable
             $id = DeviceIdFactory::from($id);
         }
 
-        return self::byUuid($id) !== null;
+        return self::byUuid($id, false) !== null;
     }
 
     public static function boot(): void

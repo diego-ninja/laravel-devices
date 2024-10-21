@@ -78,12 +78,12 @@ final class DeviceManager
             );
         }
 
-        event(new DeviceTrackedEvent(self::$deviceUuid));
-
         Device::register(
             deviceUuid: self::$deviceUuid,
             data: app(DeviceDetector::class)->detect(\request())
         );
+
+        event(new DeviceTrackedEvent(self::$deviceUuid));
 
         return self::$deviceUuid;
     }
