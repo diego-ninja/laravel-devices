@@ -52,6 +52,16 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Regenerate devices
+    |--------------------------------------------------------------------------
+    | This option specifies if missing devices should be regenerated. Useful to avoid errors
+    | when the device is not found in the database, but it is in the cookie.
+    */
+    'regenerate_devices' => false,
+
+
+    /*
+    |--------------------------------------------------------------------------
     | Allows multiple sessions per device
     |--------------------------------------------------------------------------
     | This option specifies if the user can have multiple active sessions per device
@@ -121,6 +131,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Fingerprint transport
+    |--------------------------------------------------------------------------
+    |
+    | This option allows you to specify the transport method for the fingerprint.
+    | Options: 'cookie', 'header'
+    |
+    */
+    'client_fingerprint_transport' => 'header',
+
+
+    /*
+    |--------------------------------------------------------------------------
     | Fingerprint key
     |--------------------------------------------------------------------------
     |
@@ -128,7 +150,7 @@ return [
     | the fingerprint in cookie/header set by the client.
     |
     */
-    'client_fingerprint_key' => 'x-device-fingerprint',
+    'client_fingerprint_key' => 'X-Device-Fingerprint',
 
     /*
     |--------------------------------------------------------------------------

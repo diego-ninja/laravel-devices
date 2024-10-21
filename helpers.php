@@ -8,12 +8,12 @@ if (! function_exists('fingerprint')) {
     function fingerprint(): ?string
     {
         if (Config::get('devices.fingerprinting_enabled')) {
-            if (request()->hasHeader(Config::get('devices.client_fingerprint_key'))) {
-                return request()->header(Config::get('devices.client_fingerprint_key'));
+            if (Config::get('devices.client_fingerprint_transport') === 'cookie') {
+                return Cookie::get(Config::get('devices.client_fingerprint_key'));
             }
 
-            if (Cookie::has(Config::get('devices.client_fingerprint_key'))) {
-                return Cookie::get(Config::get('devices.client_fingerprint_key'));
+            if (Config::get('devices.client_fingerprint_transport') === 'header') {
+                return request()->header(Config::get('devices.client_fingerprint_key'));
             }
 
             throw new RuntimeException('Fingerprinting is enabled but no fingerprint was found in request');

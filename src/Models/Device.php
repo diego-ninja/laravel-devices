@@ -18,6 +18,7 @@ use Ninja\DeviceTracker\DTO\Device as DeviceDTO;
 use Ninja\DeviceTracker\DTO\Metadata;
 use Ninja\DeviceTracker\Enums\DeviceStatus;
 use Ninja\DeviceTracker\Events\DeviceCreatedEvent;
+use Ninja\DeviceTracker\Events\DeviceDeletedEvent;
 use Ninja\DeviceTracker\Events\DeviceHijackedEvent;
 use Ninja\DeviceTracker\Events\DeviceUpdatedEvent;
 use Ninja\DeviceTracker\Events\DeviceVerifiedEvent;
@@ -294,6 +295,15 @@ class Device extends Model implements Cacheable
         return self::byUuid(device_uuid());
     }
 
+    public static function exists(StorableId|string $id): bool
+    {
+        if (is_string($id)) {
+            $id = DeviceIdFactory::from($id);
+        }
+
+        return self::byUuid($id) !== null;
+    }
+
     public static function boot(): void
     {
         parent::boot();
@@ -303,6 +313,12 @@ class Device extends Model implements Cacheable
             DeviceCache::put($device);
 
             event(new DeviceCreatedEvent($device));
+        });
+
+        self::deleted(function (Device $device) {
+            DeviceCache::forget($device);
+
+            event(new DeviceDeletedEvent($device));
         });
 
         static::updated(function (Device $device) {
