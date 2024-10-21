@@ -59,11 +59,11 @@ final class TwoFactorController extends Controller
 
         if ($valid !== false) {
             $user->google2fa->success();
-            Google2FASuccess::dispatch($user);
+            event(new Google2FASuccess($user));
 
             return response()->json(['message' => 'Two factor authentication successful']);
         } else {
-            Google2FAFailed::dispatch($user);
+            event(new Google2FAFailed($user));
             return response()->json(['message' => 'Two factor authentication failed'], 400);
         }
     }

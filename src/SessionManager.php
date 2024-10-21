@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Session as SessionFacade;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Exception\SessionNotFoundException;
-use Ninja\DeviceTracker\Models\Device;
+use Ninja\DeviceTracker\Facades\DeviceManager;
 use Ninja\DeviceTracker\Models\Session;
 use Ninja\DeviceTracker\Traits\HasDevices;
 
@@ -29,7 +29,7 @@ final readonly class SessionManager
      */
     public function start(): Session
     {
-        $device = Device::current();
+        $device = DeviceManager::current();
         if ($device->hijacked()) {
             throw new DeviceNotFoundException('Device is flagged as hijacked.');
         }
@@ -37,9 +37,12 @@ final readonly class SessionManager
         return Session::start(device: $device);
     }
 
+    /**
+     * @throws SessionNotFoundException
+     */
     public function end(?StorableId $sessionId = null, ?Authenticatable $user = null, bool $forgetSession = false): bool
     {
-        $session = Session::findByUuid($sessionId);
+        $session = Session::byUuid($sessionId);
         if (!$session) {
             return false;
         }
@@ -62,6 +65,7 @@ final readonly class SessionManager
 
     /**
      * @throws DeviceNotFoundException
+     * @throws SessionNotFoundException
      */
     public function refresh(?Authenticatable $user = null): Session
     {
@@ -98,7 +102,7 @@ final readonly class SessionManager
      */
     public function block(StorableId $sessionId): bool
     {
-        $session = Session::findByUuidOrFail($sessionId);
+        $session = Session::byUuidOrFail($sessionId);
         return $session->block();
     }
 
@@ -107,7 +111,7 @@ final readonly class SessionManager
      */
     public function blocked(StorableId $sessionId): bool
     {
-        $session = Session::findByUuidOrFail($sessionId);
+        $session = Session::byUuidOrFail($sessionId);
         return $session->blocked();
     }
 
@@ -116,24 +120,14 @@ final readonly class SessionManager
      */
     public function locked(StorableId $sessionId): bool
     {
-        $session = Session::findByUuidOrFail($sessionId);
+        $session = Session::byUuidOrFail($sessionId);
         return $session->locked();
-    }
-
-    public function forgot(): bool
-    {
-        return !SessionFacade::has(Session::DEVICE_SESSION_ID);
-    }
-
-    public function sessionUuid(): ?StorableId
-    {
-        return Session::sessionUuid();
     }
 
     public function delete(): void
     {
-        if ($this->sessionUuid() !== null) {
-            Session::destroy($this->sessionUuid());
+        if (session_uuid() !== null) {
+            Session::destroy(session_uuid());
             SessionFacade::forget(Session::DEVICE_SESSION_ID);
         }
     }

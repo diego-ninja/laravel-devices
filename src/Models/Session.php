@@ -17,6 +17,7 @@ use Ninja\DeviceTracker\Contracts\Cacheable;
 use Ninja\DeviceTracker\Contracts\LocationProvider;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\DTO\Location;
+use Ninja\DeviceTracker\DTO\Metadata;
 use Ninja\DeviceTracker\Enums\SessionStatus;
 use Ninja\DeviceTracker\Events\SessionBlockedEvent;
 use Ninja\DeviceTracker\Events\SessionFinishedEvent;
@@ -25,6 +26,7 @@ use Ninja\DeviceTracker\Events\SessionUnblockedEvent;
 use Ninja\DeviceTracker\Events\SessionUnlockedEvent;
 use Ninja\DeviceTracker\Exception\SessionNotFoundException;
 use Ninja\DeviceTracker\Factories\SessionIdFactory;
+use Ninja\DeviceTracker\Traits\PropertyProxy;
 
 /**
  * Class Session
@@ -41,10 +43,8 @@ use Ninja\DeviceTracker\Factories\SessionIdFactory;
  * @property string                       $ip                     string
  * @property Location                     $location               json
  * @property SessionStatus                $status                 string
- * @property boolean                      $block                  boolean
  * @property integer                      $blocked_by             unsigned int
- * @property string                       $auth_secret            string
- * @property integer                      $auth_timestamp         unsigned int
+ * @property Metadata                     $metadata               json
  * @property Carbon                       $started_at             datetime
  * @property Carbon                       $finished_at            datetime
  * @property Carbon                       $blocked_at             datetime
@@ -55,6 +55,8 @@ use Ninja\DeviceTracker\Factories\SessionIdFactory;
  */
 class Session extends Model implements Cacheable
 {
+    use PropertyProxy;
+
     public const  DEVICE_SESSION_ID = 'session.id';
 
     protected $table = 'device_sessions';
@@ -68,6 +70,7 @@ class Session extends Model implements Cacheable
         'ip',
         'location',
         'status',
+        'metadata',
         'started_at',
         'last_activity_at',
     ];
@@ -107,6 +110,15 @@ class Session extends Model implements Cacheable
         );
     }
 
+    public function metadata(): Attribute
+    {
+        return Attribute::make(
+            get: fn(?string $value) => $value ? Metadata::from(json_decode($value, true)) : new Metadata([]),
+            set: fn(Metadata $value) => $value->json()
+        );
+    }
+
+
     public static function start(Device $device, ?Authenticatable $user = null): Session
     {
         $now = Carbon::now();
@@ -137,7 +149,7 @@ class Session extends Model implements Cacheable
         ]);
 
         SessionFacade::put(self::DEVICE_SESSION_ID, $session->uuid);
-        SessionStartedEvent::dispatch($session, Auth::user());
+        event(new SessionStartedEvent($session, Auth::user()));
 
         return $session;
     }
@@ -173,7 +185,7 @@ class Session extends Model implements Cacheable
         $this->finished_at = Carbon::now();
 
         if ($this->save()) {
-            SessionFinishedEvent::dispatch($this, $user ?? Auth::user());
+            event(new SessionFinishedEvent($this, $user ?? Auth::user()));
             return true;
         }
 
@@ -215,7 +227,7 @@ class Session extends Model implements Cacheable
 
 
         if ($this->save()) {
-            SessionBlockedEvent::dispatch($this, $user);
+            event(new SessionBlockedEvent($this, $user));
             return true;
         }
 
@@ -235,7 +247,7 @@ class Session extends Model implements Cacheable
 
 
         if ($this->save()) {
-            SessionUnblockedEvent::dispatch($this, $user);
+            event(new SessionUnblockedEvent($this, $user));
             return true;
         }
 
@@ -274,7 +286,7 @@ class Session extends Model implements Cacheable
             $this->unlocked_at = Carbon::now();
 
             if ($this->save()) {
-                SessionUnlockedEvent::dispatch($this, Auth::user());
+                event(new SessionUnlockedEvent($this, Auth::user()));
             }
         }
     }
@@ -292,10 +304,14 @@ class Session extends Model implements Cacheable
     /**
      * @throws SessionNotFoundException
      */
-    public static function findByUuid(StorableId|string $uuid): ?self
+    public static function byUuid(StorableId|string $uuid, bool $cached = true): ?self
     {
         if (is_string($uuid)) {
             $uuid = SessionIdFactory::from($uuid);
+        }
+
+        if (!$cached) {
+            return self::where('uuid', $uuid->toString())->first();
         }
 
         return SessionCache::remember($uuid->toString(), function () use ($uuid) {
@@ -306,9 +322,9 @@ class Session extends Model implements Cacheable
     /**
      * @throws SessionNotFoundException
      */
-    public static function findByUuidOrFail(StorableId|string $uuid): self
+    public static function byUuidOrFail(StorableId|string $uuid): self
     {
-        return self::findByUuid($uuid) ?? throw SessionNotFoundException::withSession($uuid);
+        return self::byUuid($uuid) ?? throw SessionNotFoundException::withSession($uuid);
     }
 
     /**
@@ -316,11 +332,11 @@ class Session extends Model implements Cacheable
      */
     public static function current(): ?Session
     {
-        if (!self::sessionUuid()) {
+        if (!session_uuid()) {
             return null;
         }
 
-        return self::findByUuid(self::sessionUuid());
+        return self::byUuid(session_uuid());
     }
 
     public static function boot(): void
@@ -336,12 +352,5 @@ class Session extends Model implements Cacheable
             SessionCache::forget($session);
             SessionCache::put($session);
         });
-    }
-
-
-    public static function sessionUuid(): ?StorableId
-    {
-        $id = SessionFacade::get(self::DEVICE_SESSION_ID);
-        return $id ? SessionIdFactory::from($id) : null;
     }
 }

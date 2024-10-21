@@ -140,11 +140,6 @@ class Device extends Model implements Cacheable
         );
     }
 
-    public function activeSessions(): Collection
-    {
-        return $this->sessions()->active();
-    }
-
     public function isCurrent(): bool
     {
         return $this->uuid->toString() === device_uuid()?->toString();
@@ -158,7 +153,7 @@ class Device extends Model implements Cacheable
         $this->status = DeviceStatus::Verified;
 
         if ($this->save()) {
-            DeviceVerifiedEvent::dispatch($this, $user);
+            event(new DeviceVerifiedEvent($this, $user));
         }
     }
 
@@ -181,7 +176,7 @@ class Device extends Model implements Cacheable
         }
 
         if ($this->save()) {
-            DeviceHijackedEvent::dispatch($this, $user);
+            event(new DeviceHijackedEvent($this, $user));
         }
     }
 
@@ -282,14 +277,21 @@ class Device extends Model implements Cacheable
         return self::byUuid($uuid) ?? throw DeviceNotFoundException::withDevice($uuid);
     }
 
-    public static function byFingerprint(string $fingerprint): ?self
+    public static function byFingerprint(string $fingerprint, bool $cached = true): ?self
     {
+        if (!$cached) {
+            return self::where('fingerprint', $fingerprint)->first();
+        }
+
         return DeviceCache::remember(
             key: DeviceCache::key($fingerprint),
             callback: fn() => self::where('fingerprint', $fingerprint)->first()
         );
     }
 
+    /**
+     * @deprecated Use DeviceManager::current() instead
+     */
     public static function current(): ?self
     {
         if (Config::get('devices.fingerprinting_enabled')) {
