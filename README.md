@@ -3,14 +3,15 @@
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/diego-ninja/laravel-devices.svg?style=flat&color=blue)](https://packagist.org/packages/diego-ninja/cosmic)
 [![Total Downloads](https://img.shields.io/packagist/dt/diego-ninja/laravel-devices.svg?style=flat&color=blue)](https://packagist.org/packages/diego-ninja/laravel-devices)
 ![PHP Version](https://img.shields.io/packagist/php-v/diego-ninja/cosmic.svg?style=flat&color=blue)
+![Static Badge](https://img.shields.io/badge/laravel-10-blue)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 ![GitHub last commit](https://img.shields.io/github/last-commit/diego-ninja/laravel-devices?color=blue)
 [![Hits-of-Code](https://hitsofcode.com/github/diego-ninja/laravel-devices?branch=main&label=Hits-of-Code)](https://hitsofcode.com/github/diego-ninja/laravel-devices/view?branch=main&label=Hits-of-Code&color=blue)
 [![wakatime](https://wakatime.com/badge/user/bd65f055-c9f3-4f73-92aa-3c9810f70cc3/project/94491bff-6b6c-4b9d-a5fd-5568319d3071.svg)](https://wakatime.com/badge/user/bd65f055-c9f3-4f73-92aa-3c9810f70cc3/project/94491bff-6b6c-4b9d-a5fd-5568319d3071)
 
-This package provides session tracking functionalities, multi session management and user device management features for Laravel applications. This package is slightly based on [laravel-session-tracker](https://github.com/hamedmehryar/laravel-session-tracker) but updated with new features, and, important note, intended to use with recent Laravel versions, 10 and 11.
+This package provides session tracking functionalities, multi session management and user device management features for Laravel applications. This package is inspired by [laravel-session-tracker](https://github.com/hamedmehryar/laravel-session-tracker) but updated with new features, and, important note, intended to use with recent Laravel versions, 10 and 11.
 
-This is a work in progress, and maybe or maybe not be ready for production use.  Help is needed to improve the project, so if you are interested in contributing, please read the [contributing guide](./docs/contributing.md).
+This is a work in progress, and maybe or maybe not be ready for production use.  Help is needed to improve the project and write documentation so if you are interested in contributing, please read the [contributing guide](./docs/contributing.md).
 
 ## ❤️ Features
 
@@ -20,12 +21,19 @@ This is a work in progress, and maybe or maybe not be ready for production use. 
   * Session locking (Google 2FA support for session locking)
   * Session location tracking
 * Device verifying
-* Device hijacking detection (WIP)
 * Custom id format for sessions and devices
 * Application events
 * Ready to use middleware, routes, controllers, dtos, value objects and resources
 * Ready to use Google 2FA integration
 * Cache support for devices, sessions, locations and user agents
+* Client-side fingerprinting
+
+## 🗓️ Planned features
+
+* Device hijacking detection
+* Livewire integrations for [Laravel Jetstream](https://jetstream.laravel.com/) and [Laravel Breeze](https://laravel.com/docs/11.x/starter-kits#laravel-breeze)
+* [Laravel Pulse](https://laravel.com/docs/11.x/pulse) integration
+* [CreepJS](https://github.com/abrahamjuliot/creepjs) and [Supercookie](https://github.com/jonasstrehle/supercookie) integrations for device fingerprinting
 
 ## 📦 Installation
 

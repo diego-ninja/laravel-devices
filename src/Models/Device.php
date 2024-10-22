@@ -4,11 +4,9 @@ namespace Ninja\DeviceTracker\Models;
 
 use Carbon\Carbon;
 use Illuminate\Contracts\Auth\Authenticatable;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Ninja\DeviceTracker\Cache\DeviceCache;
@@ -23,6 +21,7 @@ use Ninja\DeviceTracker\Events\DeviceHijackedEvent;
 use Ninja\DeviceTracker\Events\DeviceUpdatedEvent;
 use Ninja\DeviceTracker\Events\DeviceVerifiedEvent;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
+use Ninja\DeviceTracker\Exception\FingerprintNotFoundException;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Models\Relations\HasManySessions;
 use Ninja\DeviceTracker\Traits\PropertyProxy;
@@ -83,11 +82,6 @@ class Device extends Model implements Cacheable
         'metadata',
         'source',
     ];
-
-    public function newHasMany(Builder $query, Model $parent, $foreignKey, $localKey): HasManySessions
-    {
-        return new HasManySessions($query, $parent, $foreignKey, $localKey);
-    }
 
     public function sessions(): HasManySessions
     {
@@ -218,6 +212,9 @@ class Device extends Model implements Cacheable
         return null;
     }
 
+    /**
+     * @throws FingerprintNotFoundException
+     */
     public static function register(
         StorableId $deviceUuid,
         DeviceDTO $data
@@ -290,6 +287,7 @@ class Device extends Model implements Cacheable
     }
 
     /**
+     * @throws FingerprintNotFoundException
      * @deprecated Use DeviceManager::current() instead
      */
     public static function current(): ?self
