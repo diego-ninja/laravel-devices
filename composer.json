@@ -11,9 +11,7 @@
     ],
     "require": {
         "php": "^8.2",
-        "hisorange/browser-detect": "^5",
         "laravel/framework": "^10 || ^11",
-        "mobiledetect/mobiledetectlib": "^4",
         "nesbot/carbon": "^2 || ^3",
         "ramsey/uuid": "^4.7",
         "matomo/device-detector": "^6.4",

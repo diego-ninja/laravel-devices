@@ -6,8 +6,6 @@ use DeviceDetector\ClientHints;
 use DeviceDetector\DeviceDetector;
 use DeviceDetector\Parser\AbstractParser;
 use DeviceDetector\Parser\Device\AbstractDeviceParser;
-use hisorange\BrowserDetect\Contracts\ResultInterface;
-use hisorange\BrowserDetect\Parser;
 use Illuminate\Http\Request;
 use Ninja\DeviceTracker\Cache\UserAgentCache;
 use Ninja\DeviceTracker\DTO\Browser;
@@ -19,7 +17,6 @@ use Ninja\DeviceTracker\DTO\Version;
 final class UserAgentDeviceDetector implements Contracts\DeviceDetector
 {
     private DeviceDetector $dd;
-    private ?ResultInterface $parser = null;
     private Request $request;
 
     public function __construct()
@@ -80,16 +77,6 @@ final class UserAgentDeviceDetector implements Contracts\DeviceDetector
             model: $this->dd->getModel(),
             type: $this->dd->getDeviceName()
         );
-    }
-
-
-    private function parser(): ResultInterface
-    {
-        if (!$this->parser) {
-            $this->parser = (new Parser(request: $this->request))->detect();
-        }
-
-        return $this->parser;
     }
 
     private function fakeUA(): string
