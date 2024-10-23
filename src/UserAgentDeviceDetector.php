@@ -47,7 +47,7 @@ final class UserAgentDeviceDetector implements Contracts\DeviceDetector
                 platform: $this->platform(),
                 device: $this->device(),
                 ip: $request->ip(),
-                grade: $this->parser()->mobileGrade() === '' ? null : $this->parser()->mobileGrade(),
+                grade: null,
                 userAgent: $this->dd->getUserAgent()
             );
         });
