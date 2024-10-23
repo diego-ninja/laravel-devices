@@ -27,6 +27,12 @@ final class SessionController extends Controller
         return response()->json(SessionResource::collection($sessions));
     }
 
+    public function active(Request $request): JsonResponse
+    {
+        $sessions = $this->getUserActiveSessions($request);
+        return response()->json(SessionResource::collection($sessions));
+    }
+
     public function show(Request $request, string $id): JsonResponse
     {
         $session = $this->findUserSession($request, $id);
@@ -98,6 +104,12 @@ final class SessionController extends Controller
     {
         $user = $request->user(Config::get('devices.auth_guard'));
         return SessionCache::userSessions($user);
+    }
+
+    private function getUserActiveSessions(Request $request)
+    {
+        $user = $request->user(Config::get('devices.auth_guard'));
+        return SessionCache::activeSessions($user);
     }
 
     private function findUserSession(Request $request, string $id): ?Session

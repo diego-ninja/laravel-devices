@@ -11,7 +11,6 @@
     ],
     "require": {
         "php": "^8.2",
-        "hisorange/browser-detect": "^4.5",
         "laravel/framework": "^10 || ^11",
         "nesbot/carbon": "^2 || ^3",
         "ramsey/uuid": "^4.7",
@@ -31,7 +30,10 @@
     "autoload": {
         "psr-4": {
             "Ninja\\DeviceTracker\\": "src/"
-        }
+        },
+        "files": [
+            "helpers.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {

@@ -6,14 +6,15 @@ use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
+use Ninja\DeviceTracker\Models\Device;
 
-final class Google2FASuccess
+final class DeviceUpdatedEvent
 {
     use Dispatchable;
     use InteractsWithSockets;
     use SerializesModels;
 
-    public function __construct(public readonly Authenticatable $user)
+    public function __construct(public readonly Device $device, public readonly ?Authenticatable $user = null)
     {
     }
 }

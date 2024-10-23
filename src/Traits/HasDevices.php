@@ -2,76 +2,58 @@
 
 namespace Ninja\DeviceTracker\Traits;
 
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Session as SessionFacade;
-use Ninja\DeviceTracker\Enums\SessionStatus;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Models\Device;
+use Ninja\DeviceTracker\Models\Relations\BelongsToManyDevices;
+use Ninja\DeviceTracker\Models\Relations\HasManySessions;
 use Ninja\DeviceTracker\Models\Session;
 
 trait HasDevices
 {
-    public function activeSessions($exceptSelf = false): HasMany
+    public function sessions(): HasManySessions
     {
-        $query =  $this->sessions()
-            ->where('finished_at', null)
-            ->where('status', SessionStatus::Active);
+        $instance = $this->newRelatedInstance(Session::class);
 
-        if ($exceptSelf) {
-            if (SessionFacade::has(Session::DEVICE_SESSION_ID)) {
-                $query->where('id', '!=', SessionFacade::get(Session::DEVICE_SESSION_ID));
-            }
-        }
-
-        return $query;
+        return new HasManySessions(
+            query: $instance->newQuery(),
+            parent: $this,
+            foreignKey: 'user_id',
+            localKey: 'id'
+        );
     }
 
-    public function signout(bool $logoutCurrentSession = false): void
+    public function devices(): BelongsToManyDevices
     {
-        if ($logoutCurrentSession) {
-            $this->session()->end();
-        }
+        $table = sprintf('%s_devices', str(\config('devices.authenticatable_table'))->singular());
+        $field = sprintf('%s_id', str(\config('devices.authenticatable_table'))->singular());
 
-        $this->sessions->each(fn (Session $session) => $session->end());
-    }
+        $instance = $this->newRelatedInstance(Device::class);
 
-    public function recentSession(): Session
-    {
-        return $this->sessions()->orderBy('last_activity_at', 'desc')->first();
-    }
-
-    public function sessions(): HasMany
-    {
-        return $this->hasMany(Session::class, 'user_id');
-    }
-
-    public function devices(): HasMany
-    {
-        return $this->hasMany(Device::class, 'user_id');
+        return new BelongsToManyDevices(
+            query: $instance->newQuery(),
+            parent: $this,
+            table: $table,
+            foreignPivotKey: $field,
+            relatedPivotKey: 'device_uuid',
+            parentKey: 'id',
+            relatedKey: 'uuid',
+        );
     }
 
     public function device(): ?Device
     {
-        return $this->devices->where(
-            key: 'uuid',
-            operator: '=',
-            value: (string) Device::getDeviceUuid()
-        )->first();
+        return $this->devices()->current();
     }
 
     public function session(): Session
     {
-        return $this->sessions->where(
-            key: 'uuid',
-            operator: '=',
-            value: (string) SessionFacade::get(Session::DEVICE_SESSION_ID)
-        )->first();
+        return $this->sessions()->current();
     }
     public function hasDevice(Device|string $device): bool
     {
         $deviceId = $device instanceof Device ? $device->uuid : DeviceIdFactory::from($device);
-        return in_array($deviceId, $this->devicesUids());
+        return in_array($deviceId, $this->devices()->uuids());
     }
 
     public function addDevice(Device $device): bool
@@ -80,8 +62,8 @@ trait HasDevices
             return true;
         }
 
-        $device->user_id = $this->id;
-        $device->save();
+        $this->devices()->attach($device->uuid);
+        $this->save();
 
         return true;
     }
@@ -89,16 +71,10 @@ trait HasDevices
     public function inactive(): bool
     {
         if ($this->sessions()->count() > 0) {
-            $lastActivity = $this->recentSession()->last_activity_at;
+            $lastActivity = $this->sessions()->recent()->last_activity_at;
             return $lastActivity && abs(strtotime($lastActivity) - strtotime(now())) > Config::get('devices.inactivity_seconds', 1200);
         }
 
         return true;
-    }
-
-    public function devicesUids(): array
-    {
-        $query = $this->devices()->pluck('uuid');
-        return $query->all();
     }
 }
