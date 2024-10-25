@@ -24,10 +24,12 @@ use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Exception\FingerprintNotFoundException;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Models\Relations\HasManySessions;
+use Ninja\DeviceTracker\Modules\Fingerprinting\Models\Tracking;
+use Ninja\DeviceTracker\Modules\Fingerprinting\Traits\HasTrackingPoints;
 use Ninja\DeviceTracker\Traits\PropertyProxy;
 
 /**
- * Class DeviceManager
+ * Class Device
  *
  * @package Ninja\DeviceManager\Models
  *
@@ -57,10 +59,13 @@ use Ninja\DeviceTracker\Traits\PropertyProxy;
  * @property Carbon                       $verified_at            datetime
  * @property Carbon                       $hijacked_at            datetime
  *
+ * @property Tracking                     $tracking
+ *
  */
 class Device extends Model implements Cacheable
 {
     use PropertyProxy;
+    use HasTrackingPoints;
 
     protected $table = 'devices';
 
@@ -288,7 +293,6 @@ class Device extends Model implements Cacheable
 
     /**
      * @throws FingerprintNotFoundException
-     * @deprecated Use DeviceManager::current() instead
      */
     public static function current(): ?self
     {

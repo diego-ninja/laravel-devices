@@ -271,7 +271,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Google 2FA Route
+    | Google 2FA Point
     |--------------------------------------------------------------------------
     |
     | This option allows you to easily specify the route name for Google 2FA form.

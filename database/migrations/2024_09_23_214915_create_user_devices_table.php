@@ -9,7 +9,7 @@ return new class extends Migration {
     {
         Schema::create($this->table(), function (Blueprint $table) {
             $table->id();
-            $table->bigInteger($this->field());
+            $table->bigInteger($this->field())->unsigned();
             $table->string('device_uuid');
             $table->timestamps();
             $table->foreign($this->field())
@@ -21,20 +21,11 @@ return new class extends Migration {
                 ->on('devices')
                 ->onDelete('cascade');
         });
-
-        Schema::table('devices', function (Blueprint $table) {
-            $table->dropForeign('devices_user_id_foreign');
-            $table->dropColumn('user_id');
-        });
     }
 
     public function down(): void
     {
         Schema::drop($this->table());
-        Schema::table('', function (Blueprint $table) {
-            $table->bigInteger('user_id')->nullable();
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
-        });
     }
 
     private function table(): string
