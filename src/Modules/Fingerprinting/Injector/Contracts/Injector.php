@@ -6,5 +6,5 @@ use Illuminate\Http\Response;
 
 interface Injector
 {
-    public static function inject(Response $response): Response;
+    public function inject(Response $response): Response;
 }

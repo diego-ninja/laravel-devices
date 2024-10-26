@@ -3,17 +3,26 @@
 namespace Ninja\DeviceTracker\Modules\Fingerprinting\Injector\Factories;
 
 use InvalidArgumentException;
+use Ninja\DeviceTracker\Modules\Fingerprinting\Injector\ClientJSInjector;
+use Ninja\DeviceTracker\Modules\Fingerprinting\Injector\Contracts\Injector;
+use Ninja\DeviceTracker\Modules\Fingerprinting\Injector\Enums\Library;
+use Ninja\DeviceTracker\Modules\Fingerprinting\Injector\FingerprintJSInjector;
 
 final class InjectorFactory
 {
-    public static function make(string $library): string
-    {
-        $class = 'Ninja\DeviceTracker\Modules\Fingerprinting\Injector\\' . ucfirst($library) . 'Injector';
+    private static array $injectors = [
+        FingerprintJSInjector::class,
+        ClientJSInjector::class
+    ];
 
-        if (!class_exists($class)) {
-            throw new InvalidArgumentException("Injector for library {$library} not found");
+    public static function make(Library $library): Injector
+    {
+        foreach (self::$injectors as $injectorClass) {
+            if ($injectorClass::library() === $library) {
+                return new $injectorClass();
+            }
         }
 
-        return $class;
+        throw new InvalidArgumentException(sprintf('Injector for library %s not found', $library->value));
     }
 }

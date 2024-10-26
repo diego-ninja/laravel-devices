@@ -149,7 +149,7 @@ return [
     | Options: 'fingerprintjs', 'clientjs', 'creepjs'
     |
     */
-    'fingerprint_client_library' => 'fingerprintjs',
+    'fingerprint_client_library' => \Ninja\DeviceTracker\Modules\Fingerprinting\Injector\Enums\Library::FingerprintJS,
 
     /*
     |--------------------------------------------------------------------------

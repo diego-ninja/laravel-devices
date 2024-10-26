@@ -10,7 +10,7 @@ class FingerprintJSInjector extends AbstractInjector
     public const LIBRARY_NAME = 'fingerprintjs';
     public const LIBRARY_URL = 'https://openfpcdn.io/fingerprintjs/v4';
 
-    public static function inject(Response $response): Response
+    public function inject(Response $response): Response
     {
         $content = $response->getContent();
 

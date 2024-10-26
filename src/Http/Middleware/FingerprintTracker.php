@@ -7,8 +7,9 @@ use Config;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Cookie;
 use Ninja\DeviceTracker\Facades\DeviceManager;
+use Ninja\DeviceTracker\Modules\Fingerprinting\Injector\Enums\Library;
+use Ninja\DeviceTracker\Modules\Fingerprinting\Injector\Factories\InjectorFactory;
 use Ninja\DeviceTracker\Modules\Fingerprinting\Injector\FingerprintJSInjector;
 
 final class FingerprintTracker
@@ -41,8 +42,10 @@ final class FingerprintTracker
         $clientCookie = Config::get('devices.client_fingerprint_key');
         $serverCookie = Config::get('devices.fingerprint_id_cookie_name');
 
+        $library = Config::get('devices.fingerprint_client_library', Library::FingerprintJS);
+
         if (!isset($_COOKIE[$clientCookie])) {
-            return FingerprintJSInjector::inject($response);
+            return (InjectorFactory::make($library))->inject($response);
         } else {
             DeviceManager::current()?->fingerprint($_COOKIE[$clientCookie], $serverCookie);
         }
