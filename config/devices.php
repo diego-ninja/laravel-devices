@@ -139,6 +139,17 @@ return [
     */
     'fingerprint_id_cookie_name' => 'fingerprint',
 
+    /*
+    |--------------------------------------------------------------------------
+    | Fingerprint client library
+    |--------------------------------------------------------------------------
+    | This option specifies the library that will be used to generate
+    | the client-side fingerprint of the current device.
+    |
+    | Options: 'fingerprintjs', 'clientjs', 'creepjs'
+    |
+    */
+    'fingerprint_client_library' => 'fingerprintjs',
 
     /*
     |--------------------------------------------------------------------------

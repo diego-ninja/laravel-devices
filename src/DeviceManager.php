@@ -97,10 +97,10 @@ final class DeviceManager
 
     public function current(): ?Device
     {
-        if (Config::get('devices.fingerprinting_enabled')) {
+        if (Config::get('devices.fingerprinting_enabled') && fingerprint()) {
             return Device::byFingerprint(fingerprint());
         }
 
-        return Device::byUuid(device_uuid());
+        return Device::byUuid(device_uuid(), false);
     }
 }

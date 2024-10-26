@@ -11,7 +11,7 @@ if (! function_exists('fingerprint')) {
     function fingerprint(): ?string
     {
         if (Config::get('devices.fingerprinting_enabled')) {
-            $cookie = Cookie::get(Config::get('devices.fingerprint_id_cookie_name'));
+            $cookie = Config::get('devices.fingerprint_id_cookie_name');
             return Cookie::has($cookie) ? Cookie::get($cookie) : null;
         }
 
