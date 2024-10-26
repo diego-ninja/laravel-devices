@@ -134,7 +134,7 @@ return [
     | Cookie name for current fingerprint device tracking
     |--------------------------------------------------------------------------
     | This option specifies the name of the cookie that will be used to store
-    | the device id of the current user.
+    | the client-side fingerprint of the current device.
     |
     */
     'fingerprint_id_cookie_name' => 'fingerprint',

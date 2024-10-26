@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Cookie;
 use Ninja\DeviceTracker\Cache\DeviceCache;
 use Ninja\DeviceTracker\Contracts\Cacheable;
 use Ninja\DeviceTracker\Contracts\StorableId;
@@ -17,15 +18,13 @@ use Ninja\DeviceTracker\DTO\Metadata;
 use Ninja\DeviceTracker\Enums\DeviceStatus;
 use Ninja\DeviceTracker\Events\DeviceCreatedEvent;
 use Ninja\DeviceTracker\Events\DeviceDeletedEvent;
+use Ninja\DeviceTracker\Events\DeviceFingerprintedEvent;
 use Ninja\DeviceTracker\Events\DeviceHijackedEvent;
 use Ninja\DeviceTracker\Events\DeviceUpdatedEvent;
 use Ninja\DeviceTracker\Events\DeviceVerifiedEvent;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
-use Ninja\DeviceTracker\Exception\FingerprintNotFoundException;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Models\Relations\HasManySessions;
-use Ninja\DeviceTracker\Modules\Fingerprinting\Models\Tracking;
-use Ninja\DeviceTracker\Modules\Fingerprinting\Traits\HasTrackingPoints;
 use Ninja\DeviceTracker\Traits\PropertyProxy;
 
 /**
@@ -65,7 +64,6 @@ use Ninja\DeviceTracker\Traits\PropertyProxy;
 class Device extends Model implements Cacheable
 {
     use PropertyProxy;
-    use HasTrackingPoints;
 
     protected $table = 'devices';
 
@@ -144,6 +142,30 @@ class Device extends Model implements Cacheable
         return $this->uuid->toString() === device_uuid()?->toString();
     }
 
+    public function fingerprint(string $fingerprint, ?string $cookie = null): void
+    {
+        $this->fingerprint = $fingerprint;
+        if ($this->save()) {
+            if ($cookie) {
+                if (!Cookie::has($cookie)) {
+                    Cookie::queue(
+                        Cookie::forever(
+                            name:$cookie,
+                            value: $fingerprint,
+                            secure: Config::get('session.secure', false),
+                            httpOnly: Config::get('session.http_only', true)
+                        )
+                    );
+                }
+            }
+            event(new DeviceFingerprintedEvent($this));
+        }
+    }
+    public function fingerprinted(): bool
+    {
+        return $this->fingerprint !== null;
+    }
+
     public function verify(?Authenticatable $user = null): void
     {
         $user = $user ?? Auth::user();
@@ -217,9 +239,6 @@ class Device extends Model implements Cacheable
         return null;
     }
 
-    /**
-     * @throws FingerprintNotFoundException
-     */
     public static function register(
         StorableId $deviceUuid,
         DeviceDTO $data
@@ -291,9 +310,6 @@ class Device extends Model implements Cacheable
         );
     }
 
-    /**
-     * @throws FingerprintNotFoundException
-     */
     public static function current(): ?self
     {
         if (Config::get('devices.fingerprinting_enabled')) {

@@ -1,17 +1,19 @@
 <script>
     window.DeviceTracker = {
         config: @json([
-            'current' => $fingerprint,
+            'current' => $current,
             'transport' => $transport,
+            'library' => $library,
         ])
     };
 </script>
+<script src="{{ $library->url }}" integrity="sha512-jpobbeoWuk4rsYXs75ykhug4Guz41o8BNzlZvbtnLwVVdXxAoaMaPTHk1Oo1jF5u71PJ+luO/CFnzGPvFOHcIQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script>
     if (window.DeviceTracker.config.current === null) {
-        const fpPromise = import('https://openfpcdn.io/fingerprintjs/v4')
-            .then(FingerprintJS => FingerprintJS.load())
+        const promise = import(window.DeviceTracker.config.library.url)
+            .then(ClientJS => new ClientJS())
 
-        fpPromise
+        promise
             .then(fp => fp.get())
             .then(result => {
                 const transport = window.DeviceTracker.config.transport
