@@ -11,6 +11,7 @@ use Ninja\DeviceTracker\Contracts\DeviceDetector;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Events\DeviceTrackedEvent;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
+use Ninja\DeviceTracker\Exception\FingerprintNotFoundException;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Models\Device;
 
@@ -55,8 +56,14 @@ final class DeviceManager
         return device_uuid() && Device::exists(device_uuid());
     }
 
+    public function fingerprinted(): bool
+    {
+        return fingerprint() && Device::byFingerprint(fingerprint());
+    }
+
     /**
      * @throws DeviceNotFoundException
+     * @throws FingerprintNotFoundException
      */
     public function track(): StorableId
     {

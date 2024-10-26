@@ -131,14 +131,25 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Cookie name for current fingerprint device tracking
+    |--------------------------------------------------------------------------
+    | This option specifies the name of the cookie that will be used to store
+    | the device id of the current user.
+    |
+    */
+    'fingerprint_id_cookie_name' => 'fingerprint',
+
+
+    /*
+    |--------------------------------------------------------------------------
     | Fingerprint transport
     |--------------------------------------------------------------------------
     |
     | This option allows you to specify the transport method for the fingerprint.
-    | Options: 'cookie', 'header'
+    | Options: 'cookie', 'header', 'query'
     |
     */
-    'client_fingerprint_transport' => 'header',
+    'client_fingerprint_transport' => 'cookie',
 
 
     /*
@@ -150,7 +161,7 @@ return [
     | the fingerprint in cookie/header set by the client.
     |
     */
-    'client_fingerprint_key' => 'X-Device-Fingerprint',
+    'client_fingerprint_key' => 'fingerprintjs',
 
     /*
     |--------------------------------------------------------------------------
