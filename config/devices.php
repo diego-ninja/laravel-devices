@@ -172,7 +172,7 @@ return [
     | the fingerprint in cookie/header set by the client.
     |
     */
-    'client_fingerprint_key' => 'fingerprintjs',
+    'client_fingerprint_key' => 'csf',
 
     /*
     |--------------------------------------------------------------------------

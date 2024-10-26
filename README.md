@@ -26,14 +26,13 @@ This is a work in progress, and maybe or maybe not be ready for production use. 
 * Ready to use middleware, routes, controllers, dtos, value objects and resources
 * Ready to use Google 2FA integration
 * Cache support for devices, sessions, locations and user agents
-* Client-side fingerprinting
+* [FingerprintJS](https://github.com/fingerprintjs/fingerprintjs) and [ClientJS](https://github.com/jackspirou/clientjs) integrations for device fingerprinting
 
 ## 🗓️ Planned features
 
 * Device hijacking detection
 * Livewire integrations for [Laravel Jetstream](https://jetstream.laravel.com/) and [Laravel Breeze](https://laravel.com/docs/11.x/starter-kits#laravel-breeze)
 * [Laravel Pulse](https://laravel.com/docs/11.x/pulse) integration
-* [CreepJS](https://github.com/abrahamjuliot/creepjs) and [Supercookie](https://github.com/jonasstrehle/supercookie) integrations for device fingerprinting
 
 ## 📦 Installation
 

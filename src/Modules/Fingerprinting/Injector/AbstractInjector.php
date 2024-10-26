@@ -2,6 +2,8 @@
 
 namespace Ninja\DeviceTracker\Modules\Fingerprinting\Injector;
 
+use Illuminate\Http\Response;
+use Ninja\DeviceTracker\Facades\DeviceManager;
 use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Modules\Fingerprinting\Injector\Contracts\Injector;
 use Ninja\DeviceTracker\Modules\Fingerprinting\Injector\Enums\Library;
@@ -25,7 +27,20 @@ abstract class AbstractInjector implements Injector
         ])->render();
     }
 
-    protected static function library(): Library
+    public function inject(Response $response): Response
+    {
+        $content = $response->getContent();
+
+        $device = DeviceManager::current();
+        if ($device) {
+            $script = self::script($device);
+            $response->setContent(str_replace('</head>', $script . '</head>', $content));
+        }
+
+        return $response;
+    }
+
+    public static function library(): Library
     {
         return Library::from(static::LIBRARY_NAME);
     }
