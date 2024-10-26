@@ -3,19 +3,15 @@
 namespace Ninja\DeviceTracker\Http\Middleware;
 
 use Closure;
-use Config;
+use Cookie;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Ninja\DeviceTracker\Facades\DeviceManager;
 use Ninja\DeviceTracker\Models\Device;
-use Ninja\DeviceTracker\Modules\Fingerprinting\Services\FingerprintingService;
 
 final readonly class DeviceTracker
 {
-    public function __construct(private FingerprintingService $service)
-    {
-    }
-
     public function handle(Request $request, Closure $next)
     {
         if (!DeviceManager::tracked()) {
@@ -26,21 +22,51 @@ final readonly class DeviceTracker
         //TODO: This is a hack to make the device available in the request
         \Ninja\DeviceTracker\DeviceManager::$deviceUuid = DeviceManager::current()->uuid;
 
-        $this->fingerprint(DeviceManager::current());
+        $response = $next($request);
 
-        return $next($request);
-    }
+        if (\Config::get("devices.fingerprinting_enabled")) {
+            if (!$this->html($response)) {
+                return $response;
+            }
 
-    private function fingerprint(Device $device): void
-    {
-        if (Config::get('devices.fingerprinting_enabled')) {
-            if (!$device->fingerprint) {
-                $fingerprint = $this->service->identify($$device);
-                if ($fingerprint) {
-                    $device->fingerprint = $fingerprint;
-                    $device->save();
-                }
+            if (!Cookie::has('fingerprint')) {
+                $content = $response->getContent();
+                $response->setContent($this->inject($content));
             }
         }
+
+        return $response;
+    }
+
+    private function html(mixed $response): bool
+    {
+        if (!$response instanceof Response) {
+            return false;
+        }
+
+        $contentType = $response->headers->get('Content-Type');
+        if (!$contentType || !str_contains($contentType, 'text/html')) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private function script(Device $device): string
+    {
+        return view('fingerprinting::tracking-script', [
+            'fingerprint' => $device->fingerprint,
+        ])->render();
+    }
+
+    private function inject(string $html): string
+    {
+        $device = DeviceManager::current();
+        if ($device) {
+            $script = $this->script($device);
+            str_replace('</head>', $script . '</head>', $html);
+        }
+
+        return $html;
     }
 }

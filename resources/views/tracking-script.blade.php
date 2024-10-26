@@ -1,45 +1,21 @@
 <script>
     window.DeviceTracker = {
         config: @json([
-            'tracking_id' => $tracking->id,
-            'reading' => $tracking->reading(),
-            'routes' => $routes
+            'fingerprint' => $fingerprint
         ])
     };
 </script>
 <script>
-    (() => {
-        const { config } = window.DeviceTracker;
-        const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+    if (window.DeviceTracker.config.fingerprint === null) {
+        const fpPromise = import('https://openfpcdn.io/fingerprintjs/v4')
+            .then(FingerprintJS => FingerprintJS.load())
 
-        const processFavicon = async (route) => {
-            if (!route.should_track) return;
-
-            const link = document.createElement('link');
-            link.rel = 'icon';
-            link.type = 'image/png';
-            link.href = `${route.route}?t=${Date.now()}`;
-
-            document.head.appendChild(link);
-            await delay(100);
-            document.head.removeChild(link);
-        };
-
-        const processRoutes = async () => {
-            for (const route of config.routes) {
-                try {
-                    await processFavicon(route);
-                    await delay(50);
-                } catch (e) {
-                    console.error('Error processing favicon:', e);
-                }
-            }
-        };
-
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', processRoutes);
-        } else {
-            processRoutes();
-        }
-    })();
+        fpPromise
+            .then(fp => fp.get())
+            .then(result => {
+                window.DeviceTracker.config.fingerprint = result.visitorId
+                document.cookie = `fingerprint=${result.visitorId}; SameSite=Strict; Secure`
+            })
+            .catch(error => console.error(error))
+    }
 </script>
