@@ -82,10 +82,11 @@ final class SessionController extends Controller
 
     public function renew(Request $request, string $id): JsonResponse
     {
+        $user = $request->user(Config::get('devices.auth_guard'));
         $session = $this->findUserSession($request, $id);
 
         if ($session) {
-            $session->renew();
+            $session->renew($user);
             return response()->json(['message' => 'Session renewed successfully']);
         }
 

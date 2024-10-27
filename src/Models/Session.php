@@ -192,14 +192,13 @@ class Session extends Model implements Cacheable
         return false;
     }
 
-    public function renew(): bool
+    public function renew(?Authenticatable $user): bool
     {
-
         $this->last_activity_at = Carbon::now();
         $this->status = SessionStatus::Active;
         $this->finished_at = null;
 
-        $this->device->users()->updateExistingPivot(Auth::user()->id, ['last_activity_at' => $this->last_activity_at]);
+        $this->device->users()->updateExistingPivot($user->id, ['last_activity_at' => $this->last_activity_at]);
 
         return $this->save();
     }
@@ -212,7 +211,7 @@ class Session extends Model implements Cacheable
             }
         }
 
-        return $this->renew();
+        return $this->renew($request->user(Config::get('devices.auth_guard')));
     }
 
     private function shouldIgnoreRestart(Request $request, array $ignore): bool

@@ -10,7 +10,7 @@ return new class extends Migration {
             $table->string('fingerprint')
                 ->unique()
                 ->nullable()
-                ->after('uuid');
+                ->after('user_id');
         });
     }
 
