@@ -194,9 +194,12 @@ class Session extends Model implements Cacheable
 
     public function renew(): bool
     {
+
         $this->last_activity_at = Carbon::now();
         $this->status = SessionStatus::Active;
         $this->finished_at = null;
+
+        $this->device->users()->updateExistingPivot(Auth::user()->id, ['last_activity_at' => $this->last_activity_at]);
 
         return $this->save();
     }

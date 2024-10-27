@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Ninja\DeviceTracker\Enums\DeviceStatus;
 
 return new class extends Migration {
     public function up(): void
@@ -11,6 +12,9 @@ return new class extends Migration {
             $table->id();
             $table->bigInteger($this->field())->unsigned();
             $table->string('device_uuid');
+            $table->string('status')->default(DeviceStatus::Unverified->value);
+            $table->timestamp('verified_at')->nullable();
+            $table->timestamp('last_activity_at')->nullable();
             $table->timestamps();
             $table->foreign($this->field())
                 ->references('id')

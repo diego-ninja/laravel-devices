@@ -8,13 +8,13 @@ use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 use Ninja\DeviceTracker\Models\Device;
 
-final class DeviceCreatedEvent
+final class DeviceAttachedEvent
 {
     use Dispatchable;
     use InteractsWithSockets;
     use SerializesModels;
 
-    public function __construct(public readonly Device $device)
+    public function __construct(public readonly Device $device, public readonly Authenticatable $user)
     {
     }
 }

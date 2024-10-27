@@ -16,6 +16,7 @@ use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\DTO\Device as DeviceDTO;
 use Ninja\DeviceTracker\DTO\Metadata;
 use Ninja\DeviceTracker\Enums\DeviceStatus;
+use Ninja\DeviceTracker\Enums\SessionStatus;
 use Ninja\DeviceTracker\Events\DeviceCreatedEvent;
 use Ninja\DeviceTracker\Events\DeviceDeletedEvent;
 use Ninja\DeviceTracker\Events\DeviceFingerprintedEvent;
@@ -57,8 +58,6 @@ use Ninja\DeviceTracker\Traits\PropertyProxy;
  * @property Carbon                       $updated_at             datetime
  * @property Carbon                       $verified_at            datetime
  * @property Carbon                       $hijacked_at            datetime
- *
- * @property Tracking                     $tracking
  *
  */
 class Device extends Model implements Cacheable
@@ -170,19 +169,30 @@ class Device extends Model implements Cacheable
     {
         $user = $user ?? Auth::user();
 
-        $this->verified_at = now();
-        $this->status = DeviceStatus::Verified;
+        $this->users()->updateExistingPivot($user->id, [
+            'device_uuid' => $this->uuid,
+            'status' => DeviceStatus::Verified,
+            'verified_at' => now(),
+        ]);
+
+        $this->sessions()
+            ->where('status', SessionStatus::Locked)
+            ->where('expires_at', '>', now())
+            ->where('user_id', $user->id)
+            ->get()
+            ->each(fn(Session $session) => $session->unlock());
 
         if ($this->save()) {
             event(new DeviceVerifiedEvent($this, $user));
         }
     }
 
-    public function verified(): bool
+    public function verified(?Authenticatable $user = null): bool
     {
-        $this->sessions->each(fn(Session $session) => $session->unlock());
+        $user = $user ?? Auth::user();
+        $deviceUser = $this->users()->where('user_id', $user->id)->first();
 
-        return $this->status === DeviceStatus::Verified;
+        return $deviceUser && $this->status === $deviceUser->pivot->status;
     }
 
     public function hijack(?Authenticatable $user = null): void
@@ -190,7 +200,10 @@ class Device extends Model implements Cacheable
         $user = $user ?? Auth::user();
 
         $this->hijacked_at = now();
-        $this->status = DeviceStatus::Hijacked;
+
+        $this->users()->updateExistingPivot($user->id, [
+            'status' => DeviceStatus::Hijacked,
+        ]);
 
         foreach ($this->sessions as $session) {
             $session->block();
@@ -203,7 +216,7 @@ class Device extends Model implements Cacheable
 
     public function hijacked(): bool
     {
-        return $this->status === DeviceStatus::Hijacked;
+        return $this->hijacked_at !== null;
     }
 
     public function forget(): bool

@@ -9,6 +9,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Collection;
 use Ninja\DeviceTracker\Contracts\DeviceDetector;
 use Ninja\DeviceTracker\Contracts\StorableId;
+use Ninja\DeviceTracker\Events\DeviceAttachedEvent;
 use Ninja\DeviceTracker\Events\DeviceTrackedEvent;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Exception\FingerprintNotFoundException;
@@ -40,6 +41,9 @@ final class DeviceManager
             }
 
             Auth::user()?->devices()->attach($deviceUuid);
+
+            event(new DeviceAttachedEvent(Device::byUuid($deviceUuid), Auth::user()));
+
             return true;
         }
 
