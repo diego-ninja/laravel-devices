@@ -69,7 +69,9 @@ class DeviceTrackerServiceProvider extends ServiceProvider
     {
         $providers = Config::get('devices.location_providers');
         if (count($providers) === 1) {
-            $this->app->singleton(LocationProvider::class, new $providers[0]());
+            $this->app->singleton(LocationProvider::class, function () use ($providers) {
+                return $this->app->make($providers[0]);
+            });
         }
 
         $this->app->singleton(LocationProvider::class, function () use ($providers) {
