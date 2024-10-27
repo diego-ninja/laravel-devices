@@ -18,13 +18,15 @@ final class MaxmindLocationProvider extends AbstractLocationProvider
     public function locate(string $ip): Location
     {
         $key = sprintf('%s:%s', LocationCache::KEY_PREFIX, $ip);
-        return LocationCache::remember($key, function () use ($ip) {
+        $this->location = LocationCache::remember($key, function () use ($ip) {
             try {
                 return $this->lookup($ip);
             } catch (AddressNotFoundException | InvalidDatabaseException $e) {
                 throw LocationLookupFailedException::forIp($ip, $e);
             }
         });
+
+        return $this->location;
     }
 
     /**
@@ -35,7 +37,7 @@ final class MaxmindLocationProvider extends AbstractLocationProvider
     {
         $record = $this->reader->city($ip);
 
-        $this->location = Location::fromArray([
+        return Location::fromArray([
             'ip' => $ip,
             'country' => $record->country->isoCode,
             'region' => $record->mostSpecificSubdivision->name,
@@ -45,7 +47,5 @@ final class MaxmindLocationProvider extends AbstractLocationProvider
             'longitude' => (string) $record->location->longitude,
             'timezone' => $record->location->timeZone
         ]);
-
-        return $this->location;
     }
 }

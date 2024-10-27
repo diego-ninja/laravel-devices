@@ -16,7 +16,7 @@ final class IpinfoLocationProvider extends AbstractLocationProvider implements L
     {
         $key = sprintf('%s:%s', LocationCache::KEY_PREFIX, $ip);
 
-        return LocationCache::remember($key, function () use ($ip) {
+        $this->location = LocationCache::remember($key, function () use ($ip) {
             try {
                 $url = sprintf(self::API_URL, $ip);
                 $locationData = json_decode(file_get_contents($url), true);
@@ -26,12 +26,12 @@ final class IpinfoLocationProvider extends AbstractLocationProvider implements L
                 $locationData['latitude'] = $lat;
                 $locationData['longitude'] = $long;
 
-                $this->location = Location::fromArray($locationData);
-
-                return $this->location;
+                return Location::fromArray($locationData);
             } catch (Exception $e) {
                 throw LocationLookupFailedException::forIp($ip, $e);
             }
         });
+
+        return $this->location;
     }
 }
