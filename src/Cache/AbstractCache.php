@@ -64,6 +64,15 @@ abstract class AbstractCache
         self::instance()->forgetItem($item);
     }
 
+    public static function flush(): void
+    {
+        if (!self::instance()->enabled()) {
+            return;
+        }
+
+        self::instance()->cache->flush();
+    }
+
     /**
      * @throws InvalidArgumentException
      */

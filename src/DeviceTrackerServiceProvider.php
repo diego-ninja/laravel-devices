@@ -6,6 +6,12 @@ use Config;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
+use Ninja\DeviceTracker\Console\Commands\CacheInvalidateCommand;
+use Ninja\DeviceTracker\Console\Commands\CacheWarmCommand;
+use Ninja\DeviceTracker\Console\Commands\CleanupDevicesCommand;
+use Ninja\DeviceTracker\Console\Commands\CleanupSessionsCommand;
+use Ninja\DeviceTracker\Console\Commands\DeviceInspectCommand;
+use Ninja\DeviceTracker\Console\Commands\DeviceStatusCommand;
 use Ninja\DeviceTracker\Contracts\CodeGenerator;
 use Ninja\DeviceTracker\Contracts\DeviceDetector;
 use Ninja\DeviceTracker\Generators\Google2FACodeGenerator;
@@ -23,6 +29,7 @@ class DeviceTrackerServiceProvider extends ServiceProvider
     {
         $this->registerPublishing();
         $this->registerMiddlewares();
+        $this->registerCommands();
 
         $this->loadViewsFrom(resource_path("views/vendor/laravel-devices"), 'laravel-devices');
 
@@ -82,6 +89,20 @@ class DeviceTrackerServiceProvider extends ServiceProvider
 
             return $fallbackProvider;
         });
+    }
+
+    private function registerCommands(): void
+    {
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                CacheWarmCommand::class,
+                CacheInvalidateCommand::class,
+                CleanupSessionsCommand::class,
+                CleanupDevicesCommand::class,
+                DeviceStatusCommand::class,
+                DeviceInspectCommand::class,
+            ]);
+        }
     }
 
     private function registerMiddlewares(): void
