@@ -1,8 +1,7 @@
 <?php
 
-namespace Ninja\DeviceTracker\DTO;
+namespace Ninja\DeviceTracker\Modules\Location\DTO;
 
-use Config;
 use JsonSerializable;
 use Ninja\DeviceTracker\Cache\LocationCache;
 use Ninja\DeviceTracker\Contracts\Cacheable;

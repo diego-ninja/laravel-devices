@@ -30,8 +30,7 @@ graph TB
 ### Implementing a Custom Location Provider
 
 ```php
-use Ninja\DeviceTracker\Contracts\LocationProvider;
-use Ninja\DeviceTracker\DTO\Location;
+use Ninja\DeviceTracker\Modules\Location\Contracts\LocationProvider;use Ninja\DeviceTracker\Modules\Location\DTO\Location;
 
 class MaxMindLocationProvider implements LocationProvider
 {
@@ -85,8 +84,7 @@ class MaxMindLocationProvider implements LocationProvider
 ### Registering Custom Provider
 
 ```php
-use Illuminate\Support\ServiceProvider;
-use Ninja\DeviceTracker\Contracts\LocationProvider;
+use Illuminate\Support\ServiceProvider;use Ninja\DeviceTracker\Modules\Location\Contracts\LocationProvider;
 
 class CustomProvidersServiceProvider extends ServiceProvider
 {

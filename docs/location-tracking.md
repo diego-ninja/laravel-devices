@@ -80,9 +80,7 @@ class IpinfoLocationProvider implements LocationProvider
 ### Example: MaxMind GeoIP2 Provider
 
 ```php
-use GeoIp2\Database\Reader;
-use Ninja\DeviceTracker\Contracts\LocationProvider;
-use Ninja\DeviceTracker\DTO\Location;
+use GeoIp2\Database\Reader;use Ninja\DeviceTracker\Modules\Location\Contracts\LocationProvider;use Ninja\DeviceTracker\Modules\Location\DTO\Location;
 
 class MaxMindLocationProvider implements LocationProvider
 {

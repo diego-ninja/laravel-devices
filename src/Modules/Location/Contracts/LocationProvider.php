@@ -1,8 +1,8 @@
 <?php
 
-namespace Ninja\DeviceTracker\Contracts;
+namespace Ninja\DeviceTracker\Modules\Location\Contracts;
 
-use Ninja\DeviceTracker\DTO\Location;
+use Ninja\DeviceTracker\Modules\Location\DTO\Location;
 
 interface LocationProvider
 {

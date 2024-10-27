@@ -14,9 +14,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Session as SessionFacade;
 use Ninja\DeviceTracker\Cache\SessionCache;
 use Ninja\DeviceTracker\Contracts\Cacheable;
-use Ninja\DeviceTracker\Contracts\LocationProvider;
 use Ninja\DeviceTracker\Contracts\StorableId;
-use Ninja\DeviceTracker\DTO\Location;
 use Ninja\DeviceTracker\DTO\Metadata;
 use Ninja\DeviceTracker\Enums\SessionStatus;
 use Ninja\DeviceTracker\Events\SessionBlockedEvent;
@@ -26,6 +24,8 @@ use Ninja\DeviceTracker\Events\SessionUnblockedEvent;
 use Ninja\DeviceTracker\Events\SessionUnlockedEvent;
 use Ninja\DeviceTracker\Exception\SessionNotFoundException;
 use Ninja\DeviceTracker\Factories\SessionIdFactory;
+use Ninja\DeviceTracker\Modules\Location\Contracts\LocationProvider;
+use Ninja\DeviceTracker\Modules\Location\DTO\Location;
 use Ninja\DeviceTracker\Traits\PropertyProxy;
 
 /**

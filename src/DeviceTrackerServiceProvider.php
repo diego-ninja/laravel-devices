@@ -8,11 +8,12 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Ninja\DeviceTracker\Contracts\CodeGenerator;
 use Ninja\DeviceTracker\Contracts\DeviceDetector;
-use Ninja\DeviceTracker\Contracts\LocationProvider;
 use Ninja\DeviceTracker\Generators\Google2FACodeGenerator;
 use Ninja\DeviceTracker\Http\Middleware\DeviceTracker;
 use Ninja\DeviceTracker\Http\Middleware\FingerprintTracker;
 use Ninja\DeviceTracker\Http\Middleware\SessionTracker;
+use Ninja\DeviceTracker\Modules\Location\Contracts\LocationProvider;
+use Ninja\DeviceTracker\Modules\Location\IpinfoLocationProvider;
 use PragmaRX\Google2FA\Google2FA;
 use PragmaRX\Google2FA\Support\Constants;
 

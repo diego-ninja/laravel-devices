@@ -4,6 +4,7 @@ namespace Ninja\DeviceTracker\DTO;
 
 use JsonSerializable;
 use Ninja\DeviceTracker\Enums\SessionStatus;
+use Ninja\DeviceTracker\Modules\Location\DTO\Location;
 use Stringable;
 
 final readonly class Session implements JsonSerializable, Stringable
