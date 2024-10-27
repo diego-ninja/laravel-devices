@@ -12,15 +12,8 @@ return new class extends Migration {
             $table->increments('id');
             $table->integer('user_id');
             $table->boolean('enabled')->nullable();
-
-            $table->text('secret')
-                ->after('enabled')
-                ->nullable();
-
-            $table->timestamp('last_success_at')
-                ->after('secret')
-                ->nullable();
-
+            $table->text('secret')->nullable();
+            $table->timestamp('last_success_at')->nullable();
             $table->timestamps();
         });
     }

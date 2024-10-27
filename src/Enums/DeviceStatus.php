@@ -7,6 +7,7 @@ enum DeviceStatus: string
     case Unverified = 'unverified';
     case Verified = 'verified';
     case Hijacked = 'hijacked';
+    case Inactive = 'inactive';
 
     public static function values(): array
     {
@@ -14,6 +15,7 @@ enum DeviceStatus: string
             self::Unverified,
             self::Verified,
             self::Hijacked,
+            self::Inactive,
         ];
     }
 }

@@ -22,7 +22,6 @@ return [
     */
     'device_id_storable_class' => \Ninja\DeviceTracker\ValueObject\DeviceId::class,
 
-
     /*
     |--------------------------------------------------------------------------
     | Session ID class
@@ -53,13 +52,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Regenerate devices
+    |--------------------------------------------------------------------------
+    | This option specifies if missing devices should be regenerated. Useful to avoid errors
+    | when the device is not found in the database, but it is in the cookie.
+    */
+    'regenerate_devices' => false,
+
+
+    /*
+    |--------------------------------------------------------------------------
     | Allows multiple sessions per device
     |--------------------------------------------------------------------------
     | This option specifies if the user can have multiple active sessions per device
     |
     */
     'allow_device_multi_session' => true,
-
 
     /*
     |--------------------------------------------------------------------------
@@ -111,6 +119,76 @@ return [
     */
     'inactivity_session_behaviour' => 'terminate',
 
+    /*
+    |--------------------------------------------------------------------------
+    | Enable fingerprinting
+    |--------------------------------------------------------------------------
+    |
+    | This option allows you to enable or disable client-side device fingerprinting.
+    |
+    */
+    'fingerprinting_enabled' => true,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cookie name for current fingerprint device tracking
+    |--------------------------------------------------------------------------
+    | This option specifies the name of the cookie that will be used to store
+    | the client-side fingerprint of the current device.
+    |
+    */
+    'fingerprint_id_cookie_name' => 'fingerprint',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Fingerprint client library
+    |--------------------------------------------------------------------------
+    | This option specifies the library that will be used to generate
+    | the client-side fingerprint of the current device.
+    |
+    | Options: 'fingerprintjs', 'clientjs', 'creepjs'
+    |
+    */
+    'fingerprint_client_library' => \Ninja\DeviceTracker\Modules\Fingerprinting\Injector\Enums\Library::FingerprintJS,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Fingerprint transport
+    |--------------------------------------------------------------------------
+    |
+    | This option allows you to specify the transport method for the fingerprint.
+    | Options: 'cookie', 'header', 'query'
+    |
+    */
+    'client_fingerprint_transport' => 'cookie',
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Fingerprint key
+    |--------------------------------------------------------------------------
+    |
+    | This option allows you to easily specify the key that will be used to store
+    | the fingerprint in cookie/header set by the client.
+    |
+    */
+    'client_fingerprint_key' => 'csf',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Location provider
+    |--------------------------------------------------------------------------
+    |
+    | This option allows you to easily specify the location providers that will be used
+    | to get the location of the device. The first provider that returns a location will be used.
+    |
+    | Options: 'ipinfo', 'maxmind'
+    |
+    */
+    'location_providers' => [
+        \Ninja\DeviceTracker\Modules\Location\IpinfoLocationProvider::class,
+        // \Ninja\DeviceTracker\Modules\Location\MaxMindLocationProvider::class,
+    ],
 
     /*
     |--------------------------------------------------------------------------
@@ -231,7 +309,7 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Google 2FA Route
+    | Google 2FA Point
     |--------------------------------------------------------------------------
     |
     | This option allows you to easily specify the route name for Google 2FA form.

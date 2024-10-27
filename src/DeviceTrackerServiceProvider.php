@@ -3,13 +3,17 @@
 namespace Ninja\DeviceTracker;
 
 use Config;
+use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Ninja\DeviceTracker\Contracts\CodeGenerator;
 use Ninja\DeviceTracker\Contracts\DeviceDetector;
-use Ninja\DeviceTracker\Contracts\LocationProvider;
 use Ninja\DeviceTracker\Generators\Google2FACodeGenerator;
+use Ninja\DeviceTracker\Http\Middleware\DeviceTracker;
+use Ninja\DeviceTracker\Http\Middleware\FingerprintTracker;
 use Ninja\DeviceTracker\Http\Middleware\SessionTracker;
+use Ninja\DeviceTracker\Modules\Location\Contracts\LocationProvider;
+use Ninja\DeviceTracker\Modules\Location\FallbackLocationProvider;
 use PragmaRX\Google2FA\Google2FA;
 use PragmaRX\Google2FA\Support\Constants;
 
@@ -19,6 +23,12 @@ class DeviceTrackerServiceProvider extends ServiceProvider
     {
         $this->registerPublishing();
         $this->registerMiddlewares();
+
+        $this->loadViewsFrom(resource_path("views/vendor/laravel-devices"), 'laravel-devices');
+
+        $this->app->resolving(EncryptCookies::class, function (EncryptCookies $encrypter) {
+            $encrypter->disableFor(config('devices.client_fingerprint_key'));
+        });
 
         if (Config::get('devices.load_routes')) {
             $this->loadRoutesFrom(__DIR__ . '/../routes/devices.php');
@@ -33,9 +43,7 @@ class DeviceTrackerServiceProvider extends ServiceProvider
             key: 'devices'
         );
 
-        $this->app->singleton(LocationProvider::class, function () {
-            return new IpinfoLocationProvider();
-        });
+        $this->registerLocationProviders();
 
         $this->app->singleton(DeviceDetector::class, function () {
             return new UserAgentDeviceDetector();
@@ -57,10 +65,32 @@ class DeviceTrackerServiceProvider extends ServiceProvider
         $this->registerAuthenticationEventHandler();
     }
 
+    private function registerLocationProviders(): void
+    {
+        $providers = Config::get('devices.location_providers');
+        if (count($providers) === 1) {
+            $this->app->singleton(LocationProvider::class, new $providers[0]());
+        }
+
+        $this->app->singleton(LocationProvider::class, function () use ($providers) {
+            $fallbackProvider = new FallbackLocationProvider();
+            foreach ($providers as $provider) {
+                $fallbackProvider->addProvider($this->app->make($provider));
+            }
+
+            return $fallbackProvider;
+        });
+    }
+
     private function registerMiddlewares(): void
     {
         $router = $this->app['router'];
+        $router->middleware('device-tracker', DeviceTracker::class);
         $router->middleware('session-tracker', SessionTracker::class);
+
+        if (Config::get('devices.fingerprinting_enabled')) {
+            $router->middleware('fingerprint-tracker', FingerprintTracker::class);
+        }
     }
 
     private function registerFacades(): void
@@ -82,6 +112,9 @@ class DeviceTrackerServiceProvider extends ServiceProvider
     private function registerPublishing(): void
     {
         if ($this->app->runningInConsole()) {
+            $this->publishes([
+                __DIR__ . '/../resources/views' => resource_path("views/vendor/laravel-devices")], 'views');
+
             $this->publishes([
                 __DIR__ . '/../config/devices.php' => config_path('devices.php')], 'config');
 

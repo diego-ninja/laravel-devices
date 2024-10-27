@@ -54,6 +54,10 @@ abstract class AbstractCache
 
         return self::instance()->cache->remember($key, self::instance()->ttl(), $callback);
     }
+    public static function key(string $key): string
+    {
+        return static::KEY_PREFIX . ':' . $key;
+    }
 
     public static function forget(Cacheable $item): void
     {

@@ -9,6 +9,7 @@ use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Ninja\DeviceTracker\Models\Session;
@@ -65,13 +66,13 @@ final readonly class SessionTracker
         try {
             return redirect()->route(Config::get('devices.logout_route_name'));
         } catch (RouteNotFoundException $e) {
-            Log::error('Route not found', ['route' => Config::get('devices.logout_route_name'), 'exception' => $e]);
+            Log::error('Point not found', ['route' => Config::get('devices.logout_route_name'), 'exception' => $e]);
         }
 
         return response()->json(['message' => 'Unauthorized'], 401);
     }
 
-    private function manageInactivity(Request $request, Closure $next): JsonResponse|RedirectResponse
+    private function manageInactivity(Request $request, Closure $next): JsonResponse|RedirectResponse|Response
     {
         if (Config::get("devices.inactivity_session_behaviour") === "terminate") {
             return $this->manageLogout($request);
@@ -89,7 +90,7 @@ final readonly class SessionTracker
         try {
             return redirect()->route(Config::get('devices.2fa_route_name'));
         } catch (RouteNotFoundException $e) {
-            Log::error('Route not found', ['route' => Config::get('devices.2fa_route_name'), 'exception' => $e]);
+            Log::error('Point not found', ['route' => Config::get('devices.2fa_route_name'), 'exception' => $e]);
         }
 
         return response()->json(['message' => 'Session locked'], 423);

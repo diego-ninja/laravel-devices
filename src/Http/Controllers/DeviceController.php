@@ -74,8 +74,10 @@ final class DeviceController extends Controller
     public function signout(Request $request, string $id)
     {
         $device = $this->getUserDevice($request, $id);
-        $sessions = $device->activeSessions();
-        $sessions->each(fn(Session $session) => $session->end());
+        $device
+            ->sessions()
+            ->active()
+            ->each(fn(Session $session) => $session->end());
 
         return response()->json(['message' => 'All active sessions for device finished successfully.']);
     }
