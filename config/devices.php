@@ -176,6 +176,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Location provider
+    |--------------------------------------------------------------------------
+    |
+    | This option allows you to easily specify the location providers that will be used
+    | to get the location of the device. The first provider that returns a location will be used.
+    |
+    | Options: 'ipinfo', 'maxmind'
+    |
+    */
+    'location_providers' => [
+        \Ninja\DeviceTracker\Modules\Location\IpinfoLocationProvider::class,
+        // \Ninja\DeviceTracker\Modules\Location\MaxMindLocationProvider::class,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Enable cache
     |--------------------------------------------------------------------------
     |

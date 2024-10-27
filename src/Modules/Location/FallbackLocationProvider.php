@@ -9,7 +9,7 @@ use Ninja\DeviceTracker\Modules\Location\Exception\LocationLookupFailedException
 
 final class FallbackLocationProvider extends AbstractLocationProvider
 {
-    public function __construct(private array $providers)
+    public function __construct(private array $providers = [])
     {
     }
 

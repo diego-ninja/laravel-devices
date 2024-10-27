@@ -13,7 +13,7 @@ use Ninja\DeviceTracker\Http\Middleware\DeviceTracker;
 use Ninja\DeviceTracker\Http\Middleware\FingerprintTracker;
 use Ninja\DeviceTracker\Http\Middleware\SessionTracker;
 use Ninja\DeviceTracker\Modules\Location\Contracts\LocationProvider;
-use Ninja\DeviceTracker\Modules\Location\IpinfoLocationProvider;
+use Ninja\DeviceTracker\Modules\Location\FallbackLocationProvider;
 use PragmaRX\Google2FA\Google2FA;
 use PragmaRX\Google2FA\Support\Constants;
 
@@ -43,9 +43,7 @@ class DeviceTrackerServiceProvider extends ServiceProvider
             key: 'devices'
         );
 
-        $this->app->singleton(LocationProvider::class, function () {
-            return new IpinfoLocationProvider();
-        });
+        $this->registerLocationProviders();
 
         $this->app->singleton(DeviceDetector::class, function () {
             return new UserAgentDeviceDetector();
@@ -65,6 +63,23 @@ class DeviceTrackerServiceProvider extends ServiceProvider
 
         $this->registerFacades();
         $this->registerAuthenticationEventHandler();
+    }
+
+    private function registerLocationProviders(): void
+    {
+        $providers = Config::get('devices.location_providers');
+        if (count($providers) === 1) {
+            $this->app->singleton(LocationProvider::class, new $providers[0]());
+        }
+
+        $this->app->singleton(LocationProvider::class, function () use ($providers) {
+            $fallbackProvider = new FallbackLocationProvider();
+            foreach ($providers as $provider) {
+                $fallbackProvider->addProvider(new $provider());
+            }
+
+            return $fallbackProvider;
+        });
     }
 
     private function registerMiddlewares(): void
