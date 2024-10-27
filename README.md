@@ -35,93 +35,9 @@ This is a work in progress, and maybe or maybe not be ready for production use. 
 * [Laravel Pulse](https://laravel.com/docs/11.x/pulse) integration
 
 
+## 📚 Documentation
+
 Please refer to the [documentation](./docs/README.md) for more information on the features and how to use this package.
-
-## 📦 Installation
-
-In composer.json:
-```json  
-"require": { "diego-ninja/laravel-devices": "^1" }  
-```
-
-and run:
-```bash
-composer update  
-```
-
-or 
-```bash
-composer require diego-ninja/laravel-devices
-```
-
-
-Publish config and migrations:
-```bash
-php artisan vendor:publish --provider="Ninja\DeviceTracker\DeviceTrackerServiceProvider"  
-```
-
-## 🚀 Quickstart
-
-Add the service provider to `bootstrap/providers.php` under `providers`:
-```php  
-return [ 
-	...        
-	Ninja\DeviceTracker\DeviceTrackerServiceProvider::class,    
-]  
-```
-
-Update config file to fit your needs:
-```php  
-config/devices.php  
-```
-
-Migrate your database:
-```bash  
-php artisan migrate  
-```
-
-Add the HasDevices trait to your user model:
-```php  
-use Ninja\DeviceTracker\Traits\HasDevices;        
-
-class User extends Model {  
-	use HasDevices;    
-	...
-}  
-```
-
-Add the Has2FA trait to your user model if you want to use the Google 2FA provided integration:
-```php  
-use Ninja\DeviceTracker\Traits\Has2FA;        
-
-class User extends Model {  
-	use Has2FA;    
-	...
-}  
-```  
-
-Add the DeviceTrack middleware in your bootstrap/app.php file. This middleware will track the user device, it will check the presence of a cookie with a device uuid and will create a new device id if it doesn't exist.
-
-```php
-protected $middleware = [
-	'Ninja\DeviceTracker\Http\Middleware\DeviceTrack',
-	...
-];
-```
-
-
-In your routes.php file you should add 'session-tracker' middleware for routes which you want to keep track of. This  middleware will check if the user has a valid session and device. If not, it will redirect to the login page or return a 401 json response depending on your configuration.
-
-```php
-	Route::group(['middleware'=>'session-tracker'], function(){
-		Route::get('your-route', 'YourController@yourAction');    
-	});
-```
-
-## 🎛️ Configuration
-
-[Config file](https://github.com/diego-ninja/laravel-devices/blob/6e3373936cbe3ba9e9c24c97fa29b8798ec23992/config/devices.php) is fully commented and self-explanatory. Please check detailed instructions on every aspect there.
-
 
 
 ## 🙏 Credits

@@ -9,11 +9,10 @@
 [![Hits-of-Code](https://hitsofcode.com/github/diego-ninja/laravel-devices?branch=main&label=Hits-of-Code)](https://hitsofcode.com/github/diego-ninja/laravel-devices/view?branch=main&label=Hits-of-Code&color=blue)
 [![wakatime](https://wakatime.com/badge/user/bd65f055-c9f3-4f73-92aa-3c9810f70cc3/project/94491bff-6b6c-4b9d-a5fd-5568319d3071.svg)](https://wakatime.com/badge/user/bd65f055-c9f3-4f73-92aa-3c9810f70cc3/project/94491bff-6b6c-4b9d-a5fd-5568319d3071)
 
-## Introduction
-Laravel Devices is a comprehensive package for managing user devices and sessions in Laravel applications. It provides robust device tracking, session management, and security features including device fingerprinting and two-factor authentication support.
-
 ## Documentation
 This documentation has been generated almost in its entirety using 🦠 [Claude 3.5 Sonnet](https://claude.ai/) based on source code analysis. Some sections may be incomplete, outdated or may contain documentation for planned or not-released features. For the most accurate information, please refer to the source code or open an issue on the package repository.
+
+If you find any issues or have suggestions for improvements, please open an issue or a pull request on the package repository.
 
 ### Getting Started
 * [Installation](installation.md)
