@@ -75,7 +75,7 @@ class DeviceTrackerServiceProvider extends ServiceProvider
         $this->app->singleton(LocationProvider::class, function () use ($providers) {
             $fallbackProvider = new FallbackLocationProvider();
             foreach ($providers as $provider) {
-                $fallbackProvider->addProvider(new $provider());
+                $fallbackProvider->addProvider($this->app->make($provider));
             }
 
             return $fallbackProvider;
