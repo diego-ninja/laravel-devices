@@ -41,6 +41,14 @@ final readonly class Browser implements JsonSerializable, Stringable
         ];
     }
 
+    public function unknown(): bool
+    {
+        return
+            in_array($this->name, [Device::UNKNOWN, '', null], true) &&
+            in_array($this->family, [Device::UNKNOWN, '', null], true) &&
+            in_array($this->engine, [Device::UNKNOWN, '', null], true);
+    }
+
     public function jsonSerialize(): array
     {
         return $this->array();

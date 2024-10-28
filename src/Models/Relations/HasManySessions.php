@@ -12,22 +12,35 @@ final class HasManySessions extends HasMany
 {
     public function first(): ?Session
     {
-        return $this->orderBy('started_at')->get()->first();
+        return $this
+            ->with('device')
+            ->orderBy('started_at')
+            ->get()
+            ->first();
     }
 
     public function last(): ?Session
     {
-        return $this->orderByDesc('started_at')->get()->first();
+        return $this
+            ->with('device')
+            ->orderByDesc('started_at')
+            ->get()
+            ->first();
     }
 
     public function current(): ?Session
     {
-        return $this->where('uuid', SessionFacade::get(Session::DEVICE_SESSION_ID))->get()->first();
+        return $this
+            ->with('device')
+            ->where('uuid', SessionFacade::get(Session::DEVICE_SESSION_ID))
+            ->get()
+            ->first();
     }
 
     public function recent(): ?Session
     {
         return $this
+            ->with('device')
             ->where('status', SessionStatus::Active)
             ->orderBy('last_activity_at', 'desc')
             ->get()
@@ -37,6 +50,7 @@ final class HasManySessions extends HasMany
     public function active(bool $exceptCurrent = false): Collection
     {
         $query =  $this
+            ->with('device')
             ->where('finished_at', null)
             ->where('status', SessionStatus::Active);
 
@@ -52,6 +66,7 @@ final class HasManySessions extends HasMany
     public function finished(): Collection
     {
         return $this
+            ->with('device')
             ->whereNotNull('finished_at')
             ->where('status', SessionStatus::Finished)
             ->orderBy('finished_at', 'desc')

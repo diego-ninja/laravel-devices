@@ -33,6 +33,14 @@ final readonly class DeviceType implements JsonSerializable, Stringable
         ];
     }
 
+    public function unknown(): bool
+    {
+        return
+            in_array($this->family, [Device::UNKNOWN, '', null], true) &&
+            in_array($this->model, [Device::UNKNOWN, '', null], true) &&
+            in_array($this->type, [Device::UNKNOWN, '', null], true);
+    }
+
     public function jsonSerialize(): array
     {
         return $this->array();

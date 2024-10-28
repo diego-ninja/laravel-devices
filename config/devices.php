@@ -59,6 +59,14 @@ return [
     */
     'regenerate_devices' => false,
 
+    /*
+    |--------------------------------------------------------------------------
+    | Allow unknown devices
+    |--------------------------------------------------------------------------
+    | This option specifies if the system should allow unknown devices to be created
+    |
+    */
+    'allow_unknown_devices' => false,
 
     /*
     |--------------------------------------------------------------------------

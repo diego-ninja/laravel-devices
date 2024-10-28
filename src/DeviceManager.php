@@ -13,8 +13,10 @@ use Ninja\DeviceTracker\Events\DeviceAttachedEvent;
 use Ninja\DeviceTracker\Events\DeviceTrackedEvent;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Exception\FingerprintNotFoundException;
+use Ninja\DeviceTracker\Exception\UnknownDeviceDetectedException;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Models\Device;
+use function request;
 
 final class DeviceManager
 {
@@ -68,6 +70,7 @@ final class DeviceManager
     /**
      * @throws DeviceNotFoundException
      * @throws FingerprintNotFoundException
+     * @throws UnknownDeviceDetectedException
      */
     public function track(): StorableId
     {
@@ -79,6 +82,15 @@ final class DeviceManager
             }
         } else {
             self::$deviceUuid = DeviceIdFactory::generate();
+        }
+
+        $payload = app(DeviceDetector::class)->detect(request());
+        if (!$payload->unknown() || config('devices.allow_unknown_devices')) {
+            Device::register(
+                deviceUuid: self::$deviceUuid,
+                data: $payload
+            );
+
             Cookie::queue(
                 Cookie::forever(
                     name: Config::get('devices.device_id_cookie_name'),
@@ -87,16 +99,13 @@ final class DeviceManager
                     httpOnly: Config::get('session.http_only', true)
                 )
             );
+
+            event(new DeviceTrackedEvent(self::$deviceUuid));
+
+            return self::$deviceUuid;
         }
 
-        Device::register(
-            deviceUuid: self::$deviceUuid,
-            data: app(DeviceDetector::class)->detect(\request())
-        );
-
-        event(new DeviceTrackedEvent(self::$deviceUuid));
-
-        return self::$deviceUuid;
+        throw UnknownDeviceDetectedException::withUA(request()->header('User-Agent'));
     }
 
     public function current(): ?Device

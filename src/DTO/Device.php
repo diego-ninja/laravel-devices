@@ -7,6 +7,8 @@ use Stringable;
 
 final readonly class Device implements JsonSerializable, Stringable
 {
+    public const UNKNOWN = "UNK";
+
     public function __construct(
         public Browser $browser,
         public Platform $platform,
@@ -51,6 +53,11 @@ final readonly class Device implements JsonSerializable, Stringable
             grade: $data['grade'],
             userAgent: $data['user_agent']
         );
+    }
+
+    public function unknown(): bool
+    {
+        return $this->browser->unknown() || $this->platform->unknown();
     }
 
     public function array(): array
