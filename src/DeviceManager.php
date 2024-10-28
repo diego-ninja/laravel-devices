@@ -114,6 +114,11 @@ final class DeviceManager
             return Device::byFingerprint(fingerprint());
         }
 
-        return Device::byUuid(device_uuid(), false);
+        $device_uuid = device_uuid();
+        if ($device_uuid) {
+            return Device::byUuid($device_uuid, false);
+        }
+
+        return null;
     }
 }

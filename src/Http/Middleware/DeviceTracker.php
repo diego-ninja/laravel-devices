@@ -23,7 +23,7 @@ final readonly class DeviceTracker
                 \Ninja\DeviceTracker\DeviceManager::$deviceUuid = DeviceManager::current()->uuid;
 
             } catch (DeviceNotFoundException | FingerprintNotFoundException | UnknownDeviceDetectedException $e) {
-                Log::info($e->getMessage(), ['exception' => $e]);
+                Log::info($e->getMessage());
                 return $next($request);
             }
         }
