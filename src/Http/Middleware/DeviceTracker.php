@@ -24,9 +24,9 @@ final readonly class DeviceTracker
 
             } catch (DeviceNotFoundException | FingerprintNotFoundException | UnknownDeviceDetectedException $e) {
                 Log::info($e->getMessage(), ['exception' => $e]);
+                return $next($request);
             }
         }
-
 
         return $next($request);
     }

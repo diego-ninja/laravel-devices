@@ -256,12 +256,6 @@ class Device extends Model implements Cacheable
         StorableId $deviceUuid,
         DeviceDTO $data
     ): ?self {
-        if (!Config::get('devices.allow_unknown_devices')) {
-            if ($data->isUnknown()) {
-                return null;
-            }
-        }
-
         $device = self::byUuid($deviceUuid, false);
         if ($device) {
             return $device;
