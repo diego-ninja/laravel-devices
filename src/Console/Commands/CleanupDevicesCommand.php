@@ -19,11 +19,6 @@ final class CleanupDevicesCommand extends Command
             $this->info(sprintf('Deleted %d hijacked devices.', $deletedHijacked));
         }
 
-        // Delete orphaned devices (no sessions or users)
-        $orphanedDevices = Device::whereDoesntHave('sessions')
-            ->whereDoesntHave('users')
-            ->delete();
-
-        $this->info(sprintf('Deleted %d orphaned devices.', $orphanedDevices));
+        $this->info(sprintf('Deleted %d orphaned devices.', Device::orphans()->delete()));
     }
 }

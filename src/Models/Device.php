@@ -4,6 +4,7 @@ namespace Ninja\DeviceTracker\Models;
 
 use Carbon\Carbon;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -339,6 +340,12 @@ class Device extends Model implements Cacheable
         }
 
         return self::byUuid($id, false) !== null;
+    }
+
+    public static function orphans(): Builder
+    {
+        return self::doesntHave('users')
+            ->doesntHave('sessions');
     }
 
     public static function boot(): void
