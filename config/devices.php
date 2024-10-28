@@ -63,7 +63,8 @@ return [
     |--------------------------------------------------------------------------
     | Allow unknown devices
     |--------------------------------------------------------------------------
-    | This option specifies if the system should allow unknown devices to be created
+    | This option specifies if the system should allow unknown devices to be created.
+    | An unknown device is a device that has no information about the browser, platform, etc.
     |
     */
     'allow_unknown_devices' => false,

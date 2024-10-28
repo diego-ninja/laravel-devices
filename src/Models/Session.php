@@ -198,7 +198,9 @@ class Session extends Model implements Cacheable
         $this->status = SessionStatus::Active;
         $this->finished_at = null;
 
-        $this->device->users()->updateExistingPivot($user->id, ['last_activity_at' => $this->last_activity_at]);
+        if ($user) {
+            $this->device->users()->updateExistingPivot($user->id, ['last_activity_at' => $this->last_activity_at]);
+        }
 
         return $this->save();
     }
