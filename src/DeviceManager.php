@@ -16,6 +16,7 @@ use Ninja\DeviceTracker\Exception\FingerprintNotFoundException;
 use Ninja\DeviceTracker\Exception\UnknownDeviceDetectedException;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Models\Device;
+
 use function request;
 
 final class DeviceManager

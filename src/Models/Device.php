@@ -25,6 +25,7 @@ use Ninja\DeviceTracker\Events\DeviceHijackedEvent;
 use Ninja\DeviceTracker\Events\DeviceUpdatedEvent;
 use Ninja\DeviceTracker\Events\DeviceVerifiedEvent;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
+use Ninja\DeviceTracker\Exception\FingerprintDuplicatedException;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Models\Relations\HasManySessions;
 use Ninja\DeviceTracker\Traits\PropertyProxy;
@@ -117,7 +118,7 @@ class Device extends Model implements Cacheable
     {
         return Attribute::make(
             get: fn(string $value) => DeviceIdFactory::from($value),
-            set: fn(StorableId $value) => (string) $value
+            set: fn(StorableId $value) => (string)$value
         );
     }
 
@@ -142,25 +143,33 @@ class Device extends Model implements Cacheable
         return $this->uuid->toString() === device_uuid()?->toString();
     }
 
+    /**
+     * @throws FingerprintDuplicatedException
+     */
     public function fingerprint(string $fingerprint, ?string $cookie = null): void
     {
-        $this->fingerprint = $fingerprint;
-        if ($this->save()) {
-            if ($cookie) {
-                if (!Cookie::has($cookie)) {
-                    Cookie::queue(
-                        Cookie::forever(
-                            name:$cookie,
-                            value: $fingerprint,
-                            secure: Config::get('session.secure', false),
-                            httpOnly: Config::get('session.http_only', true)
-                        )
-                    );
+        try {
+            $this->fingerprint = $fingerprint;
+            if ($this->save()) {
+                if ($cookie) {
+                    if (!Cookie::has($cookie)) {
+                        Cookie::queue(
+                            Cookie::forever(
+                                name: $cookie,
+                                value: $fingerprint,
+                                secure: Config::get('session.secure', false),
+                                httpOnly: Config::get('session.http_only', true)
+                            )
+                        );
+                    }
                 }
+                event(new DeviceFingerprintedEvent($this));
             }
-            event(new DeviceFingerprintedEvent($this));
+        } catch (\PDOException $exception) {
+            throw FingerprintDuplicatedException::forFingerprint($fingerprint, Device::byFingerprint($fingerprint));
         }
     }
+
     public function fingerprinted(): bool
     {
         return $this->fingerprint !== null;

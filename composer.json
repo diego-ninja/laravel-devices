@@ -12,6 +12,7 @@
     "require": {
         "php": "^8.2",
         "ext-json": "*",
+        "ext-pdo": "*",
         "laravel/framework": "^10 || ^11",
         "nesbot/carbon": "^2 || ^3",
         "ramsey/uuid": "^4.7",

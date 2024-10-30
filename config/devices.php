@@ -155,7 +155,7 @@ return [
     | This option specifies the library that will be used to generate
     | the client-side fingerprint of the current device.
     |
-    | Options: 'fingerprintjs', 'clientjs', 'creepjs'
+    | Options: 'fingerprintjs', 'clientjs', 'creepjs', 'none'
     |
     */
     'fingerprint_client_library' => \Ninja\DeviceTracker\Modules\Fingerprinting\Injector\Enums\Library::FingerprintJS,
