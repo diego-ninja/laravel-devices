@@ -18,10 +18,6 @@ final readonly class DeviceTracker
             try {
                 $deviceUuid = DeviceManager::track();
                 Log::info('Device not found, creating new one with id ' . $deviceUuid->toString());
-
-                //TODO: This is a hack to make the device available in the request
-                \Ninja\DeviceTracker\DeviceManager::$deviceUuid = DeviceManager::current()->uuid;
-
             } catch (DeviceNotFoundException | FingerprintNotFoundException | UnknownDeviceDetectedException $e) {
                 Log::info($e->getMessage());
                 return $next($request);

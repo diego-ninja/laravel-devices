@@ -29,6 +29,7 @@ use Ninja\DeviceTracker\Exception\FingerprintDuplicatedException;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Models\Relations\HasManySessions;
 use Ninja\DeviceTracker\Traits\PropertyProxy;
+use PDOException;
 
 /**
  * Class Device
@@ -165,7 +166,7 @@ class Device extends Model implements Cacheable
                 }
                 event(new DeviceFingerprintedEvent($this));
             }
-        } catch (\PDOException $exception) {
+        } catch (PDOException $exception) {
             throw FingerprintDuplicatedException::forFingerprint($fingerprint, Device::byFingerprint($fingerprint));
         }
     }
