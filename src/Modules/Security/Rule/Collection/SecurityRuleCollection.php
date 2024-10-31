@@ -3,6 +3,7 @@
 namespace Ninja\DeviceTracker\Modules\Security\Rule\Collection;
 
 use Illuminate\Support\Collection;
+use Ninja\DeviceTracker\Modules\Security\Context\SecurityContext;
 use Ninja\DeviceTracker\Modules\Security\DTO\Risk;
 use Ninja\DeviceTracker\Modules\Security\Rule\AbstractSecurityRule;
 use Ninja\DeviceTracker\Modules\Security\Rule\Contracts\Rule;
@@ -14,7 +15,7 @@ final class SecurityRuleCollection extends Collection
         return $this->filter(fn ($rule) => $rule->enabled());
     }
 
-    public function evaluate(array $context): Risk
+    public function evaluate(SecurityContext $context): Risk
     {
         $total = 0;
         $weight = 0;
