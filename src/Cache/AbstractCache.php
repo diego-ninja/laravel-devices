@@ -56,7 +56,7 @@ abstract class AbstractCache
     }
     public static function key(string $key): string
     {
-        return static::KEY_PREFIX . ':' . $key;
+        return static::KEY_PREFIX . ':' . md5($key);
     }
 
     public static function forget(Cacheable $item): void

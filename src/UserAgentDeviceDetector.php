@@ -14,10 +14,9 @@ use Ninja\DeviceTracker\DTO\DeviceType;
 use Ninja\DeviceTracker\DTO\Platform;
 use Ninja\DeviceTracker\DTO\Version;
 
-final class UserAgentDeviceDetector implements Contracts\DeviceDetector
+final readonly class UserAgentDeviceDetector implements Contracts\DeviceDetector
 {
     private DeviceDetector $dd;
-    private Request $request;
 
     public function __construct()
     {
@@ -26,10 +25,8 @@ final class UserAgentDeviceDetector implements Contracts\DeviceDetector
 
     public function detect(Request $request): Device
     {
-        $this->request = $request;
-
         $ua = $request->header('User-Agent', $this->fakeUA());
-        $key = 'ua:' . md5($ua);
+        $key = UserAgentCache::key($ua);
 
         return UserAgentCache::remember($key, function () use ($ua, $request) {
             $this->dd = new DeviceDetector(
@@ -43,7 +40,6 @@ final class UserAgentDeviceDetector implements Contracts\DeviceDetector
                 browser: $this->browser(),
                 platform: $this->platform(),
                 device: $this->device(),
-                ip: $request->ip(),
                 grade: null,
                 userAgent: $this->dd->getUserAgent()
             );

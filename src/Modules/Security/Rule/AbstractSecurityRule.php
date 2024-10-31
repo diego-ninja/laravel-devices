@@ -7,11 +7,11 @@ use Ninja\DeviceTracker\Modules\Security\Rule\Contracts\Rule;
 abstract class AbstractSecurityRule implements Rule
 {
     public function __construct(
-        protected string $name,
-        protected string $description,
-        protected float $weight,
-        protected int $threshold,
-        protected bool $enabled = true
+        public readonly string $name,
+        public readonly string $description,
+        public readonly float $weight,
+        public readonly int $threshold,
+        public readonly bool $enabled = true
     ) {
     }
 
@@ -29,5 +29,15 @@ abstract class AbstractSecurityRule implements Rule
     public function enabled(): bool
     {
         return $this->enabled;
+    }
+
+    public function weight(): float
+    {
+        return $this->weight;
+    }
+
+    public function threshold(): int
+    {
+        return $this->threshold;
     }
 }
