@@ -3,14 +3,15 @@
 namespace Ninja\DeviceTracker\Modules\Security\Rule;
 
 use Ninja\DeviceTracker\Models\Session;
+use Ninja\DeviceTracker\Modules\Security\DTO\Factor;
 
 final class FingerprintFlippingRule extends AbstractSecurityRule
 {
-    public function evaluate(array $context): float
+    public function evaluate(array $context): Factor
     {
-        $session = Session::current();
+        $session = $this->session();
         if (!$session) {
-            return 0.0;
+            return new Factor($this->factor, 0.0);
         }
 
         $changes = Session::where('user_id', $session->user_id)
@@ -18,6 +19,7 @@ final class FingerprintFlippingRule extends AbstractSecurityRule
             ->distinct('device_uuid')
             ->count();
 
-        return $changes > $this->threshold ? 1.0 : 0.0;
+        $score = $changes > $this->threshold ? 1.0 : 0.0;
+        return new Factor($this->factor, $score);
     }
 }

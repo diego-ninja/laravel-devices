@@ -3,28 +3,35 @@
 namespace Ninja\DeviceTracker\Modules\Security\Rule\Collection;
 
 use Illuminate\Support\Collection;
+use Ninja\DeviceTracker\Modules\Security\DTO\Risk;
 use Ninja\DeviceTracker\Modules\Security\Rule\AbstractSecurityRule;
 use Ninja\DeviceTracker\Modules\Security\Rule\Contracts\Rule;
 
-final class SecurityRuleCollection extends Collection implements Rule
+final class SecurityRuleCollection extends Collection
 {
     public function enabled(): self
     {
         return $this->filter(fn ($rule) => $rule->enabled());
     }
 
-    public function evaluate(array $context): float
+    public function evaluate(array $context): Risk
     {
         $total = 0;
         $weight = 0;
 
-        $this->enabled()->each(function (AbstractSecurityRule $rule) use (&$total, &$weight, $context) {
-            $score = $rule->evaluate($context);
-            $total += $score * $rule->weight;
+        $risk = Risk::default();
+
+        $this->enabled()->each(function (AbstractSecurityRule $rule) use (&$total, &$weight, $context, $risk) {
+            $factor = $rule->evaluate($context);
+            $total += $factor->score * $rule->weight;
             $weight += $rule->weight;
+
+            $risk->factor($factor);
         });
 
-        return $weight > 0 ? ($total / $weight) * 100 : 0;
+        $risk->score =  $weight > 0 ? ($total / $weight) * 100 : 0;
+
+        return $risk;
     }
 
     public static function from(string|array|Collection $data): self
@@ -34,12 +41,14 @@ final class SecurityRuleCollection extends Collection implements Rule
         }
 
         return new SecurityRuleCollection(
-            collect($data)->map(fn (array|Rule $rule) => is_array($rule) ? $this->rule($rule) : $rule)
+            collect($data)->map(fn (array|Rule $rule, string $key) => is_array($rule) ? $this->rule($rule, $key) : $rule)
         );
     }
 
-    private function rule(array $data): Rule
+    private function rule(array $data, string $factor): Rule
     {
+        $data['factor'] = $factor;
+
         $class = $data['class'];
         return $class::from($data);
     }

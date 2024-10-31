@@ -3,14 +3,15 @@
 namespace Ninja\DeviceTracker\Modules\Security\Rule;
 
 use Ninja\DeviceTracker\Models\Device;
+use Ninja\DeviceTracker\Modules\Security\DTO\Factor;
 
 class MultipleLoginRule extends AbstractSecurityRule
 {
-    public function evaluate(array $context): float
+    public function evaluate(array $context): Factor
     {
         $device = Device::byUuid($context['device_uuid']);
         if (!$device) {
-            return 0.0;
+            return new Factor($this->factor, 0.0);
         }
 
         $uniqueLogins = $device->sessions()
@@ -18,6 +19,7 @@ class MultipleLoginRule extends AbstractSecurityRule
             ->distinct('user_id')
             ->count();
 
-        return $uniqueLogins > $this->threshold ? 1.0 : 0.0;
+        $score = $uniqueLogins > $this->threshold ? 1.0 : 0.0;
+        return new Factor($this->factor, $score);
     }
 }

@@ -90,6 +90,16 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Track guest sessions
+    |--------------------------------------------------------------------------
+    | This option specifies if the system should track guest sessions
+    | or if it should ignore them.
+    |
+    */
+    'track_guest_sessions' => false,
+
+    /*
+    |--------------------------------------------------------------------------
     | Ignore routes for restarting the session
     |--------------------------------------------------------------------------
     | This option specifies the routes which the session must not be restarted
@@ -182,7 +192,6 @@ return [
     |
     */
     'client_fingerprint_key' => 'csf',
-
     /*
     |--------------------------------------------------------------------------
     | Location provider

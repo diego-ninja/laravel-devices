@@ -3,20 +3,22 @@
 namespace Ninja\DeviceTracker\Modules\Security\Rule;
 
 use Ninja\DeviceTracker\Models\Device;
+use Ninja\DeviceTracker\Modules\Security\DTO\Factor;
 
 final class MultipleSignupRule extends AbstractSecurityRule
 {
-    public function evaluate(array $context): float
+    public function evaluate(array $context): Factor
     {
         $device = Device::where('fingerprint', $context['fingerprint'])->first();
         if (!$device) {
-            return 0.0;
+            return new Factor($this->factor, 0.0);
         }
 
         $signupCount = $device->users()
             ->where('created_at', '>=', now()->subDays(180))
             ->count();
 
-        return $signupCount > $this->threshold ? 1.0 : 0.0;
+        $score = $signupCount > $this->threshold ? 1.0 : 0.0;
+        return new Factor($this->factor, $score);
     }
 }

@@ -16,6 +16,7 @@ use Ninja\DeviceTracker\Cache\SessionCache;
 use Ninja\DeviceTracker\Contracts\Cacheable;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\DTO\Metadata;
+use Ninja\DeviceTracker\Enums\EventType;
 use Ninja\DeviceTracker\Enums\SessionStatus;
 use Ninja\DeviceTracker\Events\SessionBlockedEvent;
 use Ninja\DeviceTracker\Events\SessionFinishedEvent;
@@ -24,6 +25,7 @@ use Ninja\DeviceTracker\Events\SessionUnblockedEvent;
 use Ninja\DeviceTracker\Events\SessionUnlockedEvent;
 use Ninja\DeviceTracker\Exception\SessionNotFoundException;
 use Ninja\DeviceTracker\Factories\SessionIdFactory;
+use Ninja\DeviceTracker\Models\Relations\HasManyEvents;
 use Ninja\DeviceTracker\Modules\Location\Contracts\LocationProvider;
 use Ninja\DeviceTracker\Modules\Location\DTO\Location;
 use Ninja\DeviceTracker\Traits\PropertyProxy;
@@ -84,6 +86,18 @@ class Session extends Model implements Cacheable
     public function user(): HasOne
     {
         return $this->hasOne(Config::get("devices.authenticatable_class"), 'id', 'user_id');
+    }
+
+    public function events(): HasManyEvents
+    {
+        $instance = $this->newRelatedInstance(Event::class);
+
+        return new HasManyEvents(
+            query: $instance->newQuery(),
+            parent: $this,
+            foreignKey: 'session_uuid',
+            localKey: 'uuid'
+        );
     }
 
     public function uuid(): Attribute
@@ -173,6 +187,18 @@ class Session extends Model implements Cacheable
         foreach ($previousSessions as $session) {
             $session->end(forgetSession: true);
         }
+    }
+
+    public function event(EventType $type, Metadata $metadata): Event
+    {
+        return Event::create([
+            'device_uuid' => $this->device_uuid,
+            'session_uuid' => $this->uuid,
+            'type' => $type,
+            'metadata' => $metadata,
+            'ip_address' => request()->ip(),
+            'occurred_at' => now(),
+        ]);
     }
 
     public function end(bool $forgetSession = false, ?Authenticatable $user = null): bool

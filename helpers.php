@@ -3,8 +3,10 @@
 use Illuminate\Support\Facades\Session as SessionFacade;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\DeviceManager;
+use Ninja\DeviceTracker\Exception\SessionNotFoundException;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Factories\SessionIdFactory;
+use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Models\Session;
 
 if (! function_exists('fingerprint')) {
@@ -32,5 +34,33 @@ if (! function_exists('session_uuid')) {
     {
         $id = SessionFacade::get(Session::DEVICE_SESSION_ID);
         return $id ? SessionIdFactory::from($id) : null;
+    }
+}
+
+if (! function_exists('session')) {
+    function session(): ?Session
+    {
+        try {
+            $id = session_uuid();
+            return $id ? Session::byUuid($id) : null;
+        } catch (SessionNotFoundException) {
+            return null;
+        }
+    }
+}
+
+if (! function_exists('device')) {
+    function device(bool $cached = true): ?Device
+    {
+
+        if (Config::get('devices.fingerprinting_enabled')) {
+            $fingerprint = fingerprint();
+            if ($fingerprint) {
+                return Device::byFingerprint($fingerprint, $cached);
+            }
+        }
+
+        $id = device_uuid();
+        return $id ? Device::byUuid($id, $cached) : null;
     }
 }

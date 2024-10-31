@@ -16,8 +16,10 @@ final readonly class DeviceTracker
     {
         if (!DeviceManager::tracked()) {
             try {
-                $deviceUuid = DeviceManager::track();
-                Log::info('Device not found, creating new one with id ' . $deviceUuid->toString());
+                if (config('devices.track_guest_sessions')) {
+                    $deviceUuid = DeviceManager::track();
+                    Log::info('Device not found, creating new one with id ' . $deviceUuid->toString());
+                }
             } catch (DeviceNotFoundException | FingerprintNotFoundException | UnknownDeviceDetectedException $e) {
                 Log::info($e->getMessage());
                 return $next($request);

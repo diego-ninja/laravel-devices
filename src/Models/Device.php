@@ -27,7 +27,9 @@ use Ninja\DeviceTracker\Events\DeviceVerifiedEvent;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Exception\FingerprintDuplicatedException;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
+use Ninja\DeviceTracker\Models\Relations\HasManyEvents;
 use Ninja\DeviceTracker\Models\Relations\HasManySessions;
+use Ninja\DeviceTracker\Modules\Security\DTO\Risk;
 use Ninja\DeviceTracker\Traits\PropertyProxy;
 use PDOException;
 
@@ -100,6 +102,18 @@ class Device extends Model implements Cacheable
         );
     }
 
+    public function events(): HasManyEvents
+    {
+        $instance = $this->newRelatedInstance(Event::class);
+
+        return new HasManyEvents(
+            query: $instance->newQuery(),
+            parent: $this,
+            foreignKey: 'device_uuid',
+            localKey: 'uuid'
+        );
+    }
+
     public function users(): BelongsToMany
     {
         $table = sprintf('%s_devices', str(\config('devices.authenticatable_table'))->singular());
@@ -128,6 +142,14 @@ class Device extends Model implements Cacheable
         return Attribute::make(
             get: fn(?string $value) => $value ? DeviceStatus::from($value) : DeviceStatus::Unverified,
             set: fn(DeviceStatus $value) => $value->value
+        );
+    }
+
+    public function risk(): Attribute
+    {
+        return Attribute::make(
+            get: fn(?string $value) => $value ? Risk::from($value) : Risk::default(),
+            set: fn(Risk $value) => $value->json()
         );
     }
 

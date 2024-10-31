@@ -16,6 +16,10 @@ final readonly class AuthenticationHandler
 {
     public function onLogin(Login $event): void
     {
+        if (!DeviceManager::tracked()) {
+            DeviceManager::track();
+        }
+
         DeviceManager::attach();
         SessionManager::refresh($event->user);
     }
