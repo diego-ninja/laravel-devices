@@ -5,7 +5,6 @@ namespace Ninja\DeviceTracker\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Exception\FingerprintNotFoundException;
 use Ninja\DeviceTracker\Exception\UnknownDeviceDetectedException;
@@ -18,6 +17,8 @@ final readonly class DeviceTracker
     {
         if (DeviceManager::shouldRegenerate()) {
             DeviceManager::create();
+            DeviceManager::attach();
+
             return $next($request);
         }
 
