@@ -323,7 +323,7 @@ class Session extends Model implements Cacheable
 
     public function key(): string
     {
-        return sprintf('%s:%s', SessionCache::KEY_PREFIX, $this->uuid);
+        return SessionCache::key($this->uuid);
     }
 
     public function ttl(): ?int
@@ -344,9 +344,12 @@ class Session extends Model implements Cacheable
             return self::where('uuid', $uuid->toString())->first();
         }
 
-        return SessionCache::remember($uuid->toString(), function () use ($uuid) {
-            return self::where('uuid', $uuid->toString())->first();
-        });
+        return SessionCache::remember(
+            key: SessionCache::key($uuid),
+            callback: function () use ($uuid) {
+                return self::where('uuid', $uuid->toString())->first();
+            }
+        );
     }
 
     /**

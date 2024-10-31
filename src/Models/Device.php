@@ -277,7 +277,7 @@ class Device extends Model implements Cacheable
 
     public function key(): string
     {
-        return sprintf('%s:%s', DeviceCache::KEY_PREFIX, $this->uuid->toString());
+        return DeviceCache::key($this->uuid);
     }
 
     public function ttl(): ?int

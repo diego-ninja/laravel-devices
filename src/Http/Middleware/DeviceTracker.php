@@ -9,6 +9,7 @@ use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Exception\FingerprintNotFoundException;
 use Ninja\DeviceTracker\Exception\UnknownDeviceDetectedException;
 use Ninja\DeviceTracker\Facades\DeviceManager;
+use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 
 final readonly class DeviceTracker
 {
@@ -19,6 +20,9 @@ final readonly class DeviceTracker
                 if (config('devices.track_guest_sessions')) {
                     $deviceUuid = DeviceManager::track();
                     Log::info('Device not found, creating new one with id ' . $deviceUuid->toString());
+                } else {
+                    $deviceUuid = DeviceIdFactory::generate();
+                    $request->merge(['device_id' => $deviceUuid->toString()]);
                 }
             } catch (DeviceNotFoundException | FingerprintNotFoundException | UnknownDeviceDetectedException $e) {
                 Log::info($e->getMessage());
