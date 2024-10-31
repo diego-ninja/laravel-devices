@@ -25,7 +25,15 @@ if (! function_exists('device_uuid')) {
     function device_uuid(): ?StorableId
     {
         $cookieName = Config::get('devices.device_id_cookie_name');
-        return Cookie::has($cookieName) ? DeviceIdFactory::from(Cookie::get($cookieName)) : DeviceIdFactory::from(request()->device_id);
+        if (Cookie::has($cookieName)) {
+            return DeviceIdFactory::from(Cookie::get($cookieName));
+        }
+
+        if (request()->has('device_id')) {
+            return DeviceIdFactory::from(request()->device_id);
+        }
+
+        return null;
     }
 }
 
