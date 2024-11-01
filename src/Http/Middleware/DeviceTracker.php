@@ -31,7 +31,7 @@ final readonly class DeviceTracker
                     Log::info(sprintf('Device not found. Created new one with id %s', device_uuid()));
                 } else {
                     $deviceUuid = DeviceIdFactory::generate();
-                    $request->merge(['device_id' => $deviceUuid->toString()]);
+                    $request->merge(['device_uuid' => $deviceUuid->toString()]);
 
                     Log::info(sprintf('Device not found. Tracking new one with id %s', $deviceUuid->toString()));
                 }

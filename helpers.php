@@ -24,18 +24,13 @@ if (! function_exists('fingerprint')) {
 if (! function_exists('device_uuid')) {
     function device_uuid(): ?StorableId
     {
-        try {
-            $cookieName = Config::get('devices.device_id_cookie_name');
-            if (Cookie::has($cookieName)) {
-                return DeviceIdFactory::from(Cookie::get($cookieName));
-            }
+        $cookieName = Config::get('devices.device_id_cookie_name');
+        if (Cookie::has($cookieName)) {
+            return DeviceIdFactory::from(Cookie::get($cookieName));
+        }
 
-            if (request()->has('device_id')) {
-                return DeviceIdFactory::from(request()->device_id);
-            }
-        } catch (Exception) {
-            Log::warning(sprintf('Failed to get device id from request: %s', request()->device_id));
-            return null;
+        if (request()->has('device_id')) {
+            return DeviceIdFactory::from(request()->device_uuid);
         }
 
         return null;
