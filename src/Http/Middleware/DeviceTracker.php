@@ -27,13 +27,11 @@ final readonly class DeviceTracker
                 if (config('devices.track_guest_sessions')) {
                     DeviceManager::track();
                     DeviceManager::create();
-
-                    Log::info(sprintf('Device not found. Created new one with id %s', device_uuid()));
                 } else {
-                    $deviceUuid = DeviceIdFactory::generate();
-                    $request->merge(['device_uuid' => $deviceUuid->toString()]);
+                    $param = config('devices.device_id_request_param');
+                    $uuid = DeviceIdFactory::generate();
 
-                    Log::info(sprintf('Device not found. Tracking new one with id %s', $deviceUuid->toString()));
+                    $request->merge([$param => $uuid->toString()]);
                 }
             } catch (DeviceNotFoundException | FingerprintNotFoundException | UnknownDeviceDetectedException $e) {
                 Log::info($e->getMessage());

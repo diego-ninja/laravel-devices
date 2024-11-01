@@ -14,6 +14,16 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Request param for device id
+    |--------------------------------------------------------------------------
+    | This option specifies the name of the request parameter that will be used to store
+    | the device uuid during the request.
+    |
+    */
+    'device_id_request_param' => 'device_uuid',
+
+    /*
+    |--------------------------------------------------------------------------
     | Device ID class
     |--------------------------------------------------------------------------
     | This option specifies the class that will be used to store

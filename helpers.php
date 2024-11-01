@@ -29,8 +29,9 @@ if (! function_exists('device_uuid')) {
             return DeviceIdFactory::from(Cookie::get($cookieName));
         }
 
-        if (request()->has('device_id')) {
-            return DeviceIdFactory::from(request()->device_uuid);
+        $requestParam = Config::get('devices.device_id_request_param');
+        if (request()->has($requestParam)) {
+            return DeviceIdFactory::from(request()->$requestParam);
         }
 
         return null;
