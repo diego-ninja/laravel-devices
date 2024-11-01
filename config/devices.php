@@ -10,7 +10,7 @@ return [
     | the device id of the current user.
     |
     */
-    'device_id_cookie_name' => 'device_id',
+    'device_id_cookie_name' => 'laravel_device_id',
 
     /*
     |--------------------------------------------------------------------------
@@ -20,7 +20,7 @@ return [
     | the device uuid during the request.
     |
     */
-    'device_id_request_param' => 'device_uuid',
+    'device_id_request_param' => 'laravel_device_id',
 
     /*
     |--------------------------------------------------------------------------
@@ -37,10 +37,20 @@ return [
     | Session ID class
     |--------------------------------------------------------------------------
     | This option specifies the class that will be used to store
-    | and serialize the device id. Must implement the StorableId interface.
+    | and serialize the session id. Must implement the StorableId interface.
     |
     */
     'session_id_storable_class' => \Ninja\DeviceTracker\ValueObject\SessionId::class,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Event ID class
+    |--------------------------------------------------------------------------
+    | This option specifies the class that will be used to store
+    | and serialize the event id. Must implement the StorableId interface.
+    |
+    */
+    'event_id_storable_class' => \Ninja\DeviceTracker\ValueObject\EventId::class,
 
     /*
     |--------------------------------------------------------------------------
@@ -78,6 +88,16 @@ return [
     |
     */
     'allow_unknown_devices' => false,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Allow bot devices
+    |--------------------------------------------------------------------------
+    | This option specifies if the system should allow bot devices to be created.
+    | A bot device is a device detected as bot, crawler, or spider.
+    |
+    */
+    'allow_bot_devices' => false,
 
     /*
     |--------------------------------------------------------------------------
@@ -202,6 +222,7 @@ return [
     |
     */
     'client_fingerprint_key' => 'csf',
+
     /*
     |--------------------------------------------------------------------------
     | Location provider

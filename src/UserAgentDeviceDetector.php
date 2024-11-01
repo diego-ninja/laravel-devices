@@ -23,19 +23,23 @@ final readonly class UserAgentDeviceDetector implements Contracts\DeviceDetector
         AbstractDeviceParser::setVersionTruncation(AbstractParser::VERSION_TRUNCATION_PATCH);
     }
 
-    public function detect(Request $request): Device
+    public function detect(Request $request): ?Device
     {
         $ua = $request->header('User-Agent', $this->fakeUA());
         $key = UserAgentCache::key($ua);
 
+        $this->dd = new DeviceDetector(
+            userAgent: $request->header('User-Agent', $ua),
+            clientHints: ClientHints::factory($_SERVER)
+        );
+
+        $this->dd->parse();
+
+        if ($this->dd->isBot() && !config('devices.allow_bot_devices')) {
+            return null;
+        }
+
         return UserAgentCache::remember($key, function () use ($ua, $request) {
-            $this->dd = new DeviceDetector(
-                userAgent: $request->header('User-Agent', $ua),
-                clientHints: ClientHints::factory($_SERVER)
-            );
-
-            $this->dd->parse();
-
             return new Device(
                 browser: $this->browser(),
                 platform: $this->platform(),
