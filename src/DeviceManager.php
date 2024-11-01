@@ -7,7 +7,6 @@ use Config;
 use Cookie;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Collection;
-use Ninja\DeviceTracker\Contracts\DeviceDetector;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Events\DeviceAttachedEvent;
 use Ninja\DeviceTracker\Events\DeviceTrackedEvent;
@@ -15,6 +14,7 @@ use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Exception\UnknownDeviceDetectedException;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Models\Device;
+use Ninja\DeviceTracker\Modules\Detection\Contracts\DeviceDetector;
 
 use function request;
 
@@ -96,7 +96,6 @@ final class DeviceManager
                 device_uuid() !== null &&
                 !Device::exists(device_uuid()) &&
                 Config::get('devices.regenerate_devices') && device_uuid();
-
         } catch (\Throwable) {
             \Log::warning(sprintf('Device not found for UUID: %s', device_uuid()));
             return false;

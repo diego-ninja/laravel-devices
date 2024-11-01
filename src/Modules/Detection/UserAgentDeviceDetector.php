@@ -1,6 +1,6 @@
 <?php
 
-namespace Ninja\DeviceTracker;
+namespace Ninja\DeviceTracker\Modules\Detection;
 
 use DeviceDetector\ClientHints;
 use DeviceDetector\DeviceDetector;
@@ -13,6 +13,7 @@ use Ninja\DeviceTracker\DTO\Device;
 use Ninja\DeviceTracker\DTO\DeviceType;
 use Ninja\DeviceTracker\DTO\Platform;
 use Ninja\DeviceTracker\DTO\Version;
+use Ninja\DeviceTracker\Modules;
 
 final readonly class UserAgentDeviceDetector implements Contracts\DeviceDetector
 {

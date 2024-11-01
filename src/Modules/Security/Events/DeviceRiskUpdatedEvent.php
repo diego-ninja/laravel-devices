@@ -17,5 +17,4 @@ class DeviceRiskUpdatedEvent
     public function __construct(public readonly Device $device, Risk $old, Risk $new)
     {
     }
-
 }

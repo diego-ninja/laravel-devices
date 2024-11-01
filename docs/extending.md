@@ -103,10 +103,9 @@ class CustomProvidersServiceProvider extends ServiceProvider
 
 ```php
 use DeviceDetector\ClientHints;
-use Ninja\DeviceTracker\Contracts\DeviceDetector;
-use Ninja\DeviceTracker\DTO\Device;
 use Ninja\DeviceTracker\DTO\Browser;
-use Ninja\DeviceTracker\DTO\Platform;
+use Ninja\DeviceTracker\DTO\Device;
+use Ninja\DeviceTracker\Modules\Detection\Contracts\DeviceDetector;
 
 class EnhancedDeviceDetector implements DeviceDetector
 {

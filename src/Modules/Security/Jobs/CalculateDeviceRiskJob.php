@@ -38,5 +38,4 @@ final readonly class CalculateDeviceRiskJob implements ShouldQueue
             event(new DeviceRiskUpdatedEvent($device, $old, $new));
         }
     }
-
 }

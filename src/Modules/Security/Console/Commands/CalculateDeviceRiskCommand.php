@@ -16,6 +16,5 @@ class CalculateDeviceRiskCommand extends Command
 
     public function handle(): void
     {
-
     }
 }

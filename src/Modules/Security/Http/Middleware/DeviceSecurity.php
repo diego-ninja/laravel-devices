@@ -95,4 +95,3 @@ final readonly class DeviceSecurity
         return null;
     }
 }
-

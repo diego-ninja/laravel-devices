@@ -1,6 +1,6 @@
 <?php
 
-namespace Ninja\DeviceTracker\Contracts;
+namespace Ninja\DeviceTracker\Modules\Detection\Contracts;
 
 use Illuminate\Http\Request;
 use Ninja\DeviceTracker\DTO\Device;

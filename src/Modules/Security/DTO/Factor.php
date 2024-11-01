@@ -17,7 +17,7 @@ final class Factor implements JsonSerializable
         if (is_string($data)) {
             $data = json_decode($data, true);
         }
-        
+
         return new self(
             $data['name'],
             $data['score']
