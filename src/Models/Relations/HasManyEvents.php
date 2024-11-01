@@ -24,7 +24,7 @@ class HasManyEvents extends HasMany
 
     public function signup(): HasMany
     {
-        return $this->type(EventType::Singup);
+        return $this->type(EventType::Signup);
     }
 
     public function views(): HasMany

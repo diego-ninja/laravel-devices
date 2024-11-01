@@ -2,9 +2,9 @@
 
 namespace Ninja\DeviceTracker\Modules\Security\Rule;
 
-use Ninja\DeviceTracker\Exception\SessionNotFoundException;
 use Ninja\DeviceTracker\Models\Session;
 use Ninja\DeviceTracker\Modules\Location\DTO\Location;
+use Ninja\DeviceTracker\Modules\Security\Context\SecurityContext;
 use Ninja\DeviceTracker\Modules\Security\DTO\Factor;
 
 final class LocationVelocityRule extends AbstractSecurityRule
@@ -12,32 +12,31 @@ final class LocationVelocityRule extends AbstractSecurityRule
     private const MAX_VELOCITY = 900;
     private const EARTH_RADIUS = 6371;
 
-    public function evaluate(array $context): Factor
+    public function evaluate(SecurityContext $context): Factor
     {
-        $session = $this->session();
-        if (!$session) {
+        if (!$context->session) {
             return new Factor($this->factor, 0.0);
         }
 
-        $lastSession = Session::where('user_id', $session->user_id)
-            ->where('id', '!=', $session->id)
-            ->orderBy('created_at', 'desc')
+        $lastSession = Session::where('user_id', $context->session->user_id)
+            ->where('id', '!=', $context->session->id)
+            ->orderBy('started_at', 'desc')
             ->first();
 
         if (!$lastSession) {
             return new Factor($this->factor, 0.0);
         }
 
-        if (!$lastSession->location || !$session->location) {
+        if (!$lastSession->location || !$context->session->location) {
             return new Factor($this->factor, 0.0);
         }
 
         $distance = $this->distance(
             $lastSession->location,
-            $session->location
+            $context->session->location
         );
 
-        $timeDiff = $lastSession->created_at->diffInHours($session->started_at) ?: 1;
+        $timeDiff = $lastSession->created_at->diffInHours($context->session->started_at) ?: 1;
         $velocity = $distance / $timeDiff;
 
         $score = $velocity > self::MAX_VELOCITY ? 1.0 : 0.0;

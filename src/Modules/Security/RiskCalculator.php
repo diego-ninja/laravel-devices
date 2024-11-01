@@ -6,7 +6,7 @@ use Ninja\DeviceTracker\Modules\Security\Context\SecurityContext;
 use Ninja\DeviceTracker\Modules\Security\DTO\Risk;
 use Ninja\DeviceTracker\Modules\Security\Rule\Collection\SecurityRuleCollection;
 
-final readonly class ThreatCalculator
+final readonly class RiskCalculator
 {
     protected SecurityRuleCollection $rules;
 
@@ -15,7 +15,7 @@ final readonly class ThreatCalculator
         $this->rules = SecurityRuleCollection::from(config('security.rules'));
     }
 
-    public function score(SecurityContext $context): Risk
+    public function risk(SecurityContext $context): Risk
     {
         return $this->rules->evaluate($context);
     }

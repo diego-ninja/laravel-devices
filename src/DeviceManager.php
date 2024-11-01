@@ -10,7 +10,6 @@ use Illuminate\Support\Collection;
 use Ninja\DeviceTracker\Contracts\DeviceDetector;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Events\DeviceAttachedEvent;
-use Ninja\DeviceTracker\Events\DeviceCreatedEvent;
 use Ninja\DeviceTracker\Events\DeviceTrackedEvent;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Exception\UnknownDeviceDetectedException;
@@ -35,6 +34,10 @@ final class DeviceManager
 
     public function attach(?StorableId $deviceUuid = null): bool
     {
+        if (!Auth::user()) {
+            return false;
+        }
+
         $deviceUuid = $deviceUuid ?? device_uuid();
         if ($deviceUuid) {
             if (Auth::user()?->hasDevice($deviceUuid)) {

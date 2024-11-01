@@ -6,6 +6,7 @@ enum EventType: string
 {
     case Login = 'login';
     case Logout = 'logout';
-    case Singup = 'register';
+    case Signup = 'signup';
     case PageView = 'page_view';
+    case SecurityWarning = 'security_warning';
 }

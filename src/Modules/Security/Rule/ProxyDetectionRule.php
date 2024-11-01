@@ -4,28 +4,28 @@ namespace Ninja\DeviceTracker\Modules\Security\Rule;
 
 use Illuminate\Http\Request;
 use Ninja\DeviceTracker\Models\Session;
+use Ninja\DeviceTracker\Modules\Security\Context\SecurityContext;
 use Ninja\DeviceTracker\Modules\Security\DTO\Factor;
 
 final class ProxyDetectionRule extends AbstractSecurityRule
 {
-    public function evaluate(array $context): Factor
+    public function evaluate(SecurityContext $context): Factor
     {
-        $session = $this->session();
-        if (!$session) {
+        if (!$context->session) {
             return new Factor($this->factor, 0.0);
         }
 
         $score = 0.0;
 
-        if ($this->isKnownProxy($session->ip)) {
+        if ($this->isKnownProxy($context->session->ip)) {
             $score += 0.4;
         }
 
-        if ($this->hasProxyHeaders(request())) {
+        if ($this->hasProxyHeaders($context->request)) {
             $score += 0.3;
         }
 
-        if ($this->hasGeoDiscrepancies($session)) {
+        if ($this->hasGeoDiscrepancies($context->session)) {
             $score += 0.3;
         }
 

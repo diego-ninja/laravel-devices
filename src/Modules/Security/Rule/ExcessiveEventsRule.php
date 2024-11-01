@@ -2,19 +2,18 @@
 
 namespace Ninja\DeviceTracker\Modules\Security\Rule;
 
-use Ninja\DeviceTracker\Models\Device;
+use Ninja\DeviceTracker\Modules\Security\Context\SecurityContext;
 use Ninja\DeviceTracker\Modules\Security\DTO\Factor;
 
 final class ExcessiveEventsRule extends AbstractSecurityRule
 {
-    public function evaluate(array $context): Factor
+    public function evaluate(SecurityContext $context): Factor
     {
-        $device = Device::byUuid($context['device_uuid']);
-        if (!$device) {
+        if (!$context->device) {
             return new Factor($this->factor, 0.0);
         }
 
-        $eventCount = $device->events()
+        $eventCount = $context->device->events()
             ->where('created_at', '>=', now()->subHour())
             ->count();
 

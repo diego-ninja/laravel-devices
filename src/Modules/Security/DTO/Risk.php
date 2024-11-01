@@ -27,6 +27,11 @@ final class Risk implements JsonSerializable
         );
     }
 
+    public function changed(Risk $risk): bool
+    {
+        return abs($this->score - $risk->score) > config('devices.security.risk.significant_change_threshold', 0.2);
+    }
+
     public function factor(Factor $factor): void
     {
         $this->factors[$factor->name] = $factor;
@@ -42,7 +47,7 @@ final class Risk implements JsonSerializable
 
     public function high(): bool
     {
-        return $this->level === RiskLevel::High;
+        return $this->level === RiskLevel::High || $this->critical();
     }
 
     public function medium(): bool

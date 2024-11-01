@@ -58,11 +58,13 @@ use PDOException;
  * @property string                       $grade                  string
  * @property string                       $source                 string
  * @property string                       $ip                     string
+ * @property Risk                         $risk                   json
  * @property Metadata                     $metadata               json
  * @property Carbon                       $created_at             datetime
  * @property Carbon                       $updated_at             datetime
  * @property Carbon                       $verified_at            datetime
  * @property Carbon                       $hijacked_at            datetime
+ * @property Carbon                       $risk_assessed_at       datetime
  *
  */
 class Device extends Model implements Cacheable

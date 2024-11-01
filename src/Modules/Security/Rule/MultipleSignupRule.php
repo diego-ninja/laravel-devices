@@ -2,19 +2,18 @@
 
 namespace Ninja\DeviceTracker\Modules\Security\Rule;
 
-use Ninja\DeviceTracker\Models\Device;
+use Ninja\DeviceTracker\Modules\Security\Context\SecurityContext;
 use Ninja\DeviceTracker\Modules\Security\DTO\Factor;
 
 final class MultipleSignupRule extends AbstractSecurityRule
 {
-    public function evaluate(array $context): Factor
+    public function evaluate(SecurityContext $context): Factor
     {
-        $device = Device::where('fingerprint', $context['fingerprint'])->first();
-        if (!$device) {
+        if (!$context->device) {
             return new Factor($this->factor, 0.0);
         }
 
-        $signupCount = $device->users()
+        $signupCount = $context->device->users()
             ->where('created_at', '>=', now()->subDays(180))
             ->count();
 
