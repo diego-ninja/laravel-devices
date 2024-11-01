@@ -32,6 +32,8 @@ final readonly class DeviceTracker
                 } else {
                     $deviceUuid = DeviceIdFactory::generate();
                     $request->merge(['device_id' => $deviceUuid->toString()]);
+
+                    Log::info(sprintf('Device not found. Tracking new one with id %s', $deviceUuid->toString()));
                 }
             } catch (DeviceNotFoundException | FingerprintNotFoundException | UnknownDeviceDetectedException $e) {
                 Log::info($e->getMessage());

@@ -91,10 +91,16 @@ final class DeviceManager
 
     public function shouldRegenerate(): bool
     {
-        return
-            device_uuid() !== null &&
-            !Device::exists(device_uuid()) &&
-            Config::get('devices.regenerate_devices') && device_uuid();
+        try {
+            return
+                device_uuid() !== null &&
+                !Device::exists(device_uuid()) &&
+                Config::get('devices.regenerate_devices') && device_uuid();
+
+        } catch (\Throwable) {
+            \Log::warning(sprintf('Device not found for UUID: %s', device_uuid()));
+            return false;
+        }
     }
 
     /**
