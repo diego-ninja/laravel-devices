@@ -296,27 +296,32 @@ class Device extends Model implements Cacheable
             return $device;
         }
 
-        $device = self::create([
-            'uuid' => $deviceUuid,
-            'fingerprint' => fingerprint(),
-            'browser' => $data->browser->name,
-            'browser_version' => $data->browser->version,
-            'browser_family' => $data->browser->family,
-            'browser_engine' => $data->browser->engine,
-            'platform' => $data->platform->name,
-            'platform_version' => $data->platform->version,
-            'platform_family' => $data->platform->family,
-            'device_type' => $data->device->type,
-            'device_family' => $data->device->family,
-            'device_model' => $data->device->model,
-            'grade' => $data->grade,
-            'ip' => request()->ip(),
-            'metadata' => new Metadata([]),
-            'source' => $data->userAgent,
-        ]);
+        try {
+            $device = self::create([
+                'uuid' => $deviceUuid,
+                'fingerprint' => fingerprint(),
+                'browser' => $data->browser->name,
+                'browser_version' => $data->browser->version,
+                'browser_family' => $data->browser->family,
+                'browser_engine' => $data->browser->engine,
+                'platform' => $data->platform->name,
+                'platform_version' => $data->platform->version,
+                'platform_family' => $data->platform->family,
+                'device_type' => $data->device->type,
+                'device_family' => $data->device->family,
+                'device_model' => $data->device->model,
+                'grade' => $data->grade,
+                'ip' => request()->ip(),
+                'metadata' => new Metadata([]),
+                'source' => $data->userAgent,
+            ]);
 
-        if ($device) {
-            return $device;
+            if ($device) {
+                return $device;
+            }
+        } catch (PDOException $e) {
+            \Log::warning(sprintf('Unable to create device for UUID: %s (%s)', $deviceUuid, $e->getMessage()));
+            return null;
         }
 
         return null;

@@ -106,14 +106,14 @@ return [
     | This option specifies if the user can have multiple active sessions per device
     |
     */
-    'allow_device_multi_session' => true,
+    'allow_device_multi_session' => false,
 
     /*
     |--------------------------------------------------------------------------
     | Start new session on login
     |--------------------------------------------------------------------------
-    | This option specifies if the user should start a new session when they login
-    | or if they should continue refreshing the current session.
+    | This option specifies if the user should start a new session when he logs in from a device
+    | or if he should continue refreshing the current session.
     |
     */
     'start_new_session_on_login' => false,
@@ -186,7 +186,7 @@ return [
     | the client-side fingerprint of the current device.
     |
     */
-    'fingerprint_id_cookie_name' => 'fingerprint',
+    'fingerprint_id_cookie_name' => 'laravel_device_fingerprint',
 
     /*
     |--------------------------------------------------------------------------
@@ -222,6 +222,28 @@ return [
     |
     */
     'client_fingerprint_key' => 'csf',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Enable event tracking
+    |--------------------------------------------------------------------------
+    |
+    | This option allows you to enable or disable event tracking. Events are
+    | stored in the database and can be used to track user behavior and analyze risks.
+    |
+    */
+    'event_tracking_enabled' => true,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Event retention period
+    |--------------------------------------------------------------------------
+    |
+    | This option allows you to easily specify the period of time in days that the events are
+    | stored. After this period, the events are deleted from the database.
+    |
+    */
+    'event_retention_period' => 30,
 
     /*
     |--------------------------------------------------------------------------
@@ -273,10 +295,10 @@ return [
     |
     */
     'cache_ttl' => [
-        \Ninja\DeviceTracker\Cache\SessionCache::KEY_PREFIX => 60 * 60,
-        \Ninja\DeviceTracker\Cache\DeviceCache::KEY_PREFIX => 60 * 60,
-        \Ninja\DeviceTracker\Cache\LocationCache::KEY_PREFIX => 60 * 60 * 24 * 30,
-        \Ninja\DeviceTracker\Cache\UserAgentCache::KEY_PREFIX => 60 * 60 * 24 * 30,
+        \Ninja\DeviceTracker\Cache\SessionCache::KEY_PREFIX => 3600,
+        \Ninja\DeviceTracker\Cache\DeviceCache::KEY_PREFIX => 3600,
+        \Ninja\DeviceTracker\Cache\LocationCache::KEY_PREFIX => 2592000,
+        \Ninja\DeviceTracker\Cache\UserAgentCache::KEY_PREFIX => 2592000,
     ],
 
     /*

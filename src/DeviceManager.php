@@ -7,6 +7,7 @@ use Config;
 use Cookie;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Collection;
+use Log;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Events\DeviceAttachedEvent;
 use Ninja\DeviceTracker\Events\DeviceTrackedEvent;
@@ -16,6 +17,7 @@ use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Modules\Detection\Contracts\DeviceDetector;
 
+use Throwable;
 use function request;
 
 final class DeviceManager
@@ -34,24 +36,29 @@ final class DeviceManager
 
     public function attach(?StorableId $deviceUuid = null): bool
     {
+        $deviceUuid = $deviceUuid ?? device_uuid();
+
+        if (!$deviceUuid) {
+            return false;
+        }
+
         if (!Auth::user()) {
             return false;
         }
 
-        $deviceUuid = $deviceUuid ?? device_uuid();
-        if ($deviceUuid) {
-            if (Auth::user()?->hasDevice($deviceUuid)) {
-                return true;
-            }
+        if (!Device::exists($deviceUuid)) {
+            return false;
+        }
 
-            Auth::user()?->devices()->attach($deviceUuid);
-
-            event(new DeviceAttachedEvent(Device::byUuid($deviceUuid), Auth::user()));
-
+        if (Auth::user()->hasDevice($deviceUuid)) {
             return true;
         }
 
-        return false;
+        Auth::user()->devices()->attach($deviceUuid);
+
+        event(new DeviceAttachedEvent(Device::byUuid($deviceUuid), Auth::user()));
+
+        return true;
     }
 
     public function userDevices(): Collection
@@ -96,8 +103,7 @@ final class DeviceManager
                 device_uuid() !== null &&
                 !Device::exists(device_uuid()) &&
                 Config::get('devices.regenerate_devices') && device_uuid();
-        } catch (\Throwable) {
-            \Log::warning(sprintf('Device not found for UUID: %s', device_uuid()));
+        } catch (Throwable) {
             return false;
         }
     }

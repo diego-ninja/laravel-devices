@@ -32,7 +32,7 @@ final class HasManySessions extends HasMany
     {
         return $this
             ->with('device')
-            ->where('uuid', SessionFacade::get(Session::DEVICE_SESSION_ID))
+            ->where('uuid', session_uuid())
             ->get()
             ->first();
     }
@@ -55,8 +55,8 @@ final class HasManySessions extends HasMany
             ->where('status', SessionStatus::Active);
 
         if ($exceptCurrent) {
-            if (SessionFacade::has(Session::DEVICE_SESSION_ID)) {
-                $query->where('id', '!=', SessionFacade::get(Session::DEVICE_SESSION_ID));
+            if (session_uuid()) {
+                $query->where('id', '!=', session_uuid());
             }
         }
 

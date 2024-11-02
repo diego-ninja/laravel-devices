@@ -6,11 +6,14 @@ use Config;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Events\Dispatcher;
+use Ninja\DeviceTracker\DTO\Metadata;
+use Ninja\DeviceTracker\Enums\EventType;
 use Ninja\DeviceTracker\Events\DeviceTrackedEvent;
 use Ninja\DeviceTracker\Events\Google2FASuccess;
 use Ninja\DeviceTracker\Facades\DeviceManager;
 use Ninja\DeviceTracker\Facades\SessionManager;
 use Ninja\DeviceTracker\Models\Device;
+use Ninja\DeviceTracker\Models\Event;
 use Ninja\DeviceTracker\Models\Session;
 
 final readonly class AuthenticationHandler
@@ -24,10 +27,32 @@ final readonly class AuthenticationHandler
 
         DeviceManager::attach();
         SessionManager::refresh($event->user);
+
+        Event::log(
+            type: EventType::Login,
+            session: $event->user->sessions()->current(),
+            metadata: new Metadata([
+                "url" => request()->url(),
+                "user_agent" => request()->userAgent(),
+                "route" => request()->route()?->getName(),
+                "method" => request()->method(),
+            ])
+        );
     }
 
     public function onLogout(Logout $event): void
     {
+        Event::log(
+            type: EventType::Logout,
+            session: Session::current(),
+            metadata: new Metadata([
+                "url" => request()->url(),
+                "user_agent" => request()->userAgent(),
+                "route" => request()->route()?->getName(),
+                "method" => request()->method(),
+            ])
+        );
+
         Session::current()?->end(
             forgetSession: true,
             user: $event->user,

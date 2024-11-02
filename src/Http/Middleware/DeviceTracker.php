@@ -39,6 +39,12 @@ final readonly class DeviceTracker
             }
         }
 
-        return $next($request);
+        return $next($this->propagate($request));
+    }
+
+    private function propagate(Request $request): Request
+    {
+        $param = config('devices.device_id_request_param');
+        return $request->merge([$param => DeviceManager::current()?->uuid->toString()]);
     }
 }

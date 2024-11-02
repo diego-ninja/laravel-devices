@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\DTO\Metadata;
 use Ninja\DeviceTracker\Enums\EventType;
+use Ninja\DeviceTracker\Factories\EventIdFactory;
 use Ninja\DeviceTracker\Traits\PropertyProxy;
 
 /**
@@ -73,10 +74,11 @@ class Event extends Model
         return $this->belongsTo(Session::class, 'session_uuid', 'uuid');
     }
 
-    public static function log(EventType $type, Session $session, Metadata $metadata): Event
+    public static function log(EventType $type, ?Session $session, ?Metadata $metadata): Event
     {
         return static::create([
-            'device_uuid' => $session->device_uuid,
+            'uuid' => EventIdFactory::generate(),
+            'device_uuid' => $session?->device_uuid ?? device_uuid(),
             'session_uuid' => $session->uuid,
             'type' => $type,
             'metadata' => $metadata,
