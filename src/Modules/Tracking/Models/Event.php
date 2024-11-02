@@ -82,7 +82,7 @@ class Event extends Model
         return static::create([
             'uuid' => EventIdFactory::generate(),
             'device_uuid' => $session?->device_uuid ?? device_uuid(),
-            'session_uuid' => $session->uuid,
+            'session_uuid' => $session?->uuid,
             'type' => $type,
             'metadata' => $metadata,
             'ip_address' => request()->ip(),

@@ -27,32 +27,10 @@ final readonly class AuthenticationHandler
 
         DeviceManager::attach();
         SessionManager::refresh($event->user);
-
-        Event::log(
-            type: EventType::Login,
-            session: $event->user->sessions()->current(),
-            metadata: new Metadata([
-                "url" => request()->url(),
-                "user_agent" => request()->userAgent(),
-                "route" => request()->route()?->getName(),
-                "method" => request()->method(),
-            ])
-        );
     }
 
     public function onLogout(Logout $event): void
     {
-        Event::log(
-            type: EventType::Logout,
-            session: Session::current(),
-            metadata: new Metadata([
-                "url" => request()->url(),
-                "user_agent" => request()->userAgent(),
-                "route" => request()->route()?->getName(),
-                "method" => request()->method(),
-            ])
-        );
-
         Session::current()?->end(
             forgetSession: true,
             user: $event->user,

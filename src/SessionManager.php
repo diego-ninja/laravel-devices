@@ -24,6 +24,11 @@ final readonly class SessionManager
         $this->app = $app;
     }
 
+    public function current(): ?Session
+    {
+        return Session::current();
+    }
+
     /**
      * @throws DeviceNotFoundException
      */
