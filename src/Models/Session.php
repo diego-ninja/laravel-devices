@@ -16,7 +16,6 @@ use Ninja\DeviceTracker\Cache\SessionCache;
 use Ninja\DeviceTracker\Contracts\Cacheable;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\DTO\Metadata;
-use Ninja\DeviceTracker\Enums\EventType;
 use Ninja\DeviceTracker\Enums\SessionStatus;
 use Ninja\DeviceTracker\Events\SessionBlockedEvent;
 use Ninja\DeviceTracker\Events\SessionFinishedEvent;
@@ -25,9 +24,11 @@ use Ninja\DeviceTracker\Events\SessionUnblockedEvent;
 use Ninja\DeviceTracker\Events\SessionUnlockedEvent;
 use Ninja\DeviceTracker\Exception\SessionNotFoundException;
 use Ninja\DeviceTracker\Factories\SessionIdFactory;
-use Ninja\DeviceTracker\Models\Relations\HasManyEvents;
 use Ninja\DeviceTracker\Modules\Location\Contracts\LocationProvider;
 use Ninja\DeviceTracker\Modules\Location\DTO\Location;
+use Ninja\DeviceTracker\Modules\Tracking\Enums\EventType;
+use Ninja\DeviceTracker\Modules\Tracking\Models\Event;
+use Ninja\DeviceTracker\Modules\Tracking\Models\Relations\HasManyEvents;
 use Ninja\DeviceTracker\Traits\PropertyProxy;
 
 /**

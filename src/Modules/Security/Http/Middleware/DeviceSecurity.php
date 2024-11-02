@@ -7,14 +7,14 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Ninja\DeviceTracker\DTO\Metadata;
-use Ninja\DeviceTracker\Enums\EventType;
 use Ninja\DeviceTracker\Enums\SessionStatus;
 use Ninja\DeviceTracker\Models\Device;
-use Ninja\DeviceTracker\Models\Event;
 use Ninja\DeviceTracker\Models\Session;
 use Ninja\DeviceTracker\Modules\Security\Context\SecurityContext;
 use Ninja\DeviceTracker\Modules\Security\DeviceSecurityManager;
 use Ninja\DeviceTracker\Modules\Security\Jobs\CalculateDeviceRiskJob;
+use Ninja\DeviceTracker\Modules\Tracking\Enums\EventType;
+use Ninja\DeviceTracker\Modules\Tracking\Models\Event;
 
 final readonly class DeviceSecurity
 {

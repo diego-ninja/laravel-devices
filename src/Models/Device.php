@@ -27,9 +27,10 @@ use Ninja\DeviceTracker\Events\DeviceVerifiedEvent;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Exception\FingerprintDuplicatedException;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
-use Ninja\DeviceTracker\Models\Relations\HasManyEvents;
 use Ninja\DeviceTracker\Models\Relations\HasManySessions;
 use Ninja\DeviceTracker\Modules\Security\DTO\Risk;
+use Ninja\DeviceTracker\Modules\Tracking\Models\Event;
+use Ninja\DeviceTracker\Modules\Tracking\Models\Relations\HasManyEvents;
 use Ninja\DeviceTracker\Traits\PropertyProxy;
 use PDOException;
 

@@ -15,13 +15,13 @@ use Ninja\DeviceTracker\Console\Commands\DeviceStatusCommand;
 use Ninja\DeviceTracker\Contracts\CodeGenerator;
 use Ninja\DeviceTracker\Generators\Google2FACodeGenerator;
 use Ninja\DeviceTracker\Http\Middleware\DeviceTracker;
-use Ninja\DeviceTracker\Http\Middleware\EventTracker;
-use Ninja\DeviceTracker\Http\Middleware\FingerprintTracker;
 use Ninja\DeviceTracker\Http\Middleware\SessionTracker;
 use Ninja\DeviceTracker\Modules\Detection\Contracts\DeviceDetector;
-use Ninja\DeviceTracker\Modules\Detection\UserAgentDeviceDetector;
+use Ninja\DeviceTracker\Modules\Detection\Device\UserAgentDeviceDetector;
+use Ninja\DeviceTracker\Modules\Fingerprinting\Http\Middleware\FingerprintTracker;
 use Ninja\DeviceTracker\Modules\Location\Contracts\LocationProvider;
 use Ninja\DeviceTracker\Modules\Location\FallbackLocationProvider;
+use Ninja\DeviceTracker\Modules\Tracking\Http\Middleware\EventTracker;
 use PragmaRX\Google2FA\Google2FA;
 use PragmaRX\Google2FA\Support\Constants;
 

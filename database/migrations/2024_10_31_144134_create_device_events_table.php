@@ -9,13 +9,13 @@ return new class extends Migration {
     {
         Schema::create('device_events', function (Blueprint $table) {
             $table->id();
+            $table->string('uuid')->unique();
             $table->string('device_uuid');
             $table->string('session_uuid')->nullable();
             $table->string('type');
             $table->string('ip_address')->nullable();
             $table->json('metadata')->nullable();
             $table->timestamp('occurred_at')->useCurrent();
-            $table->timestamps();
             $table->foreign('device_uuid')
                 ->references('uuid')
                 ->on('devices')

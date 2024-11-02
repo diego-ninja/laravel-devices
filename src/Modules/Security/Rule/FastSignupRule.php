@@ -2,9 +2,9 @@
 
 namespace Ninja\DeviceTracker\Modules\Security\Rule;
 
-use Ninja\DeviceTracker\Enums\EventType;
 use Ninja\DeviceTracker\Modules\Security\Context\SecurityContext;
 use Ninja\DeviceTracker\Modules\Security\DTO\Factor;
+use Ninja\DeviceTracker\Modules\Tracking\Enums\EventType;
 
 final class FastSignupRule extends AbstractSecurityRule
 {

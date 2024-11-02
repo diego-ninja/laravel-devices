@@ -1,9 +1,9 @@
 <?php
 
-namespace Ninja\DeviceTracker\Models\Relations;
+namespace Ninja\DeviceTracker\Modules\Tracking\Models\Relations;
 
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Ninja\DeviceTracker\Enums\EventType;
+use Ninja\DeviceTracker\Modules\Tracking\Enums\EventType;
 
 class HasManyEvents extends HasMany
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Ninja\DeviceTracker\Http\Middleware;
+namespace Ninja\DeviceTracker\Modules\Fingerprinting\Http\Middleware;
 
 use Closure;
 use Config;
@@ -10,7 +10,6 @@ use Illuminate\Http\Response;
 use Ninja\DeviceTracker\Facades\DeviceManager;
 use Ninja\DeviceTracker\Modules\Fingerprinting\Injector\Enums\Library;
 use Ninja\DeviceTracker\Modules\Fingerprinting\Injector\Factories\InjectorFactory;
-use Ninja\DeviceTracker\Modules\Fingerprinting\Injector\FingerprintJSInjector;
 
 final class FingerprintTracker
 {

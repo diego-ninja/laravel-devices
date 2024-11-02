@@ -1,6 +1,6 @@
 <?php
 
-namespace Ninja\DeviceTracker\Enums;
+namespace Ninja\DeviceTracker\Modules\Tracking\Enums;
 
 enum EventType: string
 {
@@ -13,4 +13,10 @@ enum EventType: string
     case ApiRequest = 'api_request';
     case SecurityWarning = 'security_warning';
     case Redirect = 'redirect';
+    case LivewireUpdate = 'livewire_update';
+
+    public function equals(EventType $eventType): bool
+    {
+        return $this->value === $eventType->value;
+    }
 }

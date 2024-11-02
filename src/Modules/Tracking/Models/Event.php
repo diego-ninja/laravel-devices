@@ -1,6 +1,6 @@
 <?php
 
-namespace Ninja\DeviceTracker\Models;
+namespace Ninja\DeviceTracker\Modules\Tracking\Models;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -8,8 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\DTO\Metadata;
-use Ninja\DeviceTracker\Enums\EventType;
 use Ninja\DeviceTracker\Factories\EventIdFactory;
+use Ninja\DeviceTracker\Models\Device;
+use Ninja\DeviceTracker\Models\Session;
+use Ninja\DeviceTracker\Modules\Tracking\Enums\EventType;
 use Ninja\DeviceTracker\Traits\PropertyProxy;
 
 /**
@@ -27,8 +29,6 @@ use Ninja\DeviceTracker\Traits\PropertyProxy;
  * @property EventType                    $type                   string
  * @property string                       $ip_address             string
  * @property Metadata                     $metadata               json
- * @property Carbon                       $created_at             datetime
- * @property Carbon                       $updated_at             datetime
  * @property Carbon                       $occurred_at            datetime
  *
  */
@@ -39,7 +39,10 @@ class Event extends Model
 
     protected $table = 'device_events';
 
+    public $timestamps = false;
+
     protected $fillable = [
+        'uuid',
         'device_uuid',
         'session_uuid',
         'type',
