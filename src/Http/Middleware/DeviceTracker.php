@@ -5,6 +5,7 @@ namespace Ninja\DeviceTracker\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Exception\FingerprintNotFoundException;
 use Ninja\DeviceTracker\Exception\UnknownDeviceDetectedException;
@@ -19,19 +20,16 @@ final readonly class DeviceTracker
             DeviceManager::create();
             DeviceManager::attach();
 
-            return $next($this->propagate($request));
+            return $next($this->propagate($request, device_uuid()));
         }
 
         if (!DeviceManager::tracked()) {
             try {
                 if (config('devices.track_guest_sessions')) {
-                    DeviceManager::track();
+                    $this->propagate($request, DeviceManager::track());
                     DeviceManager::create();
                 } else {
-                    $param = config('devices.device_id_request_param');
-                    $uuid = DeviceIdFactory::generate();
-
-                    $request->merge([$param => $uuid->toString()]);
+                    $this->propagate($request, DeviceIdFactory::generate());
                 }
             } catch (DeviceNotFoundException | FingerprintNotFoundException | UnknownDeviceDetectedException $e) {
                 Log::info($e->getMessage());
@@ -42,9 +40,9 @@ final readonly class DeviceTracker
         return $next($request);
     }
 
-    private function propagate(Request $request): Request
+    private function propagate(Request $request, StorableId $deviceUuid): Request
     {
         $param = config('devices.device_id_request_param');
-        return $request->merge([$param => DeviceManager::current()?->uuid->toString()]);
+        return $request->merge([$param => $deviceUuid->toString()]);
     }
 }

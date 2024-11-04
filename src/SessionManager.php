@@ -84,7 +84,7 @@ final readonly class SessionManager
             return $this->start();
         }
 
-        $current->renew();
+        $current->renew($user);
 
         return $current;
     }

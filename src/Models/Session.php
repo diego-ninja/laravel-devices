@@ -219,7 +219,7 @@ class Session extends Model implements Cacheable
         return false;
     }
 
-    public function renew(?Authenticatable $user): bool
+    public function renew(?Authenticatable $user = null): bool
     {
         $this->last_activity_at = Carbon::now();
         $this->status = SessionStatus::Active;
