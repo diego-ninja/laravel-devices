@@ -35,7 +35,7 @@ final readonly class MetricAggregator
 
         foreach ($this->windows as $window) {
             $slot = $this->timeslot($timestamp, $window);
-            $key = $this->key($name, $dimensions, $window, $slot);
+            $key = $this->key($name, MetricType::Counter, $dimensions, $window, $slot);
 
             Redis::pipeline(function ($pipe) use ($key, $value, $window) {
                 $pipe->incrbyfloat($key, $value);
@@ -52,7 +52,7 @@ final readonly class MetricAggregator
 
         foreach ($this->windows as $window) {
             $timeSlot = $this->timeslot($timestamp, $window);
-            $key = $this->key($name, $dimensions, $window, $timeSlot);
+            $key = $this->key($name, MetricType::Gauge, $dimensions, $window, $timeSlot);
 
             Redis::pipeline(function ($pipe) use ($key, $value, $window) {
                 $pipe->set($key, $value);
@@ -69,7 +69,7 @@ final readonly class MetricAggregator
 
         foreach ($this->windows as $window) {
             $timeSlot = $this->timeslot($timestamp, $window);
-            $key = $this->key($name, $dimensions, $window, $timeSlot);
+            $key = $this->key($name, MetricType::Histogram, $dimensions, $window, $timeSlot);
 
             Redis::pipeline(function ($pipe) use ($key, $value, $window) {
                 $pipe->zadd($key, $value, $value);
@@ -86,8 +86,9 @@ final readonly class MetricAggregator
 
     private function key(
         MetricName $name,
+        MetricType $type,
         array $dimensions,
-        string $window,
+        AggregationWindow $window,
         int $timeSlot
     ): string {
         $dimensionString = collect($dimensions)
@@ -95,10 +96,11 @@ final readonly class MetricAggregator
             ->join(':');
 
         return sprintf(
-            "%s:%s:%s:%s:%s",
+            "%s:%s:%s:%s:%d:%s",
             $this->prefix,
             $name->value,
-            $window,
+            $type->value,
+            $window->value,
             $timeSlot,
             $dimensionString
         );
