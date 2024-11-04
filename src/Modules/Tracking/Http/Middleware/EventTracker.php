@@ -13,20 +13,29 @@ use Ninja\DeviceTracker\Modules\Tracking\Enums\EventType;
 use Ninja\DeviceTracker\Modules\Tracking\Models\Event;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
-final class EventTracker
+final readonly class EventTracker
 {
-    public function __construct(private readonly DetectorRegistry $registry)
-    {
+    public function __construct(
+        private DetectorRegistry $registry
+    ) {
     }
 
     public function handle(Request $request, \Closure $next)
     {
+        if (config('devices.event_tracking_enabled') === false) {
+            return $next($request);
+        }
+
         if ($this->ignore($request)) {
             return $next($request);
         }
 
         $response = $next($request);
         $type = $this->registry->detect($request, $response);
+
+        if ($type === null) {
+            return $response;
+        }
 
         $this->log($type, $request, $response);
 
@@ -44,7 +53,7 @@ final class EventTracker
         ])->contains(fn($path) => str_starts_with($request->path(), $path));
     }
 
-    private function log(EventType $type, Request $request, mixed $response): void
+    private function log(EventType $type, Request $request, mixed $response): Event
     {
         $metadata = new Metadata([
             'request' => [
@@ -80,7 +89,7 @@ final class EventTracker
             ]
         ]);
 
-        Event::log(
+        return Event::log(
             type: $type,
             session: SessionManager::current(),
             metadata: $metadata

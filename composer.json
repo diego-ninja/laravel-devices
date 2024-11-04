@@ -18,7 +18,8 @@
         "ramsey/uuid": "^4.7",
         "matomo/device-detector": "^6.4",
         "pragmarx/google2fa": "^8.0",
-        "bacon/bacon-qr-code": "^3.0"
+        "bacon/bacon-qr-code": "^3.0",
+        "spatie/laravel-prometheus": "^1.2"
     },
     "require-dev": {
         "ext-redis": "*",

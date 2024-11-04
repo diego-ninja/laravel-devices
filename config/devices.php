@@ -452,5 +452,23 @@ return [
         'Mozilla/7.0 (iPhone; CPU iPhone OS 18_7; iPhone 15 Pro Max) AppleWebKit/533.2 (KHTML, like Gecko) CriOS/432.0.8702.51 Mobile/15E148 Safari/804.17',
         'Mozilla/5.0 (Linux; Android 13; 2211133G Build/TKQ1.220905.001; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/113.0.5672.76 Mobile Safari/537.36',
         'Mozilla/5.0 (Linux; U; Android 13; pl-pl; Xiaomi 13 Build/TKQ1.220905.001) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/100.0.4896.127 Mobile Safari/537.36 XiaoMi/MiuiBrowser/13.28.0-gn'
+    ],
+
+    'metrics' => [
+        'aggregation' => [
+            'prefix' => 'device_metrics',
+            'windows' => [
+                \Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow::Realtime,
+                \Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow::Hourly,
+                \Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow::Daily
+            ],
+            'retention' => [
+                \Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow::Realtime->name => '1 day',
+                \Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow::Hourly->name => '7 days',
+                \Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow::Daily->name => '90 days',
+                \Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow::Weekly->name => '365 days',
+                \Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow::Monthly->name => '365 days'
+            ]
+        ]
     ]
 ];

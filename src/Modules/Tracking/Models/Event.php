@@ -31,6 +31,9 @@ use Ninja\DeviceTracker\Traits\PropertyProxy;
  * @property Metadata                     $metadata               json
  * @property Carbon                       $occurred_at            datetime
  *
+ * @property-read Device                  $device
+ * @property-read Session                 $session
+ *
  */
 
 class Event extends Model
