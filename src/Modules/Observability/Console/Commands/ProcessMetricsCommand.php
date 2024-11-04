@@ -50,6 +50,7 @@ final class ProcessMetricsCommand extends Command
             }
 
             $this->stats($window);
+            $this->processor->reset($window);
         } catch (Throwable $e) {
             $this->error(sprintf(
                 'Processing failed. Error count: %d',

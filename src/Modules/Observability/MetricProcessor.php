@@ -228,7 +228,7 @@ final class MetricProcessor
 
     public function errorCount(AggregationWindow $window): int
     {
-        return (int)Redis::get(
+        return (int) Redis::get(
             sprintf('%s:processing_errors:%s', $this->prefix, $window->value)
         ) ?? 0;
     }
