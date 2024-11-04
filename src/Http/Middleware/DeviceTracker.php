@@ -19,7 +19,7 @@ final readonly class DeviceTracker
             DeviceManager::create();
             DeviceManager::attach();
 
-            return $next($request);
+            return $next($this->propagate($request));
         }
 
         if (!DeviceManager::tracked()) {
@@ -39,7 +39,7 @@ final readonly class DeviceTracker
             }
         }
 
-        return $next($this->propagate($request));
+        return $next($request);
     }
 
     private function propagate(Request $request): Request
