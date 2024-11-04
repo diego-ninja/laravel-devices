@@ -70,7 +70,6 @@ class Registry
     }
     public static function register(MetricDefinition $metric): void
     {
-        self::ensureInitialized();
         self::$metrics->put($metric->name(), $metric);
     }
 
