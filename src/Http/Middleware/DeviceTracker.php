@@ -37,7 +37,7 @@ final readonly class DeviceTracker
             }
         }
 
-        return $next($request);
+        return $next($this->propagate($request, device_uuid()));
     }
 
     private function propagate(Request $request, StorableId $deviceUuid): Request

@@ -20,4 +20,15 @@ enum AggregationWindow: string
             self::Monthly => 2592000,
         };
     }
+
+    public static function values(): array
+    {
+        return [
+            self::Realtime->value,
+            self::Hourly->value,
+            self::Daily->value,
+            self::Weekly->value,
+            self::Monthly->value,
+        ];
+    }
 }

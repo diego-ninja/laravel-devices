@@ -13,6 +13,7 @@ class MetricDefinition implements Arrayable
     private const DEFAULT_MAX_VALUE = PHP_FLOAT_MAX;
     private array $buckets;
     private array $allowed_dimensions;
+
     public function __construct(
         private readonly MetricName $name,
         private readonly MetricType $type,
@@ -115,22 +116,26 @@ class MetricDefinition implements Arrayable
      */
     private function validateDimensions(array $dimensions): void
     {
-        $invalidDimensions = array_diff(
-            array_keys($dimensions),
-            $this->allowed_dimensions
-        );
+        if (!empty($this->allowed_dimensions)) {
+            $invalidDimensions = array_diff(
+                array_keys($dimensions),
+                $this->allowed_dimensions
+            );
 
-        if (!empty($invalidDimensions)) {
-            throw InvalidMetricException::invalidDimensions($this->name, $invalidDimensions);
+            if (!empty($invalidDimensions)) {
+                throw InvalidMetricException::invalidDimensions($this->name, $invalidDimensions);
+            }
         }
 
-        $missingDimensions = array_diff(
-            $this->required_dimensions,
-            array_keys($dimensions)
-        );
+        if (!empty($this->required_dimensions)) {
+            $missingDimensions = array_diff(
+                $this->required_dimensions,
+                array_keys($dimensions)
+            );
 
-        if (!empty($missingDimensions)) {
-            throw InvalidMetricException::missingRequiredDimensions($this->name, $missingDimensions);
+            if (!empty($missingDimensions)) {
+                throw InvalidMetricException::missingRequiredDimensions($this->name, $missingDimensions);
+            }
         }
     }
 

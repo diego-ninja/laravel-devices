@@ -44,6 +44,7 @@ class Registry
         }
 
         self::register(DeviceCount::create());
+        self::$initialized = true;
     }
 
     public static function get(MetricName $name): ?MetricDefinition
@@ -78,19 +79,5 @@ class Registry
         if (!self::$initialized) {
             self::initialize();
         }
-    }
-
-    public static function asPrometheusConfig(): array
-    {
-        self::ensureInitialized();
-
-        return self::$metrics->mapWithKeys(function (MetricDefinition $metric) {
-            return [$metric->name() => [
-                'type' => strtolower($metric->type()->value),
-                'help' => $metric->description(),
-                'labels' => $metric->labels(),
-                'buckets' => $metric->buckets()
-            ]];
-        })->all();
     }
 }

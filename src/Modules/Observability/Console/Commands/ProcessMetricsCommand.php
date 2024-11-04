@@ -11,9 +11,11 @@ use Throwable;
 
 final class ProcessMetricsCommand extends Command
 {
-    protected $signature = 'devices:metrics 
+    protected $signature = 'devices:metrics
         {window : Window to process (realtime, hourly, daily, weekly, monthly)}
         {--prune : Prune old data}';
+
+    protected $description = 'Process metrics from realtime storage to persistent storage';
 
     public function __construct(protected readonly MetricProcessor $processor, protected readonly MetricAggregationRepository $repository)
     {
@@ -66,7 +68,7 @@ final class ProcessMetricsCommand extends Command
             [
                 ['Last Processing', $lastProcessing ? $lastProcessing->diffForHumans() : 'Never'],
                 ['Error Count', $errorCount],
-                ['Window', $window],
+                ['Window', $window->value],
             ]
         );
     }

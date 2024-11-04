@@ -8,10 +8,6 @@ use Ninja\DeviceTracker\Modules\Observability\Metrics\MetricDefinition;
 
 class DeviceCount extends MetricDefinition
 {
-    public function __invoke(): self
-    {
-        return self::create();
-    }
     public static function create(): self
     {
         return new self(

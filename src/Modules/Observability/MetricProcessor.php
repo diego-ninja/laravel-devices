@@ -3,10 +3,12 @@
 namespace Ninja\DeviceTracker\Modules\Observability;
 
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Redis;
 use Log;
 use Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow;
+use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Repository\DatabaseMetricAggregationRepository;
 use Throwable;
@@ -48,9 +50,11 @@ final class MetricProcessor
 
     private function metricType(MetricType $type, AggregationWindow $window, int $timeSlot): void
     {
-        $pattern = $this->pattern($type, $timeSlot);
+        $pattern = $this->pattern($type, $window, $timeSlot);
+        Log::info('Processing metric pattern', [
+            'pattern' => $pattern,
+        ]);
         $keys = Redis::keys($pattern);
-
         foreach ($keys as $key) {
             try {
                 $this->metric($key, $type, $window, $timeSlot);
@@ -95,7 +99,10 @@ final class MetricProcessor
             return match ($type) {
                 MetricType::Counter,
                 MetricType::Gauge => (float) Redis::get($key),
-                MetricType::Histogram => $this->histogram($key)
+                MetricType::Histogram => $this->histogram($key),
+                MetricType::Summary,
+                MetricType::Average,
+                MetricType::Rate => throw new Exception('To be implemented')
             };
         } catch (Throwable $e) {
             Log::error('Failed to get metric value', [
@@ -134,10 +141,13 @@ final class MetricProcessor
 
     private function parseKey(string $key): ?array
     {
-        $pattern = sprintf(
-            '/%s:([^:]+):([^:]+):(\d+):(.*)/',
-            preg_quote($this->prefix, '/')
-        );
+        $pattern = '/^' . preg_quote($this->prefix) . ':' .
+            '([^:]+):' .
+            '(' . implode('|', MetricType::values()) . '):' .
+            '(' . implode('|', AggregationWindow::values()) . '):' .
+            '(\d+):' .
+            '(.+)$/';
+
 
         if (!preg_match($pattern, $key, $matches)) {
             Log::warning('Invalid metric key format', ['key' => $key]);
@@ -145,19 +155,21 @@ final class MetricProcessor
         }
 
         return [
-            'name' => $matches[1],
-            'type' => $matches[2],
-            'timestamp' => (int)$matches[3],
+            'name' => MetricName::tryFrom($matches[1]),
+            'type' => MetricType::tryFrom($matches[2]),
+            'window' => AggregationWindow::tryFrom($matches[3]),
+            'timestamp' => (int) $matches[3],
             'dimensions' => $matches[4]
         ];
     }
 
-    private function pattern(MetricType $type, int $slot): string
+    private function pattern(MetricType $type, AggregationWindow $window, int $slot): string
     {
         return sprintf(
-            '%s:*:%s:%d:*',
+            '%s:*:%s:%s:%d:*',
             $this->prefix,
             $type->value,
+            $window->value,
             $slot
         );
     }
