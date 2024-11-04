@@ -4,9 +4,9 @@ namespace Ninja\DeviceTracker\Modules\Observability\Console\Commands;
 
 use DateInterval;
 use Illuminate\Console\Command;
+use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricAggregationRepository;
 use Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow;
-use Ninja\DeviceTracker\Modules\Tracking\Aggregation\Contracts\EventAggregationRepository;
-use Ninja\DeviceTracker\Modules\Tracking\Aggregation\Processor\AggregationProcessor;
+use Ninja\DeviceTracker\Modules\Observability\MetricProcessor;
 use Throwable;
 
 final class ProcessMetricsCommand extends Command
@@ -15,24 +15,24 @@ final class ProcessMetricsCommand extends Command
         {window : Window to process (realtime, hourly, daily, weekly, monthly)}
         {--prune : Prune old data}';
 
-    public function __construct(protected readonly AggregationProcessor $processor, protected readonly EventAggregationRepository $repository)
+    public function __construct(protected readonly MetricProcessor $processor, protected readonly MetricAggregationRepository $repository)
     {
         parent::__construct();
     }
-    public function handle(AggregationProcessor $processor): void
+    public function handle(): void
     {
         $window = AggregationWindow::tryFrom($this->argument('window'));
 
         try {
-            $processor->window($window);
+            $this->processor->window($window);
 
             $this->info(sprintf(
                 'Last processing: %s',
-                $processor->time($window)?->diffForHumans() ?? 'never'
+                $this->processor->time($window)?->diffForHumans() ?? 'never'
             ));
 
             if ($this->option('prune')) {
-                $retention = config(sprintf("devices.events.aggregation.retention.%s", $window->name), '7 days');
+                $retention = config(sprintf("devices.metrics.retention.%s", $window->value), '7 days');
                 $before = now()->sub(new DateInterval($retention));
 
                 $this->info(sprintf(
@@ -48,11 +48,10 @@ final class ProcessMetricsCommand extends Command
             }
 
             $this->stats($window);
-
         } catch (Throwable $e) {
             $this->error(sprintf(
                 'Processing failed. Error count: %d',
-                $processor->errorCount($window)
+                $this->processor->errorCount($window)
             ));
         }
     }

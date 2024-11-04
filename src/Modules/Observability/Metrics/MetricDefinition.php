@@ -5,27 +5,59 @@ namespace Ninja\DeviceTracker\Modules\Observability\Metrics;
 use Illuminate\Contracts\Support\Arrayable;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
+use Ninja\DeviceTracker\Modules\Observability\Exceptions\InvalidMetricException;
 
 class MetricDefinition implements Arrayable
 {
+    private const DEFAULT_MIN_VALUE = -PHP_FLOAT_MAX;
+    private const DEFAULT_MAX_VALUE = PHP_FLOAT_MAX;
     private array $buckets;
-    private array $labels;
-
+    private array $allowed_dimensions;
     public function __construct(
         private readonly MetricName $name,
         private readonly MetricType $type,
         private readonly string $description,
         private readonly string $unit = '',
         private readonly array $options = [],
-        array $labels = [],
-        array $buckets = []
+        private readonly array $required_dimensions = [],
+        array $allowed_dimensions = [],
+        array $buckets = [],
+        private readonly ?float $min = null,
+        private readonly ?float $max = null,
     ) {
-        $this->labels = array_merge(['device_uuid', 'session_uuid'], $labels);
+        $this->allowed_dimensions = array_merge(config('devices.metrics.labels', []), $allowed_dimensions);
         $this->buckets = match ($type) {
-            MetricType::Histogram => $buckets ?: $this->defaultBuckets(),
+            MetricType::Histogram => $buckets ?: config('devices.metrics.buckets', []),
             default => []
         };
     }
+
+    /**
+     * @throws InvalidMetricException
+     */
+    public function valid(
+        MetricType $type,
+        float $value,
+        array $dimensions,
+        bool $throwException = true
+    ): bool {
+        try {
+            if ($type !== $this->type) {
+                throw InvalidMetricException::invalidType($this->name, $this->type, $type);
+            }
+
+            $this->validateDimensions($dimensions);
+            $this->validateValue($value);
+
+            return true;
+        } catch (InvalidMetricException $e) {
+            if ($throwException) {
+                throw $e;
+            }
+            return false;
+        }
+    }
+
 
     public function name(): string
     {
@@ -47,9 +79,9 @@ class MetricDefinition implements Arrayable
         return $this->unit;
     }
 
-    public function labels(): array
+    public function dimensions(): array
     {
-        return $this->labels;
+        return $this->allowed_dimensions;
     }
 
     public function buckets(): array
@@ -69,20 +101,49 @@ class MetricDefinition implements Arrayable
             'type' => $this->type->value,
             'description' => $this->description,
             'unit' => $this->unit,
-            'labels' => $this->labels,
+            'allowed_dimensions' => $this->allowed_dimensions,
+            'required_dimensions' => $this->required_dimensions,
             'buckets' => $this->buckets,
-            'options' => $this->options
+            'options' => $this->options,
+            'min' => $this->min,
+            'max' => $this->max,
         ];
     }
 
-    private function defaultBuckets(): array
+    /**
+     * @throws InvalidMetricException
+     */
+    private function validateDimensions(array $dimensions): void
     {
-        return match ($this->unit) {
-            'seconds' => [0.01, 0.05, 0.1, 0.5, 1, 2.5, 5, 10],
-            'milliseconds' => [1, 5, 10, 50, 100, 500, 1000, 5000],
-            'bytes' => [1024, 1024 * 1024, 10 * 1024 * 1024, 100 * 1024 * 1024],
-            'score' => [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
-            default => [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000]
-        };
+        $invalidDimensions = array_diff(
+            array_keys($dimensions),
+            $this->allowed_dimensions
+        );
+
+        if (!empty($invalidDimensions)) {
+            throw InvalidMetricException::invalidDimensions($this->name, $invalidDimensions);
+        }
+
+        $missingDimensions = array_diff(
+            $this->required_dimensions,
+            array_keys($dimensions)
+        );
+
+        if (!empty($missingDimensions)) {
+            throw InvalidMetricException::missingRequiredDimensions($this->name, $missingDimensions);
+        }
+    }
+
+    /**
+     * @throws InvalidMetricException
+     */
+    private function validateValue(float $value): void
+    {
+        $min = $this->min ?? self::DEFAULT_MIN_VALUE;
+        $max = $this->max ?? self::DEFAULT_MAX_VALUE;
+
+        if ($value < $min || $value > $max) {
+            throw InvalidMetricException::valueOutOfRange($this->name, $value, $min, $max);
+        }
     }
 }

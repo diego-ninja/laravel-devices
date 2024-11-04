@@ -5,12 +5,12 @@ namespace Ninja\DeviceTracker\Modules\Observability\Repository;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Support\Collection;
+use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricAggregationRepository;
 use Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
-use Ninja\DeviceTracker\Modules\Tracking\Aggregation\Contracts\EventAggregationRepository;
 
-class DatabaseMetricAggregationRepository implements EventAggregationRepository
+class DatabaseMetricAggregationRepository implements MetricAggregationRepository
 {
     public const METRIC_AGGREGATION_TABLE = 'device_metrics';
 

@@ -455,6 +455,14 @@ return [
     ],
 
     'metrics' => [
+        'dimensions' => ["device_uuid", "session_uuid"],
+        'buckets' => [
+            'seconds' => [0.01, 0.05, 0.1, 0.5, 1, 2.5, 5, 10],
+            'milliseconds' => [1, 5, 10, 50, 100, 500, 1000, 5000],
+            'bytes' => [1024, 1024 * 1024, 10 * 1024 * 1024, 100 * 1024 * 1024],
+            'score' => [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
+            'default' => [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000]
+        ],
         'aggregation' => [
             'prefix' => 'device_metrics',
             'windows' => [

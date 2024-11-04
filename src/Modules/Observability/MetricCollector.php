@@ -5,16 +5,16 @@ namespace Ninja\DeviceTracker\Modules\Observability;
 use Ninja\DeviceTracker\Events\DeviceCreatedEvent;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 
-class MetricCollector
+final readonly class MetricCollector
 {
     public function __construct(
-        private readonly MetricAggregator $aggregator,
+        private MetricAggregator $aggregator,
     ) {
     }
 
     public function handleDeviceCreated(DeviceCreatedEvent $event): void
     {
-        $this->aggregator->increment(
+        $this->aggregator->counter(
             name: MetricName::DeviceUniqueCount,
             dimensions: [
                 'platform' => $event->device->platform_family,
@@ -22,7 +22,8 @@ class MetricCollector
             ]
         );
 
-        $this->aggregator->increment(
+        /**
+        $this->aggregator->counter(
             name: MetricName::DeviceOsDistribution,
             dimensions: [
                 'platform' => $event->device->platform,
@@ -31,7 +32,7 @@ class MetricCollector
             ]
         );
 
-        $this->aggregator->increment(
+        $this->aggregator->counter(
             name: MetricName::DeviceBrowserDistribution,
             dimensions: [
                 'browser' => $event->device->browser,
@@ -39,6 +40,7 @@ class MetricCollector
                 'browser_version' => $event->device->browser_version
             ]
         );
+        **/
     }
 
 }

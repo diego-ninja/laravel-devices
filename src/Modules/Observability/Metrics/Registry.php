@@ -5,18 +5,45 @@ namespace Ninja\DeviceTracker\Modules\Observability\Metrics;
 use Illuminate\Support\Collection;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
-use Ninja\DeviceTracker\Modules\Tracking\Aggregation\Metrics\MetricDefinition;
+use Ninja\DeviceTracker\Modules\Observability\Exceptions\InvalidMetricException;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Device\DeviceCount;
 
 class Registry
 {
     private static bool $initialized = false;
     private static Collection $metrics;
 
+
+    /**
+     * @throws InvalidMetricException
+     */
+    public static function validate(
+        MetricName $name,
+        MetricType $type,
+        float $value,
+        array $dimensions,
+        bool $throwException = true
+    ): bool {
+        self::ensureInitialized();
+
+        $definition = self::get($name);
+        if (!$definition) {
+            if ($throwException) {
+                throw new InvalidMetricException(sprintf('Metric %s not found in registry', $name->value));
+            }
+            return false;
+        }
+
+        return $definition->valid($type, $value, $dimensions, $throwException);
+    }
+
     public static function initialize(): void
     {
         if (self::$initialized) {
             return;
         }
+
+        self::register(DeviceCount::create());
     }
 
     public static function get(MetricName $name): ?MetricDefinition
@@ -66,5 +93,4 @@ class Registry
             ]];
         })->all();
     }
-
 }

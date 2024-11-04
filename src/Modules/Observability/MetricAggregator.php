@@ -6,6 +6,8 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Redis;
 use Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
+use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Registry;
 
 final readonly class MetricAggregator
 {
@@ -25,13 +27,15 @@ final readonly class MetricAggregator
         ]);
     }
 
-    public function increment(MetricName $name, array $dimensions, float $value = 1, ?Carbon $timestamp = null): void
+    public function counter(MetricName $name, array $dimensions, float $value = 1, ?Carbon $timestamp = null): void
     {
         $timestamp = $timestamp ?? now();
 
+        Registry::validate($name, MetricType::Counter, $value, $dimensions);
+
         foreach ($this->windows as $window) {
             $slot = $this->timeslot($timestamp, $window);
-            $key = $this->key($name->value, $dimensions, $window, $slot);
+            $key = $this->key($name, $dimensions, $window, $slot);
 
             Redis::pipeline(function ($pipe) use ($key, $value, $window) {
                 $pipe->incrbyfloat($key, $value);
@@ -40,13 +44,15 @@ final readonly class MetricAggregator
         }
     }
 
-    public function update(MetricName $name, array $dimensions, float $value, ?Carbon $timestamp = null): void
+    public function gauge(MetricName $name, array $dimensions, float $value, ?Carbon $timestamp = null): void
     {
         $timestamp = $timestamp ?? now();
 
+        Registry::validate($name, MetricType::Gauge, $value, $dimensions);
+
         foreach ($this->windows as $window) {
             $timeSlot = $this->timeslot($timestamp, $window);
-            $key = $this->key($name->value, $dimensions, $window, $timeSlot);
+            $key = $this->key($name, $dimensions, $window, $timeSlot);
 
             Redis::pipeline(function ($pipe) use ($key, $value, $window) {
                 $pipe->set($key, $value);
@@ -55,13 +61,15 @@ final readonly class MetricAggregator
         }
     }
 
-    public function record(MetricName $name, array $dimensions, float $value, ?Carbon $timestamp = null): void
+    public function histogram(MetricName $name, array $dimensions, float $value, ?Carbon $timestamp = null): void
     {
         $timestamp = $timestamp ?? now();
 
+        Registry::validate($name, MetricType::Histogram, $value, $dimensions);
+
         foreach ($this->windows as $window) {
             $timeSlot = $this->timeslot($timestamp, $window);
-            $key = $this->key($name->value, $dimensions, $window, $timeSlot);
+            $key = $this->key($name, $dimensions, $window, $timeSlot);
 
             Redis::pipeline(function ($pipe) use ($key, $value, $window) {
                 $pipe->zadd($key, $value, $value);
@@ -77,7 +85,7 @@ final readonly class MetricAggregator
     }
 
     private function key(
-        string $name,
+        MetricName $name,
         array $dimensions,
         string $window,
         int $timeSlot
@@ -89,7 +97,7 @@ final readonly class MetricAggregator
         return sprintf(
             "%s:%s:%s:%s:%s",
             $this->prefix,
-            $name,
+            $name->value,
             $window,
             $timeSlot,
             $dimensionString

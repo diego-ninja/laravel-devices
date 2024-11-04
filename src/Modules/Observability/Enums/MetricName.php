@@ -31,6 +31,7 @@ enum MetricName: string
     case LocationUniqueCount = 'location_unique_count';
     case LocationChangeVelocity = 'location_change_velocity';
     case LocationCountryDistribution = 'location_country_distribution';
+    case LocationCityDistribution = 'location_city_distribution';
     case LocationSuspiciousChanges = 'location_suspicious_changes';
 
     // Métricas de Eventos

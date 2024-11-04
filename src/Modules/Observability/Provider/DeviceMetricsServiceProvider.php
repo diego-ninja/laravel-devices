@@ -3,35 +3,47 @@
 namespace Ninja\DeviceTracker\Modules\Observability\Provider;
 
 use Carbon\Laravel\ServiceProvider;
+use Event;
 use Illuminate\Console\Scheduling\Schedule;
+use Ninja\DeviceTracker\Events\DeviceCreatedEvent;
 use Ninja\DeviceTracker\Modules\Observability\Console\Commands\ProcessMetricsCommand;
+use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricAggregationRepository;
+use Ninja\DeviceTracker\Modules\Observability\MetricAggregator;
+use Ninja\DeviceTracker\Modules\Observability\MetricCollector;
+use Ninja\DeviceTracker\Modules\Observability\MetricProcessor;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Registry;
 use Ninja\DeviceTracker\Modules\Observability\Repository\DatabaseMetricAggregationRepository;
-use Ninja\DeviceTracker\Modules\Tracking\Aggregation\Aggregator\EventAggregator;
-use Ninja\DeviceTracker\Modules\Tracking\Aggregation\Contracts\EventAggregationRepository;
-use Ninja\DeviceTracker\Modules\Tracking\Aggregation\Processor\AggregationProcessor;
 
 final class DeviceMetricsServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->singleton(EventAggregationRepository::class, function () {
+        $this->app->singleton(MetricAggregationRepository::class, function () {
             return new DatabaseMetricAggregationRepository();
         });
 
-        $this->app->singleton(EventAggregator::class, function ($app) {
-            return new EventAggregator();
+        $this->app->singleton(MetricAggregator::class, function ($app) {
+            return new MetricAggregator();
         });
 
-        $this->app->singleton(AggregationProcessor::class, function ($app) {
-            return new AggregationProcessor(
-                $app->make(EventAggregationRepository::class)
+        $this->app->singleton(MetricProcessor::class, function ($app) {
+            return new MetricProcessor(
+                $app->make(DatabaseMetricAggregationRepository::class)
+            );
+        });
+
+        $this->app->singleton(MetricCollector::class, function ($app) {
+            return new MetricCollector(
+                $app->make(MetricAggregator::class)
             );
         });
     }
 
     public function boot(): void
     {
-        // Registrar comando
+        Registry::initialize();
+        $this->listen();
+
         if ($this->app->runningInConsole()) {
             $this->commands([
                 ProcessMetricsCommand::class
@@ -61,5 +73,11 @@ final class DeviceMetricsServiceProvider extends ServiceProvider
                 ->monthly()
                 ->withoutOverlapping();
         });
+    }
+
+    private function listen(): void
+    {
+        $collector = $this->app->make(MetricCollector::class);
+        Event::listen(DeviceCreatedEvent::class, fn(DeviceCreatedEvent $event) => $collector->handleDeviceCreated($event));
     }
 }
