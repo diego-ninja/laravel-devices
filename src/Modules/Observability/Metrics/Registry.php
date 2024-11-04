@@ -43,6 +43,7 @@ class Registry
             return;
         }
 
+        self::$metrics = collect([]);
         self::register(DeviceCount::create());
         self::$initialized = true;
     }
