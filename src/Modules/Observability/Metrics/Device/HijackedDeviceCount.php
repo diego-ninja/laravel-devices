@@ -6,14 +6,14 @@ use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\MetricDefinition;
 
-class DeviceCount extends MetricDefinition
+class HijackedDeviceCount extends MetricDefinition
 {
     public static function create(): self
     {
         return new self(
-            name: MetricName::DeviceCount,
+            name: MetricName::HijackedDeviceCount,
             type: MetricType::Gauge,
-            description: 'Total number of devices in the system',
+            description: 'Number of hijacked devices in the system',
             required_dimensions: [],
             allowed_dimensions: [
                 'platform_family',

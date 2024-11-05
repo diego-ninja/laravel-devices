@@ -6,22 +6,23 @@ use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\MetricDefinition;
 
-class DeviceCount extends MetricDefinition
+class VerificationTimeAverage extends MetricDefinition
 {
     public static function create(): self
     {
         return new self(
-            name: MetricName::DeviceCount,
-            type: MetricType::Gauge,
-            description: 'Total number of devices in the system',
-            required_dimensions: [],
+            name: MetricName::DeviceVerificationTime,
+            type: MetricType::Average,
+            description: 'Average time taken for device verification',
+            unit: 'seconds',
+            required_dimensions: ['platform_family'],
             allowed_dimensions: [
-                'platform_family',
                 'browser_family',
                 'device_type',
+                'status',
             ],
             min: 0,
-            max: PHP_INT_MAX,
+            max: 86400 * 7, // 7 días
         );
     }
 }

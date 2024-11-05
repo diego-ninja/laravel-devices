@@ -3,11 +3,13 @@
 namespace Ninja\DeviceTracker\Models;
 
 use Carbon\Carbon;
+use DB;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cookie;
@@ -380,6 +382,14 @@ class Device extends Model implements Cacheable
         }
 
         return self::byUuid($id, false) !== null;
+    }
+
+    public static function byStatus(): Collection
+    {
+        return self::query()
+            ->select('status', DB::raw('count(*) as total'))
+            ->groupBy('status')
+            ->pluck('total', 'status');
     }
 
     public static function orphans(): Builder

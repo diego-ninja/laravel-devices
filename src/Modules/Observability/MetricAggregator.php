@@ -2,13 +2,31 @@
 
 namespace Ninja\DeviceTracker\Modules\Observability;
 
+use BadMethodCallException;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Redis;
+use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricHandler;
 use Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
+use Ninja\DeviceTracker\Modules\Observability\Exceptions\InvalidMetricException;
+use Ninja\DeviceTracker\Modules\Observability\Exceptions\MetricHandlerNotFoundException;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Registry;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Average;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Counter;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Gauge;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Histogram;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Rate;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Summary;
 
+/**
+ * @method void counter(MetricName $name, array $dimensions, float $value = 1, ?Carbon $timestamp = null)
+ * @method void gauge(MetricName $name, array $dimensions, float $value, ?Carbon $timestamp = null)
+ * @method void histogram(MetricName $name, array $dimensions, float $value, ?Carbon $timestamp = null)
+ * @method void average(MetricName $name, array $dimensions, float $value, ?Carbon $timestamp = null)
+ * @method void rate(MetricName $name, array $dimensions, float $value, ?Carbon $timestamp = null)
+ * @method void summary(MetricName $name, array $dimensions, float $value, ?Carbon $timestamp = null)
+ */
 final readonly class MetricAggregator
 {
     private string $prefix;
@@ -18,6 +36,12 @@ final readonly class MetricAggregator
      */
     private array $windows;
 
+    /**
+     * @var MetricHandler[]
+     */
+    private array $handlers;
+
+
     public function __construct()
     {
         $this->prefix = config("devices.metrics.aggregation.prefix");
@@ -25,56 +49,64 @@ final readonly class MetricAggregator
             AggregationWindow::Realtime,
             AggregationWindow::Hourly
         ]);
+
+        $this->handlers();
     }
 
-    public function counter(MetricName $name, array $dimensions, float $value = 1, ?Carbon $timestamp = null): void
+    /**
+     * @throws InvalidMetricException
+     * @throws MetricHandlerNotFoundException
+     */
+    public function record(MetricName $name, MetricType $type, array $dimensions, float $value, ?Carbon $timestamp = null): void
     {
         $timestamp = $timestamp ?? now();
 
-        Registry::validate($name, MetricType::Counter, $value, $dimensions);
+        Registry::validate($name, $type, $value, $dimensions);
+        $handler = $this->handlers[$type->value];
 
-        foreach ($this->windows as $window) {
-            $slot = $this->timeslot($timestamp, $window);
-            $key = $this->key($name, MetricType::Counter, $dimensions, $window, $slot);
-
-            Redis::pipeline(function ($pipe) use ($key, $value, $window) {
-                $pipe->incrbyfloat($key, $value);
-                $pipe->expire($key, $window->seconds());
-            });
+        if (!$handler) {
+            throw MetricHandlerNotFoundException::forType($type);
         }
-    }
-
-    public function gauge(MetricName $name, array $dimensions, float $value, ?Carbon $timestamp = null): void
-    {
-        $timestamp = $timestamp ?? now();
-
-        Registry::validate($name, MetricType::Gauge, $value, $dimensions);
 
         foreach ($this->windows as $window) {
             $timeSlot = $this->timeslot($timestamp, $window);
-            $key = $this->key($name, MetricType::Gauge, $dimensions, $window, $timeSlot);
+            $key = $this->key($name, $type, $dimensions, $window, $timeSlot);
 
-            Redis::pipeline(function ($pipe) use ($key, $value, $window) {
-                $pipe->set($key, $value);
-                $pipe->expire($key, $window->seconds() * 2);
-            });
+            $this->persist($key, $type, $value, $window, $timestamp);
         }
     }
 
-    public function histogram(MetricName $name, array $dimensions, float $value, ?Carbon $timestamp = null): void
+    private function persist(string $key, MetricType $type, float $value, AggregationWindow $window, Carbon $timestamp): void
     {
-        $timestamp = $timestamp ?? now();
+        Redis::pipeline(function ($pipe) use ($key, $type, $value, $window, $timestamp) {
+            match ($type) {
+                MetricType::Counter => $pipe->incrbyfloat($key, $value),
+                MetricType::Gauge => $pipe->set($key, $value),
+                MetricType::Histogram,
+                MetricType::Summary,
+                MetricType::Rate => $pipe->zadd($key, $timestamp->timestamp, json_encode([
+                    'value' => $value,
+                    'timestamp' => $timestamp->timestamp
+                ])),
+                MetricType::Average => $pipe->zadd($key, $timestamp->timestamp, $value)
+            };
 
-        Registry::validate($name, MetricType::Histogram, $value, $dimensions);
+            $pipe->expire($key, $window->seconds() * 2);
+        });
+    }
 
-        foreach ($this->windows as $window) {
-            $timeSlot = $this->timeslot($timestamp, $window);
-            $key = $this->key($name, MetricType::Histogram, $dimensions, $window, $timeSlot);
-
-            Redis::pipeline(function ($pipe) use ($key, $value, $window) {
-                $pipe->zadd($key, $value, $value);
-                $pipe->expire($key, $window->seconds() * 2);
-            });
+    /**
+     * @throws MetricHandlerNotFoundException
+     * @throws InvalidMetricException
+     */
+    public function __call($name, $arguments): void
+    {
+        $type = MetricType::tryFrom($name);
+        if ($type && isset($this->handlers[$metricType->value])) {
+            $timestamp = $arguments[3] ?? now();
+            $this->record($arguments[0], $type, $arguments[1], $arguments[2], $timestamp);
+        } else {
+            throw new BadMethodCallException(sprintf('Method %s does not exist', $name));
         }
     }
 
@@ -106,4 +138,17 @@ final readonly class MetricAggregator
         );
     }
 
+    private function handlers(): void
+    {
+        $this->handlers = [
+            MetricType::Counter->value => new Counter(),
+            MetricType::Gauge->value => new Gauge(),
+            MetricType::Histogram->value => new Histogram(
+                config('devices.metrics.buckets')
+            ),
+            MetricType::Average->value => new Average(),
+            MetricType::Rate->value => new Rate(),
+            MetricType::Summary->value => new Summary()
+        ];
+    }
 }

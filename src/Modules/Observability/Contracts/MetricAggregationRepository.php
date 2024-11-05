@@ -11,7 +11,7 @@ use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 interface MetricAggregationRepository
 {
     public function store(MetricName $name, MetricType $type, float $value, array $dimensions, Carbon $timestamp, AggregationWindow $window): void;
-    public function query(MetricName $name, array $dimensions = [], ?AggregationWindow $window = null, ?Carbon $from = null, ?Carbon $to = null): Collection;
+    public function query(?MetricName $name, ?array $dimensions = [], ?AggregationWindow $window = null, ?Carbon $from = null, ?Carbon $to = null): Collection;
     public function prune(AggregationWindow $window, Carbon $before): int;
 
 }

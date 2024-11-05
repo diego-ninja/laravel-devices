@@ -2,6 +2,8 @@
 
 namespace Ninja\DeviceTracker\Modules\Observability\Enums;
 
+use Carbon\Carbon;
+
 enum AggregationWindow: string
 {
     case Realtime = 'realtime';
@@ -18,6 +20,34 @@ enum AggregationWindow: string
             self::Daily => 86400,
             self::Weekly => 604800,
             self::Monthly => 2592000,
+        };
+    }
+
+    public function timeslot(Carbon $timestamp): int
+    {
+        $seconds = $this->seconds();
+        return floor($timestamp->timestamp / $seconds) * $seconds;
+    }
+
+    public function previous(): ?AggregationWindow
+    {
+        return match ($this) {
+            self::Monthly => self::Weekly,
+            self::Weekly => self::Daily,
+            self::Daily => self::Hourly,
+            self::Hourly => self::Realtime,
+            default => null,
+        };
+    }
+
+    public function next(): ?AggregationWindow
+    {
+        return match ($this) {
+            self::Realtime => self::Hourly,
+            self::Hourly => self::Daily,
+            self::Daily => self::Weekly,
+            self::Weekly => self::Monthly,
+            default => null,
         };
     }
 

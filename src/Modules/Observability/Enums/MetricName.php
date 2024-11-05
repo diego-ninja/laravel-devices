@@ -22,13 +22,23 @@ enum MetricName: string
 
     case DeviceVerificationTime = 'device_verification_time';
     case DeviceRiskScore = 'device_risk_score';
-    case DeviceUniqueCount = 'device_unique_count';
+    case DeviceRiskScoreDistribution = 'device_risk_score_distribution';
+    case DeviceCount = 'device_count';
+    case HijackedDeviceCount = 'hijacked_device_count';
+    case VerifiedDeviceCount = 'verified_device_count';
+    case VerifiedDeviceRate = 'verified_device_rate';
+    case HijackedDeviceRate = 'hijacked_device_rate';
+    case RiskScoreAverage = 'risk_score_average';
     case DeviceFingerprintChanges = 'device_fingerprint_changes';
-    case DeviceOsDistribution = 'device_os_distribution';
-    case DeviceBrowserDistribution = 'device_browser_distribution';
+    case DevicePlatformDistribution = 'device_platform_distribution';
+    case DeviceTypeDistribution = 'device_type_distribution';
+    case DeviceCreationRate = 'device_creation_rate';
+    case DeviceVerificationRate = 'device_verification_rate';
+    case DeviceVerificationLatency = 'device_verification_latency';
+    case DeviceLifespan = 'device_lifespan';
 
     // Métricas de Ubicación
-    case LocationUniqueCount = 'location_unique_count';
+    case LocationCount = 'location_count';
     case LocationChangeVelocity = 'location_change_velocity';
     case LocationCountryDistribution = 'location_country_distribution';
     case LocationCityDistribution = 'location_city_distribution';

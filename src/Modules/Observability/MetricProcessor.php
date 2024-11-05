@@ -10,24 +10,28 @@ use Log;
 use Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Average;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Counter;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Gauge;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Histogram;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Rate;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Summary;
 use Ninja\DeviceTracker\Modules\Observability\Repository\DatabaseMetricAggregationRepository;
 use Throwable;
 
 final class MetricProcessor
 {
-    private const METRIC_TYPES = [
-        MetricType::Counter,
-        MetricType::Gauge,
-        MetricType::Histogram
-    ];
-
     private string $prefix;
 
     private Collection $keys;
+
+    private array $handlers;
     public function __construct(private readonly DatabaseMetricAggregationRepository $repository)
     {
         $this->prefix = config("devices.metrics.aggregation.prefix");
         $this->keys = collect();
+
+        $this->handlers();
     }
 
     public function window(AggregationWindow $window): void
@@ -35,26 +39,70 @@ final class MetricProcessor
         try {
             $now = now();
             $windowSeconds = $window->seconds();
-            $previousSlot = floor($now->subSeconds($windowSeconds)->timestamp / $windowSeconds) * $windowSeconds;
+            $slot = floor($now->subSeconds($windowSeconds)->timestamp / $windowSeconds) * $windowSeconds;
 
-            foreach (self::METRIC_TYPES as $type) {
-                $this->metricType($type, $window, $previousSlot);
+            foreach (MetricType::all() as $type) {
+                $this->metricType($type, $window, $slot);
             }
 
+            if ($window !== AggregationWindow::Realtime) {
+                $this->merge($window, $slot);
+            }
+
+            $this->success($window, $slot);
             $this->clean();
-            $this->success($window, $previousSlot);
         } catch (Throwable $e) {
             $this->failure($e, $window);
         }
     }
 
+    public function merge(AggregationWindow $window, int $slot): void
+    {
+        $previous = $window->previous();
+        if ($previous === null) {
+            return;
+        }
+
+        $from = Carbon::createFromTimestamp($slot);
+        $to = Carbon::createFromTimestamp($slot + $window->seconds());
+
+        $metrics = $this->repository->query(
+            name: null,
+            window: $previous,
+            from: $from,
+            to: $to
+        );
+
+        foreach ($metrics->groupBy(['name', 'type', 'dimensions']) as $name => $byType) {
+            foreach ($byType as $type => $byDimensions) {
+                foreach ($byDimensions as $dimensions => $values) {
+                    $handler = $this->handlers[$type];
+                    $merged = $handler->merge($values->pluck('value')->toArray());
+
+                    $this->repository->store(
+                        name: MetricName::from($name),
+                        type: MetricType::from($type),
+                        value: $this->format($merged),
+                        dimensions: json_decode($dimensions, true),
+                        timestamp: Carbon::createFromTimestamp($slot),
+                        window: $window
+                    );
+                }
+            }
+        }
+    }
+
     private function metricType(MetricType $type, AggregationWindow $window, int $timeSlot): void
     {
-        $pattern = $this->pattern($type, $window, $timeSlot);
-        Log::info('Processing metric pattern', [
-            'pattern' => $pattern,
+        $keys = Redis::keys($this->pattern($type, $window, $timeSlot));
+
+        Log::info('Processing metric type', [
+            'type' => $type->value,
+            'window' => $window->value,
+            'time_slot' => Carbon::createFromTimestamp($timeSlot)->toDateTimeString(),
+            'keys' => $keys
         ]);
-        $keys = Redis::keys($pattern);
+
         foreach ($keys as $key) {
             try {
                 $this->metric($key, $type, $window, $timeSlot);
@@ -62,7 +110,7 @@ final class MetricProcessor
             } catch (Throwable $e) {
                 Log::error('Failed to process metric', [
                     'key' => $key,
-                    'type' => $type,
+                    'type' => $type->value,
                     'window' => $window->value,
                     'error' => $e->getMessage()
                 ]);
@@ -71,83 +119,165 @@ final class MetricProcessor
     }
     private function metric(string $key, MetricType $type, AggregationWindow $window, int $timeSlot): void
     {
-        $metadata = $this->parseKey($key);
+        $metadata = $this->parse($key);
         if (!$metadata) {
             return;
         }
 
         $value = $this->value($key, $type);
-        if ($value === null) {
-            return;
+        $computed = $this->handlers[$type->value]->compute($value);
+
+        try {
+            $dimensions = $this->dimensions($metadata['dimensions']);
+
+            $this->repository->store(
+                name: $metadata['name'],
+                type: $type,
+                value: $this->format($computed),
+                dimensions: $dimensions,
+                timestamp: Carbon::createFromTimestamp($timeSlot),
+                window: $window
+            );
+        } catch (Throwable $e) {
+            Log::error('Failed to store metric', [
+                'key' => $key,
+                'type' => $type->value,
+                'window' => $window->value,
+                'error' => $e->getMessage()
+            ]);
         }
-
-        $dimensions = $this->dimensions($metadata['dimensions']);
-
-        $this->repository->store(
-            name: $metadata['name'],
-            type: $type,
-            value: $value,
-            dimensions: $dimensions,
-            timestamp: Carbon::createFromTimestamp($timeSlot),
-            window: $window
-        );
     }
 
-    private function value(string $key, MetricType $type): ?float
+    private function value(string $key, MetricType $type): array
     {
+        $key = str_replace(config('database.redis.options.prefix'), '', $key);
+
         try {
-            return match ($type) {
+            $values = match ($type) {
                 MetricType::Counter,
-                MetricType::Gauge => (float) Redis::get($key),
+                MetricType::Gauge => [['value' => (float) Redis::get($key)]],
                 MetricType::Histogram => $this->histogram($key),
-                MetricType::Summary,
-                MetricType::Average,
-                MetricType::Rate => throw new Exception('To be implemented')
+                MetricType::Summary => $this->summary($key),
+                MetricType::Average => $this->average($key),
+                MetricType::Rate => $this->timestamped($key)
             };
+
+            return $this->handlers[$type->value]->compute($values);
         } catch (Throwable $e) {
             Log::error('Failed to get metric value', [
                 'key' => $key,
                 'type' => $type->value,
                 'error' => $e->getMessage()
             ]);
-            return null;
+            return [];
         }
     }
 
+    private function histogram(string $key): array
+    {
+        $values = Redis::zrange($key, 0, -1, ['WITHSCORES' => true]);
+        if (empty($values)) {
+            return [];
+        }
+
+        return array_map(fn($value) => ['value' => (float) $value], $values);
+    }
+
+    private function summary(string $key): array
+    {
+        $values = Redis::zrange($key, 0, -1, ['WITHSCORES' => true]);
+        if (empty($values)) {
+            return [];
+        }
+
+        $result = [];
+        foreach ($values as $value => $score) {
+            $decoded = json_decode($value, true);
+            if (isset($decoded['value'])) {
+                $result[] = [
+                    'value' => (float) $decoded['value'],
+                    'timestamp' => (int) $score,
+                ];
+            }
+        }
+
+        return $result;
+    }
+
+    private function average(string $key): array
+    {
+        $values = Redis::zrange($key, 0, -1, ['WITHSCORES' => true]);
+        if (empty($values)) {
+            return [];
+        }
+
+        return array_map(fn($value) => ['value' => (float) $value], $values);
+    }
+
+    private function timestamped(string $key): array
+    {
+        $rawValues = Redis::zrange($key, 0, -1, ['WITHSCORES' => true]);
+        if (empty($rawValues)) {
+            return [];
+        }
+
+        $values = [];
+        foreach ($rawValues as $value => $timestamp) {
+            $decoded = json_decode($value, true);
+            if (isset($decoded['value'])) {
+                $values[] = [
+                    'value' => $decoded['value'],
+                    'timestamp' => $timestamp
+                ];
+            }
+        }
+
+        return $values;
+    }
+
+    private function format(mixed $value): string
+    {
+        if (is_array($value)) {
+            return json_encode($value);
+        }
+
+        if (is_float($value)) {
+            return number_format($value, 4, '.', '');
+        }
+
+        return (string) $value;
+    }
+
+    /**
+     * @throws Exception
+     */
     private function dimensions(string $dimensionString): array
     {
         $dimensions = [];
         $pairs = explode(':', $dimensionString);
 
-        foreach ($pairs as $pair) {
-            [$key, $value] = array_pad(explode('=', $pair), 2, null);
-            if ($key && $value !== null) {
-                $dimensions[$key] = $value;
-            }
+        if (count($pairs) % 2 !== 0) {
+            throw new Exception('Invalid dimension string. Uneven number of key-value pairs');
+        }
+
+        for ($i = 0; $i < count($pairs); $i += 2) {
+            $key = $pairs[$i];
+            $value = $pairs[$i + 1];
+            $dimensions[$key] = $value;
         }
 
         return $dimensions;
     }
 
-    private function histogram(string $key): float
+    private function parse(string $key): ?array
     {
-        $values = Redis::zrange($key, 0, -1, ['WITHSCORES' => true]);
-        if (empty($values)) {
-            return 0.0;
-        }
-
-        return array_sum($values) / count($values);
-    }
-
-    private function parseKey(string $key): ?array
-    {
-        $pattern = '/^' . preg_quote($this->prefix) . ':' .
+        Log::info('Parsing metric key', ['key' => $key]);
+        $pattern = '/^[^:]+:' .
             '([^:]+):' .
             '(' . implode('|', MetricType::values()) . '):' .
             '(' . implode('|', AggregationWindow::values()) . '):' .
             '(\d+):' .
             '(.+)$/';
-
 
         if (!preg_match($pattern, $key, $matches)) {
             Log::warning('Invalid metric key format', ['key' => $key]);
@@ -158,8 +288,8 @@ final class MetricProcessor
             'name' => MetricName::tryFrom($matches[1]),
             'type' => MetricType::tryFrom($matches[2]),
             'window' => AggregationWindow::tryFrom($matches[3]),
-            'timestamp' => (int) $matches[3],
-            'dimensions' => $matches[4]
+            'timestamp' => (int) $matches[4],
+            'dimensions' => $matches[5]
         ];
     }
 
@@ -188,7 +318,7 @@ final class MetricProcessor
     private function success(AggregationWindow $window, int $timeSlot): void
     {
         Log::info('Successfully processed aggregation window', [
-            'window' => $window,
+            'window' => $window->value,
             'time_slot' => Carbon::createFromTimestamp($timeSlot)->toDateTimeString(),
             'metrics_processed' => $this->keys->count()
         ]);
@@ -205,7 +335,7 @@ final class MetricProcessor
     private function failure(Throwable $e, AggregationWindow $window): void
     {
         Log::error('Failed to process aggregation window', [
-            'window' => $window,
+            'window' => $window->value,
             'error' => $e->getMessage(),
             'trace' => $e->getTraceAsString()
         ]);
@@ -213,8 +343,6 @@ final class MetricProcessor
         Redis::incr(
             sprintf('%s:processing_errors:%s', $this->prefix, $window->value)
         );
-
-        throw $e;
     }
 
     public function time(AggregationWindow $window): ?Carbon
@@ -226,7 +354,7 @@ final class MetricProcessor
         return $timestamp ? Carbon::createFromTimestamp($timestamp) : null;
     }
 
-    public function errorCount(AggregationWindow $window): int
+    public function errors(AggregationWindow $window): int
     {
         return (int) Redis::get(
             sprintf('%s:processing_errors:%s', $this->prefix, $window->value)
@@ -236,5 +364,19 @@ final class MetricProcessor
     public function reset(AggregationWindow $window): void
     {
         Redis::del(sprintf('%s:processing_errors:%s', $this->prefix, $window->value));
+    }
+
+    private function handlers(): void
+    {
+        $this->handlers = [
+            MetricType::Counter->value => new Counter(),
+            MetricType::Gauge->value => new Gauge(),
+            MetricType::Histogram->value => new Histogram(
+                config('devices.metrics.buckets')
+            ),
+            MetricType::Average->value => new Average(),
+            MetricType::Rate->value => new Rate(),
+            MetricType::Summary->value => new Summary()
+        ];
     }
 }

@@ -6,10 +6,13 @@ use Carbon\Laravel\ServiceProvider;
 use Event;
 use Illuminate\Console\Scheduling\Schedule;
 use Ninja\DeviceTracker\Events\DeviceCreatedEvent;
+use Ninja\DeviceTracker\Events\DeviceDeletedEvent;
+use Ninja\DeviceTracker\Events\DeviceHijackedEvent;
+use Ninja\DeviceTracker\Events\DeviceVerifiedEvent;
+use Ninja\DeviceTracker\Modules\Observability\Collectors\DeviceMetricCollector;
 use Ninja\DeviceTracker\Modules\Observability\Console\Commands\ProcessMetricsCommand;
 use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricAggregationRepository;
 use Ninja\DeviceTracker\Modules\Observability\MetricAggregator;
-use Ninja\DeviceTracker\Modules\Observability\MetricCollector;
 use Ninja\DeviceTracker\Modules\Observability\MetricProcessor;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Registry;
 use Ninja\DeviceTracker\Modules\Observability\Repository\DatabaseMetricAggregationRepository;
@@ -32,10 +35,8 @@ final class DeviceMetricsServiceProvider extends ServiceProvider
             );
         });
 
-        $this->app->singleton(MetricCollector::class, function ($app) {
-            return new MetricCollector(
-                $app->make(MetricAggregator::class)
-            );
+        $this->app->singleton(DeviceMetricCollector::class, function ($app) {
+            return new DeviceMetricCollector();
         });
     }
 
@@ -77,7 +78,11 @@ final class DeviceMetricsServiceProvider extends ServiceProvider
 
     private function listen(): void
     {
-        $collector = $this->app->make(MetricCollector::class);
+        $collector = $this->app->make(DeviceMetricCollector::class);
+
         Event::listen(DeviceCreatedEvent::class, fn(DeviceCreatedEvent $event) => $collector->handleDeviceCreated($event));
+        Event::listen(DeviceVerifiedEvent::class, fn(DeviceVerifiedEvent $event) => $collector->handleDeviceVerified($event));
+        Event::listen(DeviceHijackedEvent::class, fn(DeviceHijackedEvent $event) => $collector->handleDeviceHijacked($event));
+        Event::listen(DeviceDeletedEvent::class, fn(DeviceDeletedEvent $event) => $collector->handleDeviceDeleted($event));
     }
 }

@@ -12,6 +12,7 @@ class MetricDefinition implements Arrayable
     private const DEFAULT_MIN_VALUE = -PHP_FLOAT_MAX;
     private const DEFAULT_MAX_VALUE = PHP_FLOAT_MAX;
     private array $buckets;
+    private array $quantiles;
     private array $allowed_dimensions;
 
     public function __construct(
@@ -23,12 +24,17 @@ class MetricDefinition implements Arrayable
         private readonly array $required_dimensions = [],
         array $allowed_dimensions = [],
         array $buckets = [],
+        array $quantiles = [],
         private readonly ?float $min = null,
         private readonly ?float $max = null,
     ) {
         $this->allowed_dimensions = array_merge(config('devices.metrics.labels', []), $allowed_dimensions);
         $this->buckets = match ($type) {
             MetricType::Histogram => $buckets ?: config('devices.metrics.buckets', []),
+            default => []
+        };
+        $this->quantiles = match ($type) {
+            MetricType::Summary => $quantiles ?: [0.5, 0.9, 0.95, 0.99],
             default => []
         };
     }
@@ -90,6 +96,11 @@ class MetricDefinition implements Arrayable
         return $this->buckets;
     }
 
+    public function quantiles(): array
+    {
+        return $this->quantiles;
+    }
+
     public function options(): array
     {
         return $this->options;
@@ -105,6 +116,7 @@ class MetricDefinition implements Arrayable
             'allowed_dimensions' => $this->allowed_dimensions,
             'required_dimensions' => $this->required_dimensions,
             'buckets' => $this->buckets,
+            'quantiles' => $this->quantiles,
             'options' => $this->options,
             'min' => $this->min,
             'max' => $this->max,

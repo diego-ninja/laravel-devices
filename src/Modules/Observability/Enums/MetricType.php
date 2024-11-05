@@ -22,4 +22,16 @@ enum MetricType: string
             self::Rate->value,
         ];
     }
+
+    public static function all(): array
+    {
+        return [
+            self::Counter,
+            self::Gauge,
+            self::Histogram,
+            self::Summary,
+            self::Average,
+            self::Rate,
+        ];
+    }
 }

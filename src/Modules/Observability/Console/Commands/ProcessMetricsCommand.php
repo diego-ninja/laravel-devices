@@ -54,7 +54,7 @@ final class ProcessMetricsCommand extends Command
         } catch (Throwable $e) {
             $this->error(sprintf(
                 'Processing failed. Error count: %d',
-                $this->processor->errorCount($window)
+                $this->processor->errors($window)
             ));
         }
     }
@@ -62,7 +62,7 @@ final class ProcessMetricsCommand extends Command
     private function stats(AggregationWindow $window): void
     {
         $lastProcessing = $this->processor->time($window);
-        $errorCount = $this->processor->errorCount($window);
+        $errorCount = $this->processor->errors($window);
 
         $this->table(
             ['Metric', 'Value'],

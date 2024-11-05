@@ -6,17 +6,17 @@ use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\MetricDefinition;
 
-class DeviceCount extends MetricDefinition
+class CreationRate extends MetricDefinition
 {
     public static function create(): self
     {
         return new self(
-            name: MetricName::DeviceCount,
-            type: MetricType::Gauge,
-            description: 'Total number of devices in the system',
-            required_dimensions: [],
+            name: MetricName::DeviceCreationRate,
+            type: MetricType::Rate,
+            description: 'Rate of new device registrations per hour',
+            unit: 'devices/hour',
+            required_dimensions: ['platform_family'],
             allowed_dimensions: [
-                'platform_family',
                 'browser_family',
                 'device_type',
             ],
