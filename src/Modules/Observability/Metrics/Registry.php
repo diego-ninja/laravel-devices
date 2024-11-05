@@ -6,7 +6,6 @@ use Illuminate\Support\Collection;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Exceptions\InvalidMetricException;
-use Ninja\DeviceTracker\Modules\Observability\Metrics\Device\DeviceCount;
 
 class Registry
 {
@@ -43,15 +42,17 @@ class Registry
             return;
         }
 
-        self::$metrics = collect([]);
-        self::register(DeviceCount::create());
+        self::$metrics = collect();
+        foreach (config('devices.metrics.enabled') as $metric) {
+            self::register($metric::create());
+        }
         self::$initialized = true;
     }
 
-    public static function get(MetricName $name): ?MetricDefinition
+    public static function get(MetricName $name): ?AbstractMetricDefinition
     {
         self::ensureInitialized();
-        return self::$metrics->first(fn(MetricDefinition $metric) => $metric->name() === $name->value);
+        return self::$metrics->first(fn(AbstractMetricDefinition $metric) => $metric->name() === $name->value);
     }
 
     public static function all(): Collection
@@ -69,7 +70,7 @@ class Registry
         self::ensureInitialized();
         return self::$metrics->filter(fn($metric) => in_array($label, $metric->getLabels()));
     }
-    public static function register(MetricDefinition $metric): void
+    public static function register(AbstractMetricDefinition $metric): void
     {
         self::$metrics->put($metric->name(), $metric);
     }

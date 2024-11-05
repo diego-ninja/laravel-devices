@@ -4,9 +4,9 @@ namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Device;
 
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
-use Ninja\DeviceTracker\Modules\Observability\Metrics\MetricDefinition;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\AbstractMetricDefinition;
 
-class VerificationLatencyDistribution extends MetricDefinition
+class VerificationLatencyDistribution extends AbstractMetricDefinition
 {
     public static function create(): self
     {
@@ -22,7 +22,7 @@ class VerificationLatencyDistribution extends MetricDefinition
             ],
             quantiles: [0.5, 0.75, 0.90, 0.95, 0.99],
             min: 0, // 7 días
-            max: 86400 * 7 // Ahora sí es soportado por MetricDefinition
+            max: 86400 * 7 // Ahora sí es soportado por AbstractMetricDefinition
         );
     }
 }

@@ -102,7 +102,7 @@ final readonly class MetricAggregator
     public function __call($name, $arguments): void
     {
         $type = MetricType::tryFrom($name);
-        if ($type && isset($this->handlers[$metricType->value])) {
+        if ($type && isset($this->handlers[$type->value])) {
             $timestamp = $arguments[3] ?? now();
             $this->record($arguments[0], $type, $arguments[1], $arguments[2], $timestamp);
         } else {

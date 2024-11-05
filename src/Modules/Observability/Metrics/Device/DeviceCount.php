@@ -4,9 +4,9 @@ namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Device;
 
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
-use Ninja\DeviceTracker\Modules\Observability\Metrics\MetricDefinition;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\AbstractMetricDefinition;
 
-class DeviceCount extends MetricDefinition
+class DeviceCount extends AbstractMetricDefinition
 {
     public static function create(): self
     {

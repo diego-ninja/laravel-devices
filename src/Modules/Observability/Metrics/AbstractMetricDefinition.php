@@ -7,7 +7,7 @@ use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Exceptions\InvalidMetricException;
 
-class MetricDefinition implements Arrayable
+abstract class AbstractMetricDefinition implements Arrayable
 {
     private const DEFAULT_MIN_VALUE = -PHP_FLOAT_MAX;
     private const DEFAULT_MAX_VALUE = PHP_FLOAT_MAX;
@@ -38,6 +38,8 @@ class MetricDefinition implements Arrayable
             default => []
         };
     }
+
+    abstract public static function create(): self;
 
     /**
      * @throws InvalidMetricException

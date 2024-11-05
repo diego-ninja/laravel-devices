@@ -455,6 +455,22 @@ return [
     ],
 
     'metrics' => [
+        'enabled' => [
+            \Ninja\DeviceTracker\Modules\Observability\Metrics\Device\DeviceCount::class,
+            \Ninja\DeviceTracker\Modules\Observability\Metrics\Device\VerifiedDeviceCount::class,
+            \Ninja\DeviceTracker\Modules\Observability\Metrics\Device\HijackedDeviceCount::class,
+            \Ninja\DeviceTracker\Modules\Observability\Metrics\Device\CreationRate::class,
+            \Ninja\DeviceTracker\Modules\Observability\Metrics\Device\VerificationRate::class,
+            \Ninja\DeviceTracker\Modules\Observability\Metrics\Device\VerificationLatencyDistribution::class,
+            \Ninja\DeviceTracker\Modules\Observability\Metrics\Device\VerificationTimeAverage::class,
+            \Ninja\DeviceTracker\Modules\Observability\Metrics\Device\VerifiedRate::class,
+            \Ninja\DeviceTracker\Modules\Observability\Metrics\Device\HijackedRate::class,
+            \Ninja\DeviceTracker\Modules\Observability\Metrics\Device\DeviceTypeDistribution::class,
+            \Ninja\DeviceTracker\Modules\Observability\Metrics\Device\PlatformDistribution::class,
+            \Ninja\DeviceTracker\Modules\Observability\Metrics\Device\RiskScoreAverage::class,
+            \Ninja\DeviceTracker\Modules\Observability\Metrics\Device\RiskScoreDistribution::class,
+            \Ninja\DeviceTracker\Modules\Observability\Metrics\Device\Lifespan::class
+        ],
         'dimensions' => ["device_uuid", "session_uuid"],
         'buckets' => [
             'seconds' => [0.01, 0.05, 0.1, 0.5, 1, 2.5, 5, 10],

@@ -4,9 +4,9 @@ namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Device;
 
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
-use Ninja\DeviceTracker\Modules\Observability\Metrics\MetricDefinition;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\AbstractMetricDefinition;
 
-class VerificationTimeAverage extends MetricDefinition
+class VerificationTimeAverage extends AbstractMetricDefinition
 {
     public static function create(): self
     {
