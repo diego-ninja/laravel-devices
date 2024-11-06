@@ -25,6 +25,38 @@ final class DimensionCollection extends Collection implements \JsonSerializable,
             array_map(fn($dimension) => Dimension::from($dimension), $data),
         );
     }
+
+
+    public function valid(array $required, array $allowed): bool
+    {
+        return
+            empty($this->hasInvalidDimensions($allowed)) &&
+            empty($this->hasMissingDimensions($required));
+    }
+
+    public function names(): array
+    {
+        return array_map(fn(Dimension $dimension) => $dimension->name, $this->array());
+    }
+
+    private function hasInvalidDimensions(array $allowedDimensions): array
+    {
+        if (empty($allowedDimensions)) {
+            return [];
+        }
+
+        return array_diff($this->names(), $allowedDimensions);
+    }
+
+    private function hasMissingDimensions(array $requiredDimensions): array
+    {
+        if (empty($requiredDimensions)) {
+            return [];
+        }
+
+        return array_diff($requiredDimensions, $this->names());
+    }
+
     public function json(): string
     {
         return json_encode($this->array());

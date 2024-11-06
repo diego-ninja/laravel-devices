@@ -56,7 +56,10 @@ abstract class AbstractMetricDefinition implements Arrayable
                 throw InvalidMetricException::invalidType($this->name, $this->type, $type);
             }
 
-            $this->validateDimensions($dimensions);
+            if ($dimensions->valid($this->required_dimensions, $this->allowed_dimensions)) {
+                throw InvalidMetricException::invalidDimensions($this->name, $dimensions->hasInvalidDimensions($this->allowed_dimensions));
+            }
+
             $this->validateValue($value);
 
             return true;
@@ -124,39 +127,6 @@ abstract class AbstractMetricDefinition implements Arrayable
             'min' => $this->min,
             'max' => $this->max,
         ];
-    }
-
-    /**
-     * @throws InvalidMetricException
-     */
-    private function validateDimensions(DimensionCollection $dimensions): void
-    {
-        $allowed_dimensions = array_merge(
-            $this->required_dimensions,
-            $this->allowed_dimensions
-        );
-
-        if (!empty($allowed_dimensions)) {
-            $invalidDimensions = array_diff(
-                array_keys($dimensions->toArray()),
-                $allowed_dimensions
-            );
-
-            if (!empty($invalidDimensions)) {
-                throw InvalidMetricException::invalidDimensions($this->name, $invalidDimensions);
-            }
-        }
-
-        if (!empty($this->required_dimensions)) {
-            $missingDimensions = array_diff(
-                $this->required_dimensions,
-                array_keys($dimensions->toArray())
-            );
-
-            if (!empty($missingDimensions)) {
-                throw InvalidMetricException::missingRequiredDimensions($this->name, $missingDimensions);
-            }
-        }
     }
 
     /**
