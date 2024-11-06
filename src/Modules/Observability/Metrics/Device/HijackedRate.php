@@ -15,7 +15,6 @@ class HijackedRate extends AbstractMetricDefinition
             type: MetricType::Gauge,
             description: 'Rate of hijacked devices vs total devices',
             unit: 'percentage',
-            required_dimensions: ['platform_family'],
             allowed_dimensions: [
                 'browser_family',
                 'device_type',

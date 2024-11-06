@@ -21,12 +21,12 @@ use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Rate;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Summary;
 
 /**
- * @method void counter(MetricName $name, float $value = 1, array $dimensions = [])
- * @method void gauge(MetricName $name, float $value, array $dimensions = [])
- * @method void histogram(MetricName $name, float $value, array $dimensions = [])
- * @method void average(MetricName $name, float $value, array $dimensions = [])
- * @method void rate(MetricName $name, float $value, array $dimensions = [])
- * @method void summary(MetricName $name, float $value, array $dimensions = [])
+ * @method void counter(MetricName $name, float $value = 1, ?array $dimensions = null)
+ * @method void gauge(MetricName $name, float $value, ?array $dimensions = null)
+ * @method void histogram(MetricName $name, float $value, ?array $dimensions = null)
+ * @method void average(MetricName $name, float $value, ?array $dimensions = null)
+ * @method void rate(MetricName $name, float $value, ?array $dimensions = null)
+ * @method void summary(MetricName $name, float $value, ?array $dimensions = null)
  */
 final readonly class MetricAggregator
 {
@@ -109,8 +109,8 @@ final readonly class MetricAggregator
     {
         $name = $arguments[0];
         $type = MetricType::tryFrom($method);
-        $dimensions = DimensionCollection::from($arguments[1]);
-        $value = (float) $arguments[2];
+        $dimensions = $arguments[2] ? DimensionCollection::from($arguments[2]) : new DimensionCollection();
+        $value = (float) $arguments[1];
 
         if ($type && isset($this->handlers[$type->value])) {
             $this->record($name, $type, $value, $dimensions);

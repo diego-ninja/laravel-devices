@@ -76,7 +76,7 @@ if (! function_exists('device')) {
 }
 
 if (! function_exists('counter')) {
-    function counter(string $name, float $value = 1, array $dimensions = []): void
+    function counter(string $name, float $value = 1, ?array $dimensions = null): void
     {
         $aggregator = app(MetricAggregator::class);
         $aggregator->counter(MetricName::from($name), $value, $dimensions);
@@ -84,7 +84,7 @@ if (! function_exists('counter')) {
 }
 
 if (! function_exists('gauge')) {
-    function gauge(string $name, float $value, array $dimensions = []): void
+    function gauge(string $name, float $value, ?array $dimensions = null): void
     {
         $aggregator = app(MetricAggregator::class);
         $aggregator->gauge(MetricName::from($name), $value, $dimensions);
@@ -92,7 +92,7 @@ if (! function_exists('gauge')) {
 }
 
 if (! function_exists('histogram')) {
-    function histogram(string $name, float $value, array $dimensions = []): void
+    function histogram(string $name, float $value, ?array $dimensions = null): void
     {
         $aggregator = app(MetricAggregator::class);
         $aggregator->histogram(MetricName::from($name), $value, $dimensions);
@@ -100,7 +100,7 @@ if (! function_exists('histogram')) {
 }
 
 if (! function_exists('average')) {
-    function average(string $name, float $value, array $dimensions = []): void
+    function average(string $name, float $value, ?array $dimensions = null): void
     {
         $aggregator = app(MetricAggregator::class);
         $aggregator->average(MetricName::from($name), $value, $dimensions);

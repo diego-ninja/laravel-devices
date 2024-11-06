@@ -16,6 +16,11 @@ final class DimensionCollection extends Collection implements \JsonSerializable,
         if (is_string($data)) {
             $data = json_decode(base64_decode($data), true);
         }
+
+        if (empty($data)) {
+            return new self();
+        }
+
         return new self(
             array_map(fn($dimension) => Dimension::from($dimension), $data),
         );

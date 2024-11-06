@@ -18,8 +18,12 @@ final readonly class Dimension implements \JsonSerializable
         ];
     }
 
-    public static function from(string|array $data): self
+    public static function from(string|array|Dimension $data): self
     {
+        if ($data instanceof self) {
+            return $data;
+        }
+
         if (is_string($data)) {
             $data = json_decode($data, true);
         }

@@ -9,6 +9,7 @@ use Ninja\DeviceTracker\Events\DeviceDeletedEvent;
 use Ninja\DeviceTracker\Events\DeviceHijackedEvent;
 use Ninja\DeviceTracker\Events\DeviceVerifiedEvent;
 use Ninja\DeviceTracker\Models\Device;
+use Ninja\DeviceTracker\Modules\Observability\Dto\Dimension;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 
 final readonly class DeviceMetricCollector
@@ -26,8 +27,8 @@ final readonly class DeviceMetricCollector
         rate(
             name: MetricName::DeviceCreationRate->value,
             dimensions: [
-                'platform_family' => $event->device->platform_family,
-                'device_type' => $event->device->device_type
+                new Dimension('platform_family', $event->device->platform_family),
+                new Dimension('device_type', $event->device->device_type)
             ]
         );
     }
@@ -39,8 +40,8 @@ final readonly class DeviceMetricCollector
 
         $verificationTime = $event->device->verified_at->diffInSeconds($event->device->created_at);
         $dimensions = [
-            'platform_family' => $event->device->platform_family,
-            'device_type' => $event->device->device_type
+            new Dimension('platform_family', $event->device->platform_family),
+            new Dimension('device_type', $event->device->device_type)
         ];
 
         average(
@@ -73,9 +74,9 @@ final readonly class DeviceMetricCollector
                 name: MetricName::DeviceLifespan->value,
                 value: $lifespan,
                 dimensions: [
-                    'platform_family' => $event->device->platform_family,
-                    'device_type' => $event->device->device_type,
-                    'status' => DeviceStatus::Hijacked->value,
+                    new Dimension('platform_family', $event->device->platform_family),
+                    new Dimension('device_type', $event->device->device_type),
+                    new Dimension('status', DeviceStatus::Hijacked->value)
                 ]
             );
         }
@@ -90,9 +91,9 @@ final readonly class DeviceMetricCollector
                 name: MetricName::DeviceLifespan->value,
                 value: $lifespan,
                 dimensions: [
-                    'platform_family' => $event->device->platform_family,
-                    'device_type' => $event->device->device_type,
-                    'status' => $event->device->status->value,
+                    new Dimension('platform_family', $event->device->platform_family),
+                    new Dimension('device_type', $event->device->device_type),
+                    new Dimension('status', $event->device->status->value)
                 ]
             );
         }
@@ -135,9 +136,9 @@ final readonly class DeviceMetricCollector
 
         foreach ($platforms as $distribution) {
             $dimensions = [
-                'platform_family' => $distribution->platform_family,
-                'platform_version' => $distribution->platform_version,
-                'status' => $distribution->status->value,
+                new Dimension('platform_family', $distribution->platform_family),
+                new Dimension('platform_version', $distribution->platform_version),
+                new Dimension('status', $distribution->status->value)
             ];
 
             counter(MetricName::DevicePlatformDistribution->value, $distribution->count, $dimensions);
@@ -154,9 +155,9 @@ final readonly class DeviceMetricCollector
 
         foreach ($types as $distribution) {
             $dimensions = [
-                'device_type' => $distribution->device_type,
-                'device_family' => $distribution->device_family,
-                'platform_family' => $distribution->platform_family,
+                new Dimension('device_type', $distribution->device_type),
+                new Dimension('device_family', $distribution->device_family),
+                new Dimension('platform_family', $distribution->platform_family)
             ];
 
             counter(MetricName::DeviceTypeDistribution->value, $distribution->count, $dimensions);
@@ -175,8 +176,8 @@ final readonly class DeviceMetricCollector
 
         foreach ($scores as $score) {
             $dimensions = [
-                'platform_family' => $score->platform_family,
-                'status' => $score->status->value,
+                new Dimension('platform_family', $score->platform_family),
+                new Dimension('status', $score->status->value)
             ];
 
             gauge(MetricName::DeviceRiskScore->value, $score->avg_score, $dimensions);
@@ -201,9 +202,9 @@ final readonly class DeviceMetricCollector
                 name: MetricName::DeviceLifespan->value,
                 value: $lifespan->avg_lifespan,
                 dimensions: [
-                    'platform_family' => $lifespan->platform_family,
-                    'device_type' => $lifespan->device_type,
-                    'status' => $lifespan->status->value,
+                    new Dimension('platform_family', $lifespan->platform_family),
+                    new Dimension('device_type', $lifespan->device_type),
+                    new Dimension('status', $lifespan->status->value)
                 ]
             );
         }

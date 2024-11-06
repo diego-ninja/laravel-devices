@@ -15,7 +15,6 @@ class VerifiedRate extends AbstractMetricDefinition
             type: MetricType::Gauge,
             description: 'Percentage of verified devices vs total devices',
             unit: 'percentage',
-            required_dimensions: ['platform_family'],
             allowed_dimensions: [
                 'browser_family',
                 'device_type',
