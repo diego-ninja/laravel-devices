@@ -23,8 +23,10 @@ enum AggregationWindow: string
         };
     }
 
-    public function timeslot(Carbon $timestamp): int
+    public function timeslot(?Carbon $timestamp = null): int
     {
+        $timestamp ??= now();
+
         $seconds = $this->seconds();
         return floor($timestamp->timestamp / $seconds) * $seconds;
     }

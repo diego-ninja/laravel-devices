@@ -3,6 +3,7 @@
 namespace Ninja\DeviceTracker\Modules\Observability\Metrics;
 
 use Illuminate\Contracts\Support\Arrayable;
+use Ninja\DeviceTracker\Modules\Observability\Dto\DimensionCollection;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Exceptions\InvalidMetricException;
@@ -47,7 +48,7 @@ abstract class AbstractMetricDefinition implements Arrayable
     public function valid(
         MetricType $type,
         float $value,
-        array $dimensions,
+        DimensionCollection $dimensions,
         bool $throwException = true
     ): bool {
         try {
@@ -128,12 +129,17 @@ abstract class AbstractMetricDefinition implements Arrayable
     /**
      * @throws InvalidMetricException
      */
-    private function validateDimensions(array $dimensions): void
+    private function validateDimensions(DimensionCollection $dimensions): void
     {
-        if (!empty($this->allowed_dimensions)) {
+        $allowed_dimensions = array_merge(
+            $this->required_dimensions,
+            $this->allowed_dimensions
+        );
+
+        if (!empty($allowed_dimensions)) {
             $invalidDimensions = array_diff(
-                array_keys($dimensions),
-                $this->allowed_dimensions
+                array_keys($dimensions->toArray()),
+                $allowed_dimensions
             );
 
             if (!empty($invalidDimensions)) {
@@ -144,7 +150,7 @@ abstract class AbstractMetricDefinition implements Arrayable
         if (!empty($this->required_dimensions)) {
             $missingDimensions = array_diff(
                 $this->required_dimensions,
-                array_keys($dimensions)
+                array_keys($dimensions->toArray())
             );
 
             if (!empty($missingDimensions)) {

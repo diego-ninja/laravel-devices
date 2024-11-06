@@ -79,7 +79,7 @@ if (! function_exists('counter')) {
     function counter(string $name, float $value = 1, array $dimensions = []): void
     {
         $aggregator = app(MetricAggregator::class);
-        $aggregator->counter(MetricName::from($name), $dimensions, $value);
+        $aggregator->counter(MetricName::from($name), $value, $dimensions);
     }
 }
 
@@ -87,7 +87,7 @@ if (! function_exists('gauge')) {
     function gauge(string $name, float $value, array $dimensions = []): void
     {
         $aggregator = app(MetricAggregator::class);
-        $aggregator->gauge(MetricName::from($name), $dimensions, $value);
+        $aggregator->gauge(MetricName::from($name), $value, $dimensions);
     }
 }
 
@@ -95,7 +95,7 @@ if (! function_exists('histogram')) {
     function histogram(string $name, float $value, array $dimensions = []): void
     {
         $aggregator = app(MetricAggregator::class);
-        $aggregator->histogram(MetricName::from($name), $dimensions, $value);
+        $aggregator->histogram(MetricName::from($name), $value, $dimensions);
     }
 }
 
@@ -103,7 +103,7 @@ if (! function_exists('average')) {
     function average(string $name, float $value, array $dimensions = []): void
     {
         $aggregator = app(MetricAggregator::class);
-        $aggregator->average(MetricName::from($name), $dimensions, $value);
+        $aggregator->average(MetricName::from($name), $value, $dimensions);
     }
 }
 
@@ -111,7 +111,7 @@ if (! function_exists('rate')) {
     function rate(string $name, float $value = 1, array $dimensions = []): void
     {
         $aggregator = app(MetricAggregator::class);
-        $aggregator->rate(MetricName::from($name), $dimensions, $value);
+        $aggregator->rate(MetricName::from($name), $value, $dimensions);
     }
 }
 
@@ -119,6 +119,6 @@ if (! function_exists('summary')) {
     function summary(string $name, float $value, array $dimensions = []): void
     {
         $aggregator = app(MetricAggregator::class);
-        $aggregator->summary(MetricName::from($name), $dimensions, $value);
+        $aggregator->summary(MetricName::from($name), $value, $dimensions);
     }
 }

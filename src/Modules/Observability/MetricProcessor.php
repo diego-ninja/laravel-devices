@@ -3,10 +3,10 @@
 namespace Ninja\DeviceTracker\Modules\Observability;
 
 use Carbon\Carbon;
-use Exception;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Redis;
 use Log;
+use Ninja\DeviceTracker\Modules\Observability\Dto\Key;
 use Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
@@ -92,20 +92,20 @@ final class MetricProcessor
         }
     }
 
-    private function metricType(MetricType $type, AggregationWindow $window, int $timeSlot): void
+    private function metricType(MetricType $type, AggregationWindow $window, int $slot): void
     {
-        $keys = Redis::keys($this->pattern($type, $window, $timeSlot));
+        $keys = Redis::keys($this->pattern($type, $window, $slot));
 
         Log::info('Processing metric type', [
             'type' => $type->value,
             'window' => $window->value,
-            'time_slot' => Carbon::createFromTimestamp($timeSlot)->toDateTimeString(),
+            'time_slot' => Carbon::createFromTimestamp($slot)->toDateTimeString(),
             'keys' => $keys
         ]);
 
         foreach ($keys as $key) {
             try {
-                $this->metric($key, $type, $window, $timeSlot);
+                $this->metric($key, $type, $window, $slot);
                 $this->keys->add($key);
             } catch (Throwable $e) {
                 Log::error('Failed to process metric', [
@@ -119,22 +119,16 @@ final class MetricProcessor
     }
     private function metric(string $key, MetricType $type, AggregationWindow $window, int $timeSlot): void
     {
-        $metadata = $this->parse($key);
-        if (!$metadata) {
-            return;
-        }
-
+        $metadata = Key::decode($key);
         $value = $this->value($key, $type);
         $computed = $this->handlers[$type->value]->compute($value);
 
         try {
-            $dimensions = $this->dimensions($metadata['dimensions']);
-
             $this->repository->store(
-                name: $metadata['name'],
-                type: $type,
+                name: $metadata->name,
+                type: $metadata->type,
                 value: $this->format($computed),
-                dimensions: $dimensions,
+                dimensions: $metadata->dimensions,
                 timestamp: Carbon::createFromTimestamp($timeSlot),
                 window: $window
             );
@@ -246,51 +240,6 @@ final class MetricProcessor
         }
 
         return (string) $value;
-    }
-
-    /**
-     * @throws Exception
-     */
-    private function dimensions(string $dimensionString): array
-    {
-        $dimensions = [];
-        $pairs = explode(':', $dimensionString);
-
-        if (count($pairs) % 2 !== 0) {
-            throw new Exception('Invalid dimension string. Uneven number of key-value pairs');
-        }
-
-        for ($i = 0; $i < count($pairs); $i += 2) {
-            $key = $pairs[$i];
-            $value = $pairs[$i + 1];
-            $dimensions[$key] = $value;
-        }
-
-        return $dimensions;
-    }
-
-    private function parse(string $key): ?array
-    {
-        Log::info('Parsing metric key', ['key' => $key]);
-        $pattern = '/^[^:]+:' .
-            '([^:]+):' .
-            '(' . implode('|', MetricType::values()) . '):' .
-            '(' . implode('|', AggregationWindow::values()) . '):' .
-            '(\d+):' .
-            '(.+)$/';
-
-        if (!preg_match($pattern, $key, $matches)) {
-            Log::warning('Invalid metric key format', ['key' => $key]);
-            return null;
-        }
-
-        return [
-            'name' => MetricName::tryFrom($matches[1]),
-            'type' => MetricType::tryFrom($matches[2]),
-            'window' => AggregationWindow::tryFrom($matches[3]),
-            'timestamp' => (int) $matches[4],
-            'dimensions' => $matches[5]
-        ];
     }
 
     private function pattern(MetricType $type, AggregationWindow $window, int $slot): string

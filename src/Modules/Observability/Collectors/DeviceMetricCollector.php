@@ -130,25 +130,25 @@ final readonly class DeviceMetricCollector
                 DB::raw('count(*) as count')
             ]
         )
-        ->groupBy('platform_family', 'platform_version', 'status')
-        ->get();
+            ->groupBy('platform_family', 'platform_version', 'status')
+            ->get();
 
         foreach ($platforms as $distribution) {
             $dimensions = [
                 'platform_family' => $distribution->platform_family,
                 'platform_version' => $distribution->platform_version,
-                'status' => $distribution->status,
+                'status' => $distribution->status->value,
             ];
 
             counter(MetricName::DevicePlatformDistribution->value, $distribution->count, $dimensions);
         }
 
         $types = Device::select([
-                'device_type',
-                'device_family',
-                'platform_family',
-                DB::raw('count(*) as count')
-            ])
+            'device_type',
+            'device_family',
+            'platform_family',
+            DB::raw('count(*) as count')
+        ])
             ->groupBy('device_type', 'device_family', 'platform_family')
             ->get();
 
@@ -176,7 +176,7 @@ final readonly class DeviceMetricCollector
         foreach ($scores as $score) {
             $dimensions = [
                 'platform_family' => $score->platform_family,
-                'status' => $score->status,
+                'status' => $score->status->value,
             ];
 
             gauge(MetricName::DeviceRiskScore->value, $score->avg_score, $dimensions);
@@ -203,7 +203,7 @@ final readonly class DeviceMetricCollector
                 dimensions: [
                     'platform_family' => $lifespan->platform_family,
                     'device_type' => $lifespan->device_type,
-                    'status' => $lifespan->status,
+                    'status' => $lifespan->status->value,
                 ]
             );
         }

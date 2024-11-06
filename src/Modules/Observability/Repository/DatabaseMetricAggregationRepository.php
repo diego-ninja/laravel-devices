@@ -7,6 +7,8 @@ use DB;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricAggregationRepository;
+use Ninja\DeviceTracker\Modules\Observability\Dto\Dimension;
+use Ninja\DeviceTracker\Modules\Observability\Dto\DimensionCollection;
 use Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
@@ -20,8 +22,8 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
     public function store(
         MetricName $name,
         MetricType $type,
-        float|string $value,
-        array $dimensions,
+        float $value,
+        DimensionCollection $dimensions,
         Carbon $timestamp,
         AggregationWindow $window
     ): void {
@@ -29,7 +31,7 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
             'name' => $name->value,
             'type' => $type->value,
             'value' => $value,
-            'dimensions' => json_encode($dimensions),
+            'dimensions' => $dimensions->json(),
             'timestamp' => $timestamp,
             'window' => $window->value,
             'created_at' => now()
@@ -38,7 +40,7 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
 
     public function query(
         ?MetricName $name,
-        ?array $dimensions = [],
+        ?DimensionCollection $dimensions = null,
         ?AggregationWindow $window = null,
         ?Carbon $from = null,
         ?Carbon $to = null
@@ -51,7 +53,7 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
 
     public function latest(
         MetricName $name,
-        array $dimensions = [],
+        ?DimensionCollection $dimensions = null,
         ?AggregationWindow $window = null
     ): ?float {
         $result = $this->buildQuery($name, $dimensions, $window)
@@ -107,7 +109,7 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
 
     public function stats(
         MetricName $name,
-        array $dimensions = [],
+        ?DimensionCollection $dimensions = null,
         ?AggregationWindow $window = null,
         ?TimeRange $timeRange = null
     ): array {
@@ -138,12 +140,12 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
 
     public function getDimensionValues(
         MetricName $name,
-        string $dimension,
+        Dimension $dimension,
         ?TimeRange $timeRange = null
     ): Collection {
         $query = DB::table(self::METRIC_AGGREGATION_TABLE)
             ->where('name', $name->value)
-            ->whereRaw("JSON_EXTRACT(dimensions, ?) IS NOT NULL", ["$.{$dimension}"]);
+            ->whereRaw("JSON_EXTRACT(dimensions, ?) IS NOT NULL", ["$.{$dimension->name}"]);
 
         if ($timeRange) {
             $query->whereBetween('timestamp', [$timeRange->from, $timeRange->to]);
@@ -151,7 +153,7 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
 
         return $query
             ->select(
-                DB::raw(sprintf("DISTINCT JSON_UNQUOTE(JSON_EXTRACT(dimensions, '$.%s')) as value", $dimension))
+                DB::raw(sprintf("DISTINCT JSON_UNQUOTE(JSON_EXTRACT(dimensions, '$.%s')) as value", $dimension->name))
             )
             ->pluck('value');
     }
@@ -160,7 +162,7 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
         MetricName $name,
         string $interval,
         ?TimeRange $timeRange = null,
-        array $dimensions = []
+        ?DimensionCollection $dimensions = null
     ): Collection {
         $query = $this->buildQuery($name, $dimensions);
 
@@ -199,7 +201,7 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
     }
     private function buildQuery(
         ?MetricName $name = null,
-        array $dimensions = [],
+        ?DimensionCollection $dimensions = null,
         ?AggregationWindow $window = null,
         ?Carbon $from = null,
         ?Carbon $to = null

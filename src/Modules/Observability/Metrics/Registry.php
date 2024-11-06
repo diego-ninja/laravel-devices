@@ -3,6 +3,7 @@
 namespace Ninja\DeviceTracker\Modules\Observability\Metrics;
 
 use Illuminate\Support\Collection;
+use Ninja\DeviceTracker\Modules\Observability\Dto\DimensionCollection;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Exceptions\InvalidMetricException;
@@ -20,7 +21,7 @@ class Registry
         MetricName $name,
         MetricType $type,
         float $value,
-        array $dimensions,
+        DimensionCollection $dimensions,
         bool $throwException = true
     ): bool {
         self::ensureInitialized();
