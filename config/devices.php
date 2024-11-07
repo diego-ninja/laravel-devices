@@ -456,20 +456,20 @@ return [
 
     'metrics' => [
         'enabled' => [
-            \Ninja\DeviceTracker\Modules\Observability\Metrics\Device\DeviceCount::class,
-            \Ninja\DeviceTracker\Modules\Observability\Metrics\Device\VerifiedDeviceCount::class,
-            \Ninja\DeviceTracker\Modules\Observability\Metrics\Device\HijackedDeviceCount::class,
-            \Ninja\DeviceTracker\Modules\Observability\Metrics\Device\CreationRate::class,
-            \Ninja\DeviceTracker\Modules\Observability\Metrics\Device\VerificationRate::class,
-            \Ninja\DeviceTracker\Modules\Observability\Metrics\Device\VerificationLatencyDistribution::class,
-            \Ninja\DeviceTracker\Modules\Observability\Metrics\Device\VerificationTimeAverage::class,
-            \Ninja\DeviceTracker\Modules\Observability\Metrics\Device\VerifiedRate::class,
-            \Ninja\DeviceTracker\Modules\Observability\Metrics\Device\HijackedRate::class,
-            \Ninja\DeviceTracker\Modules\Observability\Metrics\Device\DeviceTypeDistribution::class,
-            \Ninja\DeviceTracker\Modules\Observability\Metrics\Device\PlatformDistribution::class,
-            \Ninja\DeviceTracker\Modules\Observability\Metrics\Device\RiskScoreAverage::class,
-            \Ninja\DeviceTracker\Modules\Observability\Metrics\Device\RiskScoreDistribution::class,
-            \Ninja\DeviceTracker\Modules\Observability\Metrics\Device\Lifespan::class
+            \Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\DeviceCount::class,
+            \Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\VerifiedDeviceCount::class,
+            \Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\HijackedDeviceCount::class,
+            \Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\CreationRate::class,
+            \Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\VerificationRate::class,
+            \Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\VerificationLatencyDistribution::class,
+            \Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\VerificationTimeAverage::class,
+            \Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\VerifiedRate::class,
+            \Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\HijackedRate::class,
+            \Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\DeviceTypeDistribution::class,
+            \Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\PlatformDistribution::class,
+            \Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\RiskScoreAverage::class,
+            \Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\RiskScoreDistribution::class,
+            \Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\Lifespan::class
         ],
         'dimensions' => ["device_uuid", "session_uuid"],
         'buckets' => [

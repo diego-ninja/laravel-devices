@@ -7,6 +7,7 @@ use Ninja\DeviceTracker\Modules\Observability\Dto\DimensionCollection;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Exceptions\InvalidMetricException;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\AbstractMetricDefinition;
 
 class Registry
 {

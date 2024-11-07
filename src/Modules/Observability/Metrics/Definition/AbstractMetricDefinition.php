@@ -1,18 +1,16 @@
 <?php
 
-namespace Ninja\DeviceTracker\Modules\Observability\Metrics;
+namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Definition;
 
 use Illuminate\Contracts\Support\Arrayable;
 use Ninja\DeviceTracker\Modules\Observability\Dto\DimensionCollection;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Exceptions\InvalidMetricException;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Validators\MetricValueValidator;
 
 abstract class AbstractMetricDefinition implements Arrayable
 {
-    private const DEFAULT_MIN_VALUE = -PHP_FLOAT_MAX;
-    private const DEFAULT_MAX_VALUE = PHP_FLOAT_MAX;
-
     private array $buckets;
     private array $quantiles;
     private array $allowed_dimensions;
@@ -61,7 +59,9 @@ abstract class AbstractMetricDefinition implements Arrayable
                 throw InvalidMetricException::invalidDimensions($this->name, $dimensions->invalidDimensions($this->allowed_dimensions));
             }
 
-            $this->validateValue($value);
+            if (!MetricValueValidator::validate($value, $this->min, $this->max)) {
+                throw InvalidMetricException::valueOutOfRange($this->name, $value, $this->min, $this->max);
+            }
 
             return true;
         } catch (InvalidMetricException $e) {
@@ -128,18 +128,5 @@ abstract class AbstractMetricDefinition implements Arrayable
             'min' => $this->min,
             'max' => $this->max,
         ];
-    }
-
-    /**
-     * @throws InvalidMetricException
-     */
-    private function validateValue(float $value): void
-    {
-        $min = $this->min ?? self::DEFAULT_MIN_VALUE;
-        $max = $this->max ?? self::DEFAULT_MAX_VALUE;
-
-        if ($value < $min || $value > $max) {
-            throw InvalidMetricException::valueOutOfRange($this->name, $value, $min, $max);
-        }
     }
 }
