@@ -4,7 +4,7 @@ namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device;
 
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
-use Ninja\DeviceTracker\Modules\Observability\Metrics\AbstractMetricDefinition;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\AbstractMetricDefinition;
 
 class HijackedDeviceCount extends AbstractMetricDefinition
 {
