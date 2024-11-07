@@ -12,6 +12,7 @@ abstract class AbstractMetricDefinition implements Arrayable
 {
     private const DEFAULT_MIN_VALUE = -PHP_FLOAT_MAX;
     private const DEFAULT_MAX_VALUE = PHP_FLOAT_MAX;
+
     private array $buckets;
     private array $quantiles;
     private array $allowed_dimensions;
@@ -56,8 +57,8 @@ abstract class AbstractMetricDefinition implements Arrayable
                 throw InvalidMetricException::invalidType($this->name, $this->type, $type);
             }
 
-            if ($dimensions->valid($this->required_dimensions, $this->allowed_dimensions)) {
-                throw InvalidMetricException::invalidDimensions($this->name, $dimensions->hasInvalidDimensions($this->allowed_dimensions));
+            if (!$dimensions->valid($this->required_dimensions, $this->allowed_dimensions)) {
+                throw InvalidMetricException::invalidDimensions($this->name, $dimensions->invalidDimensions($this->allowed_dimensions));
             }
 
             $this->validateValue($value);

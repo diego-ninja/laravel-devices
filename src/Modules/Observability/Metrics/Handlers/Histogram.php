@@ -2,71 +2,75 @@
 
 namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers;
 
-use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricHandler;
-
-final readonly class Histogram implements MetricHandler
+final class Histogram extends AbstractMetricHandler
 {
-    private array $buckets;
+    private readonly array $buckets;
 
     public function __construct(array $buckets)
     {
+        parent::__construct(min: 0.0);
         sort($buckets);
         $this->buckets = $buckets;
     }
 
     public function compute(array $values): array
     {
-        sort($values);
-        $total = count($values);
+        if (empty($values)) {
+            return $this->empty();
+        }
+
+        $validValues = $this->filter($values);
+        sort($validValues);
+
         $result = [
-            'count' => $total,
-            'sum' => array_sum($values),
-            'min' => $total > 0 ? $values[0] : 0,
-            'max' => $total > 0 ? end($values) : 0,
-            'avg' => $total > 0 ? array_sum($values) / $total : 0,
-            'buckets' => $this->buckets($values),
+            'count' => count($validValues),
+            'sum' => array_sum($validValues),
+            'min' => $validValues[0],
+            'max' => end($validValues),
+            'avg' => array_sum($validValues) / count($validValues),
+            'buckets' => $this->buckets($validValues),
+            'values' => $validValues
         ];
 
-        $result['p50'] = $this->percentile($values, 0.5);
-        $result['p90'] = $this->percentile($values, 0.9);
-        $result['p95'] = $this->percentile($values, 0.95);
-        $result['p99'] = $this->percentile($values, 0.99);
+        $result['p50'] = $this->percentile($validValues, 0.5);
+        $result['p90'] = $this->percentile($validValues, 0.9);
+        $result['p95'] = $this->percentile($validValues, 0.95);
+        $result['p99'] = $this->percentile($validValues, 0.99);
 
         return $result;
     }
 
     public function merge(array $windows): array
     {
-        $mergedBuckets = [];
-        $totalCount = 0;
-        $totalSum = 0;
-        $allMins = [];
-        $allMaxs = [];
+        if (empty($windows)) {
+            return $this->empty();
+        }
 
+        $allValues = [];
         foreach ($windows as $window) {
-            $totalCount += $window['count'];
-            $totalSum += $window['sum'];
-            $allMins[] = $window['min'];
-            $allMaxs[] = $window['max'];
-
-            foreach ($window['buckets'] as $bucket => $count) {
-                $mergedBuckets[$bucket] = ($mergedBuckets[$bucket] ?? 0) + $count;
+            if (isset($window['values'])) {
+                $allValues = array_merge($allValues, $window['values']);
             }
         }
 
-        return [
-            'count' => $totalCount,
-            'sum' => $totalSum,
-            'min' => $totalCount > 0 ? min($allMins) : 0,
-            'max' => $totalCount > 0 ? max($allMaxs) : 0,
-            'avg' => $totalCount > 0 ? $totalSum / $totalCount : 0,
-            'buckets' => $mergedBuckets,
-        ];
+        return $this->compute($allValues);
     }
 
-    public function validate(float $value): bool
+    private function empty(): array
     {
-        return true;
+        return [
+            'count' => 0,
+            'sum' => 0,
+            'min' => 0,
+            'max' => 0,
+            'avg' => 0,
+            'buckets' => array_fill_keys($this->buckets, 0),
+            'p50' => 0,
+            'p90' => 0,
+            'p95' => 0,
+            'p99' => 0,
+            'values' => []
+        ];
     }
 
     private function buckets(array $values): array

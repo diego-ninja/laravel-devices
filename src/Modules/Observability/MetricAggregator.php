@@ -3,22 +3,19 @@
 namespace Ninja\DeviceTracker\Modules\Observability;
 
 use BadMethodCallException;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
-use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricHandler;
 use Ninja\DeviceTracker\Modules\Observability\Dto\DimensionCollection;
 use Ninja\DeviceTracker\Modules\Observability\Dto\Key;
 use Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Exceptions\InvalidMetricException;
-use Ninja\DeviceTracker\Modules\Observability\Exceptions\MetricHandlerNotFoundException;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\HandlerFactory;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Registry;
-use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Average;
-use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Counter;
-use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Gauge;
-use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Histogram;
-use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Rate;
-use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Summary;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Storage\RedisMetricStorage;
+use Throwable;
 
 /**
  * @method void counter(MetricName $name, float $value = 1, ?array $dimensions = null)
@@ -30,54 +27,46 @@ use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Summary;
  */
 final readonly class MetricAggregator
 {
-    private string $prefix;
+    private Collection $windows;
 
-    /**
-     * @var AggregationWindow[]
-     */
-    private array $windows;
-
-    /**
-     * @var MetricHandler[]
-     */
-    private array $handlers;
-
-
-    public function __construct()
+    public function __construct(private RedisMetricStorage $storage)
     {
-        $this->prefix = config("devices.metrics.aggregation.prefix");
-        $this->windows = config("devices.metrics.aggregation.windows", [
+        $this->windows = collect(config("devices.metrics.aggregation.windows", [
             AggregationWindow::Realtime,
             AggregationWindow::Hourly
-        ]);
-
-        $this->handlers();
+        ]));
     }
 
     /**
      * @throws InvalidMetricException
-     * @throws MetricHandlerNotFoundException
      */
-    public function record(MetricName $name, MetricType $type, float $value, DimensionCollection $dimensions): void
-    {
+    public function record(
+        MetricName $name,
+        MetricType $type,
+        float $value,
+        DimensionCollection $dimensions
+    ): void {
         Registry::validate($name, $type, $value, $dimensions);
-        $handler = $this->handlers[$type->value];
-
-        if (!$handler) {
-            throw MetricHandlerNotFoundException::forType($type);
-        }
 
         foreach ($this->windows as $window) {
-            $this->persist(
-                key: new Key(
-                    name: $name,
-                    type: $type,
-                    window: $window,
-                    dimensions: $dimensions,
-                    prefix: $this->prefix
-                ),
-                value: $value
-            );
+            try {
+                $this->storage->store(
+                    new Key(
+                        name: $name,
+                        type: $type,
+                        window: $window,
+                        dimensions: $dimensions
+                    ),
+                    $value
+                );
+            } catch (Throwable $e) {
+                Log::error('Failed to record metric', [
+                    'name' => $name->value,
+                    'type' => $type->value,
+                    'window' => $window->value,
+                    'error' => $e->getMessage()
+                ]);
+            }
         }
     }
 
@@ -90,11 +79,11 @@ final readonly class MetricAggregator
                 MetricType::Gauge => $pipe->set((string) $key, $value),
                 MetricType::Histogram,
                 MetricType::Summary,
-                MetricType::Rate => $pipe->zadd((string) $key, $timestamp, json_encode([
+                MetricType::Rate => $pipe->zadd((string) $key, $timestamp->timestamp, json_encode([
                     'value' => $value,
                     'timestamp' => $timestamp
                 ])),
-                MetricType::Average => $pipe->zadd((string) $key, $timestamp, $value)
+                MetricType::Average => $pipe->zadd((string) $key, $timestamp->timestamp, $value)
             };
 
             $pipe->expire($key, $key->window->seconds() * 2);
@@ -102,34 +91,38 @@ final readonly class MetricAggregator
     }
 
     /**
-     * @throws MetricHandlerNotFoundException
      * @throws InvalidMetricException
      */
-    public function __call($method, $arguments): void
+    public function __call(string $method, array $arguments): void
     {
-        $name = $arguments[0];
         $type = MetricType::tryFrom($method);
-        $dimensions = $arguments[2] ? DimensionCollection::from($arguments[2]) : new DimensionCollection();
-        $value = (float) $arguments[1];
-
-        if ($type && isset($this->handlers[$type->value])) {
-            $this->record($name, $type, $value, $dimensions);
-        } else {
-            throw new BadMethodCallException(sprintf('Method %s does not exist', $method));
+        if (!$type || !HandlerFactory::handlers()->has($type)) {
+            throw new BadMethodCallException(
+                sprintf('Invalid metric type: %s', $method)
+            );
         }
+
+        $name = $arguments[0];
+        $value = (float)$arguments[1];
+        $dimensions = isset($arguments[2])
+            ? DimensionCollection::from($arguments[2])
+            : new DimensionCollection();
+
+        $this->record(
+            name: $name instanceof MetricName ? $name : MetricName::from($name),
+            type: $type,
+            value: $value,
+            dimensions: $dimensions
+        );
     }
 
-    private function handlers(): void
+    public function windows(): Collection
     {
-        $this->handlers = [
-            MetricType::Counter->value => new Counter(),
-            MetricType::Gauge->value => new Gauge(),
-            MetricType::Histogram->value => new Histogram(
-                config('devices.metrics.buckets')
-            ),
-            MetricType::Average->value => new Average(),
-            MetricType::Rate->value => new Rate(),
-            MetricType::Summary->value => new Summary()
-        ];
+        return $this->windows;
+    }
+
+    public function enabled(AggregationWindow $window): bool
+    {
+        return $this->windows->contains($window);
     }
 }

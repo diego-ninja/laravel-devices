@@ -2,52 +2,66 @@
 
 namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers;
 
-use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricHandler;
+use Ninja\DeviceTracker\Modules\Observability\ValueObjects\RateWindow;
+use Ninja\DeviceTracker\Modules\Observability\ValueObjects\TimeWindow;
 
-final readonly class Rate implements MetricHandler
+final class Rate extends AbstractMetricHandler
 {
-    private int $interval;
+    private readonly int $interval;
 
-    public function __construct(int $interval = 60)
+    public function __construct(int $interval = 3600)
     {
+        parent::__construct(min: 0.0);
         $this->interval = $interval;
     }
 
-    public function compute(array $values): float
+    public function compute(array $values): array
     {
         if (count($values) < 2) {
-            return 0.0;
+            return [
+                'rate' => 0.0,
+                'count' => count($values),
+                'interval' => $this->interval
+            ];
         }
 
-        $timeRange = end($values)['timestamp'] - reset($values)['timestamp'];
-        if ($timeRange <= 0) {
-            return 0.0;
+        $window = RateWindow::fromValues($values, $this->interval);
+        if ($window->empty() || $window->duration() <= 0) {
+            return [
+                'rate' => (float)count($values),
+                'count' => count($values),
+                'interval' => $this->interval
+            ];
         }
 
-        return (count($values) * $this->interval) / $timeRange;
+        $validValues = $this->filter($values);
+        $rate = (count($validValues) * $this->interval) / $window->duration();
+
+        return [
+            'rate' => $rate,
+            'count' => count($validValues),
+            'interval' => $this->interval,
+            'window_start' => $window->start,
+            'window_end' => $window->end
+        ];
     }
 
-    public function merge(array $windows): float
+    public function merge(array $windows): array
     {
-        if (empty($windows)) {
-            return 0.0;
-        }
-
         $totalCount = 0;
-        $totalTime = 0;
+        $totalDuration = 0;
 
         foreach ($windows as $window) {
-            if (isset($window['count']) && isset($window['time'])) {
+            if (isset($window['count'], $window['window_start'], $window['window_end'])) {
                 $totalCount += $window['count'];
-                $totalTime += $window['time'];
+                $totalDuration += ($window['window_end'] - $window['window_start']);
             }
         }
 
-        return $totalTime > 0 ? ($totalCount * $this->interval) / $totalTime : 0.0;
-    }
-
-    public function validate(float $value): bool
-    {
-        return true;
+        return [
+            'rate' => $totalDuration > 0 ? ($totalCount * $this->interval) / $totalDuration : 0.0,
+            'count' => $totalCount,
+            'interval' => $this->interval
+        ];
     }
 }

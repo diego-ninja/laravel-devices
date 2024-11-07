@@ -2,14 +2,13 @@
 
 namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers;
 
-use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricHandler;
-
-final readonly class Summary implements MetricHandler
+final class Summary extends AbstractMetricHandler
 {
-    private array $quantiles;
+    private readonly array $quantiles;
 
     public function __construct(array $quantiles = [0.5, 0.9, 0.95, 0.99])
     {
+        parent::__construct();
         $this->quantiles = $quantiles;
     }
 
@@ -19,17 +18,20 @@ final readonly class Summary implements MetricHandler
             return $this->empty();
         }
 
-        sort($values);
+        $validValues = $this->filter($values);
+        sort($validValues);
+
         $result = [
-            'count' => count($values),
-            'sum' => array_sum($values),
-            'min' => $values[0],
-            'max' => end($values),
+            'count' => count($validValues),
+            'sum' => array_sum($validValues),
+            'min' => $validValues[0],
+            'max' => end($validValues),
             'quantiles' => [],
+            'values' => $validValues
         ];
 
         foreach ($this->quantiles as $q) {
-            $result['quantiles'][$q] = $this->percentile($values, $q);
+            $result['quantiles'][$q] = $this->percentile($validValues, $q);
         }
 
         return $result;
@@ -41,25 +43,16 @@ final readonly class Summary implements MetricHandler
             return $this->empty();
         }
 
-        $totalCount = 0;
-        $totalSum = 0;
         $allValues = [];
-
         foreach ($windows as $window) {
-            $totalCount += $window['count'];
-            $totalSum += $window['sum'];
-            // Para los cuantiles necesitamos recalcular con todos los valores
-            // Esto es una simplificación, en producción podríamos usar t-digest o algoritmos más eficientes
-            $allValues[] = $window['values'];
+            if (isset($window['values'])) {
+                $allValues = array_merge($allValues, $window['values']);
+            } else {
+                $allValues[] = $this->extractValue($window);
+            }
         }
 
-        $allValues = array_merge(...$allValues);
         return $this->compute($allValues);
-    }
-
-    public function validate(float $value): bool
-    {
-        return true;
     }
 
     private function empty(): array
@@ -70,6 +63,7 @@ final readonly class Summary implements MetricHandler
             'min' => 0,
             'max' => 0,
             'quantiles' => [],
+            'values' => []
         ];
 
         foreach ($this->quantiles as $q) {

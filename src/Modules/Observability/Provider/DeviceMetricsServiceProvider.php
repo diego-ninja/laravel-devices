@@ -12,26 +12,75 @@ use Ninja\DeviceTracker\Events\DeviceVerifiedEvent;
 use Ninja\DeviceTracker\Modules\Observability\Collectors\DeviceMetricCollector;
 use Ninja\DeviceTracker\Modules\Observability\Console\Commands\ProcessMetricsCommand;
 use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricAggregationRepository;
+use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\MetricAggregator;
-use Ninja\DeviceTracker\Modules\Observability\MetricProcessor;
+use Ninja\DeviceTracker\Modules\Observability\MetricMerger;
+use Ninja\DeviceTracker\Modules\Observability\MetricManager;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Average;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Counter;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Gauge;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Histogram;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Rate;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Summary;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Registry;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Storage\RedisMetricStorage;
+use Ninja\DeviceTracker\Modules\Observability\Processors\MetricProcessor;
+use Ninja\DeviceTracker\Modules\Observability\Processors\TypeProcessor;
+use Ninja\DeviceTracker\Modules\Observability\Processors\WindowProcessor;
 use Ninja\DeviceTracker\Modules\Observability\Repository\DatabaseMetricAggregationRepository;
+use Ninja\DeviceTracker\Modules\Observability\StateManager;
 
 final class DeviceMetricsServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->app->singleton(RedisMetricStorage::class, function ($app) {
+            return new RedisMetricStorage(config('devices.metrics.aggregation.prefix'));
+        });
+
         $this->app->singleton(MetricAggregationRepository::class, function () {
             return new DatabaseMetricAggregationRepository();
         });
 
-        $this->app->singleton(MetricAggregator::class, function ($app) {
-            return new MetricAggregator();
+        $this->app->singleton(MetricMerger::class, function ($app) {
+            return new MetricMerger(
+                $app->make(MetricAggregationRepository::class)
+            );
         });
 
         $this->app->singleton(MetricProcessor::class, function ($app) {
             return new MetricProcessor(
-                $app->make(DatabaseMetricAggregationRepository::class)
+                $app->make(MetricMerger::class),
+                $app->make(RedisMetricStorage::class)
+            );
+        });
+
+        $this->app->singleton(TypeProcessor::class, function ($app) {
+            return new TypeProcessor(
+                $app->make(MetricProcessor::class),
+                $app->make(RedisMetricStorage::class)
+            );
+        });
+
+        $this->app->singleton(WindowProcessor::class, function ($app) {
+            return new WindowProcessor(
+                $app->make(TypeProcessor::class),
+                $app->make(MetricMerger::class),
+                $app->make(StateManager::class)
+            );
+        });
+
+        $this->app->singleton(MetricAggregator::class, function ($app) {
+            return new MetricAggregator(
+                $app->make(RedisMetricStorage::class)
+            );
+        });
+
+        $this->app->singleton(MetricManager::class, function ($app) {
+            return new MetricManager(
+                $app->make(WindowProcessor::class),
+                $app->make(RedisMetricStorage::class),
+                $app->make(StateManager::class)
             );
         });
 

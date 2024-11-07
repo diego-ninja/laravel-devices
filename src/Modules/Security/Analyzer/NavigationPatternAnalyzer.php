@@ -18,9 +18,11 @@ final class NavigationPatternAnalyzer extends AbstractAnalyzer
     private function analyzeNavigationSpeed(Collection $events): float
     {
         $timeDiffs = $this->calculateTimeDiffs($events);
-        if (empty($timeDiffs)) return 0.0;
+        if (empty($timeDiffs)) {
+            return 0.0;
+        }
 
-        $anomalies = array_filter($timeDiffs, function($diff) {
+        $anomalies = array_filter($timeDiffs, function ($diff) {
             return $diff < self::MIN_NORMAL_PAGE_TIME ||
                 $diff > self::MAX_NORMAL_PAGE_TIME;
         });

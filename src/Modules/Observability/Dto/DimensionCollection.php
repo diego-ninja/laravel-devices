@@ -30,16 +30,16 @@ final class DimensionCollection extends Collection implements \JsonSerializable,
     public function valid(array $required, array $allowed): bool
     {
         return
-            empty($this->hasInvalidDimensions($allowed)) &&
-            empty($this->hasMissingDimensions($required));
+            empty($this->invalidDimensions($allowed)) &&
+            empty($this->missingDimensions($required));
     }
 
     public function names(): array
     {
-        return array_map(fn(Dimension $dimension) => $dimension->name, $this->array());
+        return array_map(fn(Dimension $dimension) => $dimension->name, $this->toArray());
     }
 
-    private function hasInvalidDimensions(array $allowedDimensions): array
+    public function invalidDimensions(array $allowedDimensions): array
     {
         if (empty($allowedDimensions)) {
             return [];
@@ -48,7 +48,7 @@ final class DimensionCollection extends Collection implements \JsonSerializable,
         return array_diff($this->names(), $allowedDimensions);
     }
 
-    private function hasMissingDimensions(array $requiredDimensions): array
+    private function missingDimensions(array $requiredDimensions): array
     {
         if (empty($requiredDimensions)) {
             return [];

@@ -7,7 +7,6 @@ use Ninja\DeviceTracker\Modules\Security\Contracts\PatternRepository;
 
 abstract class AbstractAnalyzer implements BehaviorAnalyzer
 {
-
     public function __construct(protected readonly PatternRepository $repository)
     {
     }
@@ -19,5 +18,4 @@ abstract class AbstractAnalyzer implements BehaviorAnalyzer
 
         return sqrt($variance);
     }
-
 }

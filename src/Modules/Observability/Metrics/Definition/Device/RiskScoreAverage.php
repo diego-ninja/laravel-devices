@@ -6,22 +6,23 @@ use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\AbstractMetricDefinition;
 
-class VerifiedDeviceCount extends AbstractMetricDefinition
+class RiskScoreAverage extends AbstractMetricDefinition
 {
     public static function create(): self
     {
         return new self(
-            name: MetricName::VerifiedDeviceCount,
+            name: MetricName::RiskScoreAverage,
             type: MetricType::Gauge,
-            description: 'Number of verified devices in the system',
-            required_dimensions: [],
+            description: 'Average risk score of devices',
+            unit: 'score',
+            required_dimensions: ['platform_family'],
             allowed_dimensions: [
-                'platform_family',
                 'browser_family',
                 'device_type',
+                'status',
             ],
             min: 0,
-            max: PHP_INT_MAX,
+            max: 100,
         );
     }
 }

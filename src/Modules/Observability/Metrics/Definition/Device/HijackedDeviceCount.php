@@ -6,20 +6,18 @@ use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\AbstractMetricDefinition;
 
-class PlatformDistribution extends AbstractMetricDefinition
+class HijackedDeviceCount extends AbstractMetricDefinition
 {
     public static function create(): self
     {
         return new self(
-            name: MetricName::DevicePlatformDistribution,
-            type: MetricType::Counter,
-            description: 'Distribution of devices across different platforms',
-            required_dimensions: [
-                'platform_family',
-                'platform_version',
-            ],
+            name: MetricName::HijackedDeviceCount,
+            type: MetricType::Gauge,
+            description: 'Number of hijacked devices in the system',
+            required_dimensions: [],
             allowed_dimensions: [
-                'status',
+                'platform_family',
+                'browser_family',
                 'device_type',
             ],
             min: 0,

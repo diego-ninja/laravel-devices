@@ -6,7 +6,7 @@ use DateInterval;
 use Illuminate\Console\Command;
 use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricAggregationRepository;
 use Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow;
-use Ninja\DeviceTracker\Modules\Observability\MetricProcessor;
+use Ninja\DeviceTracker\Modules\Observability\MetricManager;
 use Throwable;
 
 final class ProcessMetricsCommand extends Command
@@ -17,7 +17,7 @@ final class ProcessMetricsCommand extends Command
 
     protected $description = 'Process metrics from realtime storage to persistent storage';
 
-    public function __construct(protected readonly MetricProcessor $processor, protected readonly MetricAggregationRepository $repository)
+    public function __construct(protected readonly MetricManager $manager, protected readonly MetricAggregationRepository $repository)
     {
         parent::__construct();
     }
@@ -26,11 +26,11 @@ final class ProcessMetricsCommand extends Command
         $window = AggregationWindow::tryFrom($this->argument('window'));
 
         try {
-            $this->processor->window($window);
+            $this->manager->process($window);
 
             $this->info(sprintf(
                 'Last processing: %s',
-                $this->processor->time($window)?->diffForHumans() ?? 'never'
+                $this->manager->last($window)?->diffForHumans() ?? 'never'
             ));
 
             if ($this->option('prune')) {
@@ -50,19 +50,19 @@ final class ProcessMetricsCommand extends Command
             }
 
             $this->stats($window);
-            $this->processor->reset($window);
+            $this->manager->reset($window);
         } catch (Throwable $e) {
             $this->error(sprintf(
                 'Processing failed. Error count: %d',
-                $this->processor->errors($window)
+                $this->manager->errors($window)
             ));
         }
     }
 
     private function stats(AggregationWindow $window): void
     {
-        $lastProcessing = $this->processor->time($window);
-        $errorCount = $this->processor->errors($window);
+        $lastProcessing = $this->manager->last($window);
+        $errorCount = $this->manager->errors($window);
 
         $this->table(
             ['Metric', 'Value'],

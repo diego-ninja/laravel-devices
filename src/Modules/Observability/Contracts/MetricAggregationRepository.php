@@ -14,5 +14,4 @@ interface MetricAggregationRepository
     public function store(MetricName $name, MetricType $type, float $value, DimensionCollection $dimensions, Carbon $timestamp, AggregationWindow $window): void;
     public function query(?MetricName $name, ?DimensionCollection $dimensions = null, ?AggregationWindow $window = null, ?Carbon $from = null, ?Carbon $to = null): Collection;
     public function prune(AggregationWindow $window, Carbon $before): int;
-
 }

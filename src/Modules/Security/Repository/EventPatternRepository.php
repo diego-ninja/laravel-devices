@@ -8,7 +8,6 @@ use Ninja\DeviceTracker\Modules\Tracking\Models\Event;
 
 final readonly class EventPatternRepository implements PatternRepository
 {
-
     public function history(Device $device, int $hours = 24): array
     {
         return Event::where('device_uuid', $device->uuid)

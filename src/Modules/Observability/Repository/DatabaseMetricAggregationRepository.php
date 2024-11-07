@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use DB;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
+use InvalidArgumentException;
 use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricAggregationRepository;
 use Ninja\DeviceTracker\Modules\Observability\Dto\Dimension;
 use Ninja\DeviceTracker\Modules\Observability\Dto\DimensionCollection;
@@ -22,15 +23,21 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
     public function store(
         MetricName $name,
         MetricType $type,
-        float $value,
+        float|string $value,
         DimensionCollection $dimensions,
         Carbon $timestamp,
         AggregationWindow $window
     ): void {
+        $storedValue = match ($type) {
+            MetricType::Summary,
+            MetricType::Histogram => is_string($value) ? $value : json_encode($value),
+            default => (string) $value
+        };
+
         DB::table(self::METRIC_AGGREGATION_TABLE)->insert([
             'name' => $name->value,
             'type' => $type->value,
-            'value' => $value,
+            'value' => $storedValue,
             'dimensions' => $dimensions->json(),
             'timestamp' => $timestamp,
             'window' => $window->value,
@@ -39,28 +46,28 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
     }
 
     public function query(
-        ?MetricName $name,
+        ?MetricName $name = null,
         ?DimensionCollection $dimensions = null,
         ?AggregationWindow $window = null,
         ?Carbon $from = null,
         ?Carbon $to = null
     ): Collection {
-        return $this
-            ->buildQuery($name, $dimensions, $window, $from, $to)
+        return $this->buildQuery($name, $dimensions, $window, $from, $to)
             ->orderBy('timestamp')
-            ->get();
+            ->get()
+            ->map(fn($metric) => $this->formatMetricFromStorage($metric));
     }
 
     public function latest(
         MetricName $name,
         ?DimensionCollection $dimensions = null,
         ?AggregationWindow $window = null
-    ): ?float {
+    ): ?array {
         $result = $this->buildQuery($name, $dimensions, $window)
             ->latest('timestamp')
             ->first();
 
-        return $result ? (float) $result->value : null;
+        return $result ? $this->formatMetricFromStorage($result) : null;
     }
 
     public function findByTimeRange(TimeRange $timeRange, array $names = []): Collection
@@ -72,7 +79,10 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
             $query->whereIn('name', collect($names)->map->value->all());
         }
 
-        return $query->orderBy('timestamp')->get();
+        return $query
+            ->orderBy('timestamp')
+            ->get()
+            ->map(fn($metric) => $this->formatMetricFromStorage($metric));
     }
 
     public function findByCriteria(MetricCriteria $criteria): Collection
@@ -99,12 +109,19 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
         }
 
         if ($criteria->dimensions) {
-            foreach ($criteria->dimensions as $key => $value) {
-                $query->where('dimensions', 'like', "%\"{$key}\":\"{$value}\"%");
+            foreach ($criteria->dimensions as $dimension) {
+                $query->where('dimensions', 'like', sprintf(
+                    '%%"%s":"%s"%%',
+                    $dimension->name,
+                    $dimension->value
+                ));
             }
         }
 
-        return $query->orderBy('timestamp')->get();
+        return $query
+            ->orderBy('timestamp')
+            ->get()
+            ->map(fn($metric) => $this->formatMetricFromStorage($metric));
     }
 
     public function stats(
@@ -130,9 +147,9 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
 
         return [
             'count' => $stats->count,
-            'min_value' => $stats->min_value,
-            'max_value' => $stats->max_value,
-            'avg_value' => $stats->avg_value,
+            'min_value' => $this->parseNumericValue($stats->min_value),
+            'max_value' => $this->parseNumericValue($stats->max_value),
+            'avg_value' => $this->parseNumericValue($stats->avg_value),
             'first_seen' => $stats->first_seen ? Carbon::parse($stats->first_seen) : null,
             'last_seen' => $stats->last_seen ? Carbon::parse($stats->last_seen) : null,
         ];
@@ -152,9 +169,10 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
         }
 
         return $query
-            ->select(
-                DB::raw(sprintf("DISTINCT JSON_UNQUOTE(JSON_EXTRACT(dimensions, '$.%s')) as value", $dimension->name))
-            )
+            ->select(DB::raw(sprintf(
+                "DISTINCT JSON_UNQUOTE(JSON_EXTRACT(dimensions, '$.%s')) as value",
+                $dimension->name
+            )))
             ->pluck('value');
     }
 
@@ -171,15 +189,48 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
         }
 
         return $query->select([
-            DB::raw(sprintf("DATE_FORMAT(timestamp, '%s') as time", $this->getTimeFormat($interval))),
-            DB::raw('CAST(AVG(CAST(value AS FLOAT)) AS FLOAT) as value'),
+            DB::raw(sprintf(
+                "DATE_FORMAT(timestamp, '%s') as time",
+                $this->getTimeFormat($interval)
+            )),
+            'type',
+            'value',
             'window'
         ])
-            ->groupBy('time', 'window')
             ->orderBy('time')
-            ->get();
+            ->get()
+            ->map(function ($row) {
+                $row->value = $this->parseStoredValue(
+                    MetricType::from($row->type),
+                    $row->value
+                );
+                return $row;
+            });
     }
 
+    public function aggregate(
+        MetricName $name,
+        string $aggregation,
+        ?TimeRange $timeRange = null,
+        ?DimensionCollection $dimensions = null
+    ): mixed {
+        $query = $this->buildQuery($name, $dimensions);
+
+        if ($timeRange) {
+            $query->whereBetween('timestamp', [$timeRange->from, $timeRange->to]);
+        }
+
+        $result = match ($aggregation) {
+            'count' => $query->count(),
+            'sum' => $query->sum(DB::raw('CAST(value AS FLOAT)')),
+            'avg' => $query->avg(DB::raw('CAST(value AS FLOAT)')),
+            'min' => $query->min(DB::raw('CAST(value AS FLOAT)')),
+            'max' => $query->max(DB::raw('CAST(value AS FLOAT)')),
+            default => throw new InvalidArgumentException("Unknown aggregation: {$aggregation}")
+        };
+
+        return $this->parseNumericValue($result);
+    }
     public function prune(AggregationWindow $window, Carbon $before): int
     {
         return DB::table(self::METRIC_AGGREGATION_TABLE)
@@ -199,6 +250,7 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
             default => '%Y-%m-%d %H:%i:%s'
         };
     }
+
     private function buildQuery(
         ?MetricName $name = null,
         ?DimensionCollection $dimensions = null,
@@ -212,9 +264,13 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
             $query->where('name', $name->value);
         }
 
-        if (!empty($dimensions)) {
-            foreach ($dimensions as $key => $value) {
-                $query->where('dimensions', 'like', "%\"{$key}\":\"{$value}\"%");
+        if ($dimensions && !$dimensions->isEmpty()) {
+            foreach ($dimensions as $dimension) {
+                $query->where('dimensions', 'like', sprintf(
+                    '%%"%s":"%s"%%',
+                    $dimension->name,
+                    $dimension->value
+                ));
             }
         }
 
@@ -231,5 +287,51 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
         }
 
         return $query;
+    }
+
+    private function formatValueForStorage(MetricType $type, mixed $value): string
+    {
+        return match ($type) {
+            MetricType::Counter,
+            MetricType::Gauge => (string) ($value['value'] ?? $value),
+            MetricType::Rate => (string) ($value['rate'] ?? $value),
+            MetricType::Average => (string) ($value['avg'] ?? $value),
+            MetricType::Summary,
+            MetricType::Histogram => is_string($value) ? $value : json_encode($value)
+        };
+    }
+
+    private function formatMetricFromStorage(object $metric): array
+    {
+        $type = MetricType::from($metric->type);
+
+        return [
+            'name' => $metric->name,
+            'type' => $metric->type,
+            'value' => $this->parseStoredValue($type, $metric->value),
+            'dimensions' => json_decode($metric->dimensions, true),
+            'timestamp' => Carbon::parse($metric->timestamp),
+            'window' => $metric->window
+        ];
+    }
+
+    private function parseStoredValue(MetricType $type, string $value): mixed
+    {
+        return match ($type) {
+            MetricType::Summary,
+            MetricType::Histogram => json_decode($value, true),
+            MetricType::Counter,
+            MetricType::Gauge,
+            MetricType::Rate,
+            MetricType::Average => $this->parseNumericValue($value)
+        };
+    }
+    private function parseNumericValue(mixed $value): float
+    {
+        if ($value === null) {
+            return 0.0;
+        }
+
+        return is_numeric($value) ? (float)$value : 0.0;
     }
 }

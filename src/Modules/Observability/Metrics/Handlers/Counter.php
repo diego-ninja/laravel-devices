@@ -2,22 +2,41 @@
 
 namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers;
 
-use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricHandler;
-
-final readonly class Counter implements MetricHandler
+final class Counter extends AbstractMetricHandler
 {
-    public function compute(array $values): float
+    public function __construct()
     {
-        return array_sum($values);
+        parent::__construct(min: 0.0);
     }
 
-    public function merge(array $windows): float
+    public function compute(array $values): array
     {
-        return array_sum($windows);
+        $validValues = $this->filter($values);
+
+        return [
+            'value' => array_sum($validValues),
+            'count' => count($validValues)
+        ];
     }
 
-    public function validate(float $value): bool
+    public function merge(array $windows): array
     {
-        return $value >= 0;
+        $total = 0;
+        $count = 0;
+
+        foreach ($windows as $window) {
+            if (is_array($window)) {
+                $total += $window['value'] ?? 0;
+                $count += $window['count'] ?? 0;
+            } else {
+                $total += $this->extractValue($window);
+                $count++;
+            }
+        }
+
+        return [
+            'value' => $total,
+            'count' => $count
+        ];
     }
 }

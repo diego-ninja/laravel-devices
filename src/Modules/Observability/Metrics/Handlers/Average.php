@@ -2,39 +2,45 @@
 
 namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers;
 
-use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricHandler;
-
-final readonly class Average implements MetricHandler
+final class Average extends AbstractMetricHandler
 {
-    public function compute(array $values): float
+    public function compute(array $values): array
     {
         if (empty($values)) {
-            return 0.0;
+            return ['avg' => 0.0, 'sum' => 0.0, 'count' => 0];
         }
-        return array_sum($values) / count($values);
+
+        $validValues = $this->filter($values);
+        $sum = array_sum($validValues);
+        $count = count($validValues);
+
+        return [
+            'avg' => $count > 0 ? $sum / $count : 0.0,
+            'sum' => $sum,
+            'count' => $count
+        ];
     }
 
-    public function merge(array $windows): float
+    public function merge(array $windows): array
     {
-        if (empty($windows)) {
-            return 0.0;
-        }
-
         $totalSum = 0;
         $totalCount = 0;
 
         foreach ($windows as $window) {
-            if (isset($window['sum']) && isset($window['count'])) {
-                $totalSum += $window['sum'];
-                $totalCount += $window['count'];
+            if (is_array($window)) {
+                $totalSum += $window['sum'] ?? 0;
+                $totalCount += $window['count'] ?? 0;
+            } else {
+                $value = $this->extractValue($window);
+                $totalSum += $value;
+                $totalCount++;
             }
         }
 
-        return $totalCount > 0 ? $totalSum / $totalCount : 0.0;
-    }
-
-    public function validate(float $value): bool
-    {
-        return true;
+        return [
+            'avg' => $totalCount > 0 ? $totalSum / $totalCount : 0.0,
+            'sum' => $totalSum,
+            'count' => $totalCount
+        ];
     }
 }

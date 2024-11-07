@@ -2,22 +2,43 @@
 
 namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers;
 
-use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricHandler;
-
-final readonly class Gauge implements MetricHandler
+final class Gauge extends AbstractMetricHandler
 {
-    public function compute(array $values): float
+    public function compute(array $values): array
     {
-        return end($values) ?: 0.0;
+        if (empty($values)) {
+            return ['value' => 0.0, 'timestamp' => time()];
+        }
+
+        $sorted = $this->sortByTimestamp($values);
+        $latest = reset($sorted);
+
+        return [
+            'value' => $this->extractValue($latest),
+            'timestamp' => $this->extractTimestamp($latest) ?? time()
+        ];
     }
 
-    public function merge(array $windows): float
+    public function merge(array $windows): array
     {
-        return end($windows) ?: 0.0;
-    }
+        if (empty($windows)) {
+            return ['value' => 0.0, 'timestamp' => time()];
+        }
 
-    public function validate(float $value): bool
-    {
-        return true;
+        $latest = null;
+        $latestTimestamp = 0;
+
+        foreach ($windows as $window) {
+            $timestamp = $this->extractTimestamp($window);
+            if ($timestamp && $timestamp > $latestTimestamp) {
+                $latest = $window;
+                $latestTimestamp = $timestamp;
+            }
+        }
+
+        return [
+            'value' => $latest ? $this->extractValue($latest) : 0.0,
+            'timestamp' => $latestTimestamp ?: time()
+        ];
     }
 }

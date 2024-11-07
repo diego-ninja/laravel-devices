@@ -479,6 +479,8 @@ return [
             'score' => [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
             'default' => [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000]
         ],
+        'quantiles' => [0.5, 0.9, 0.95, 0.99],
+        'rate_interval' => 3600,
         'aggregation' => [
             'prefix' => 'device_metrics',
             'windows' => [

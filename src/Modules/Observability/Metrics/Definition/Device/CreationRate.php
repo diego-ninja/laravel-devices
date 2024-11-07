@@ -6,15 +6,15 @@ use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\AbstractMetricDefinition;
 
-class VerificationRate extends AbstractMetricDefinition
+class CreationRate extends AbstractMetricDefinition
 {
     public static function create(): self
     {
         return new self(
-            name: MetricName::DeviceVerificationRate,
+            name: MetricName::DeviceCreationRate,
             type: MetricType::Rate,
-            description: 'Rate of device verifications per hour',
-            unit: 'verifications/hour',
+            description: 'Rate of new device registrations per hour',
+            unit: 'devices/hour',
             required_dimensions: ['platform_family'],
             allowed_dimensions: [
                 'browser_family',
