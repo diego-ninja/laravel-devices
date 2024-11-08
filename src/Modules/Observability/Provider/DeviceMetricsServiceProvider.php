@@ -47,7 +47,7 @@ final class DeviceMetricsServiceProvider extends ServiceProvider
 
         $this->app->singleton(StateManager::class, function ($app) {
             return new StateManager(
-                $app->make(MetricStorage::class)
+                $app->make(StateStorage::class)
             );
         });
 
