@@ -18,27 +18,29 @@ final readonly class RedisMetricStorage
 
     public function store(Key $key, float $value): void
     {
+        $metricKey = $this->prefix((string) $key);
+
         try {
-            Redis::pipeline(function ($pipe) use ($key, $value) {
+            Redis::pipeline(function ($pipe) use ($key, $metricKey, $value) {
                 $timestamp = now();
 
                 match ($key->type) {
-                    MetricType::Counter => $pipe->incrbyfloat((string) $key, $value),
-                    MetricType::Gauge => $pipe->set((string) $key, $value),
+                    MetricType::Counter => $pipe->incrbyfloat($metricKey, $value),
+                    MetricType::Gauge => $pipe->set($metricKey, $value),
                     MetricType::Histogram,
                     MetricType::Summary,
-                    MetricType::Rate => $pipe->zadd((string) $key, $timestamp->timestamp, json_encode([
+                    MetricType::Rate => $pipe->zadd($metricKey, $timestamp->timestamp, json_encode([
                         'value' => $value,
                         'timestamp' => $timestamp
                     ])),
-                    MetricType::Average => $pipe->zadd((string) $key, $timestamp->timestamp, $value)
+                    MetricType::Average => $pipe->zadd($metricKey, $timestamp->timestamp, $value)
                 };
 
-                $pipe->expire((string)$key, $key->window->seconds() * 2);
+                $pipe->expire($metricKey, $key->window->seconds() * 2);
             });
         } catch (Throwable $e) {
             Log::error('Failed to store metric', [
-                'key' => (string)$key,
+                'key' => $metricKey,
                 'value' => $value,
                 'error' => $e->getMessage()
             ]);
@@ -48,16 +50,15 @@ final readonly class RedisMetricStorage
 
     public function value(string $key, MetricType $type): array
     {
-        $key = $this->strip($key);
-
+        $metricKey = $this->prefix($key);
         try {
             return match ($type) {
                 MetricType::Counter,
-                MetricType::Gauge => [['value' => (float) Redis::get($key)]],
+                MetricType::Gauge => [['value' => (float) Redis::get($metricKey)]],
                 MetricType::Histogram,
-                MetricType::Average => $this->histogram($key),
+                MetricType::Average => $this->histogram($metricKey),
                 MetricType::Summary,
-                MetricType::Rate => $this->timestamped($key)
+                MetricType::Rate => $this->timestamped($metricKey)
             };
         } catch (Throwable $e) {
             Log::error('Failed to get metric value', [
@@ -71,18 +72,23 @@ final readonly class RedisMetricStorage
 
     public function keys(string $pattern): array
     {
-        return Redis::keys($pattern);
+        $keys = Redis::keys($this->prefix($pattern)) ?: [];
+        return array_map(fn($key) => $this->strip($key), $keys);
     }
 
     public function delete(array $keys): void
     {
-        if (!empty($keys)) {
-            Redis::pipeline(function ($pipe) use ($keys) {
-                foreach ($keys as $key) {
-                    $pipe->del($key);
-                }
-            });
+        if (empty($keys)) {
+            return;
         }
+
+        $metricKeys = array_map(fn($key) => $this->prefix($key), $keys);
+
+        Redis::pipeline(function ($pipe) use ($metricKeys) {
+            foreach ($metricKeys as $key) {
+                $pipe->del($key);
+            }
+        });
     }
 
     public function count(AggregationWindow $window): array
@@ -192,8 +198,21 @@ final readonly class RedisMetricStorage
         }, array_keys($values), array_values($values));
     }
 
+    private function prefix(string $key): string
+    {
+        if (str_starts_with($key, $this->prefix . ':')) {
+            return $key;
+        }
+
+        return sprintf('%s:%s', $this->prefix, $key);
+    }
+
     private function strip(string $key): string
     {
-        return str_replace($this->prefix, '', $key);
+        if (str_starts_with($key, $this->prefix . ':')) {
+            return substr($key, strlen($this->prefix) + 1);
+        }
+
+        return $key;
     }
 }

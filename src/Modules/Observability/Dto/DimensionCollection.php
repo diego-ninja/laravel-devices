@@ -30,7 +30,7 @@ final class DimensionCollection extends Collection implements \JsonSerializable,
     public function valid(array $required, array $allowed): bool
     {
         return
-            empty($this->invalidDimensions($allowed)) &&
+            empty($this->invalidDimensions(array_merge($allowed, $required))) &&
             empty($this->missingDimensions($required));
     }
 

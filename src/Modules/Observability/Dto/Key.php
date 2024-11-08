@@ -15,23 +15,9 @@ final class Key implements JsonSerializable, Stringable
         public MetricType $type,
         public AggregationWindow $window,
         public DimensionCollection $dimensions,
-        public ?int $slot = null,
-        public ?string $prefix = null,
+        public ?int $slot = null
     ) {
         $this->slot = $this->slot ?? $this->window->timeslot(now());
-    }
-
-    public static function withPrefix(self $key, string $prefix): string
-    {
-        return sprintf(
-            "%s:%s:%s:%s:%d:%s",
-            $prefix,
-            $key->name->value,
-            $key->type->value,
-            $key->window->value,
-            $key->slot,
-            $key->dimensions
-        );
     }
 
     public static function decode(string $key): self
@@ -93,10 +79,6 @@ final class Key implements JsonSerializable, Stringable
 
     public function __toString(): string
     {
-        if ($this->prefix) {
-            return self::withPrefix($this, $this->prefix);
-        }
-
         return sprintf(
             "%s:%s:%s:%d:%s",
             $this->name->value,
