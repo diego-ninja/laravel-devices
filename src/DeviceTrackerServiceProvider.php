@@ -2,8 +2,8 @@
 
 namespace Ninja\DeviceTracker;
 
-use Config;
 use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Ninja\DeviceTracker\Console\Commands\CacheInvalidateCommand;
