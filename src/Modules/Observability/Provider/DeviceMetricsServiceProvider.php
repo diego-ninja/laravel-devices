@@ -23,7 +23,10 @@ use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Histogram;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Rate;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Summary;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Registry;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Storage\Contracts\MetricStorage;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Storage\Contracts\StateStorage;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Storage\RedisMetricStorage;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Storage\RedisStateStorage;
 use Ninja\DeviceTracker\Modules\Observability\Processors\MetricProcessor;
 use Ninja\DeviceTracker\Modules\Observability\Processors\TypeProcessor;
 use Ninja\DeviceTracker\Modules\Observability\Processors\WindowProcessor;
@@ -34,8 +37,18 @@ final class DeviceMetricsServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
-        $this->app->singleton(RedisMetricStorage::class, function ($app) {
+        $this->app->singleton(MetricStorage::class, function ($app) {
             return new RedisMetricStorage(config('devices.metrics.aggregation.prefix'));
+        });
+
+        $this->app->singleton(StateStorage::class, function ($app) {
+            return new RedisStateStorage(config('devices.metrics.aggregation.prefix'));
+        });
+
+        $this->app->singleton(StateManager::class, function ($app) {
+            return new StateManager(
+                $app->make(MetricStorage::class)
+            );
         });
 
         $this->app->singleton(MetricAggregationRepository::class, function () {
@@ -51,14 +64,14 @@ final class DeviceMetricsServiceProvider extends ServiceProvider
         $this->app->singleton(MetricProcessor::class, function ($app) {
             return new MetricProcessor(
                 $app->make(MetricMerger::class),
-                $app->make(RedisMetricStorage::class)
+                $app->make(MetricStorage::class)
             );
         });
 
         $this->app->singleton(TypeProcessor::class, function ($app) {
             return new TypeProcessor(
                 $app->make(MetricProcessor::class),
-                $app->make(RedisMetricStorage::class)
+                $app->make(MetricStorage::class)
             );
         });
 
@@ -66,20 +79,21 @@ final class DeviceMetricsServiceProvider extends ServiceProvider
             return new WindowProcessor(
                 $app->make(TypeProcessor::class),
                 $app->make(MetricMerger::class),
+                $app->make(MetricStorage::class),
                 $app->make(StateManager::class)
             );
         });
 
         $this->app->singleton(MetricAggregator::class, function ($app) {
             return new MetricAggregator(
-                $app->make(RedisMetricStorage::class)
+                $app->make(MetricStorage::class)
             );
         });
 
         $this->app->singleton(MetricManager::class, function ($app) {
             return new MetricManager(
                 $app->make(WindowProcessor::class),
-                $app->make(RedisMetricStorage::class),
+                $app->make(MetricStorage::class),
                 $app->make(StateManager::class)
             );
         });

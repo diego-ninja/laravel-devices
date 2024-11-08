@@ -455,6 +455,27 @@ return [
     ],
 
     'metrics' => [
+        'storage' => [
+            'driver' => 'redis',
+            'prefix' => 'device_metrics',
+            'connection' => 'default',
+            'memory' => [
+                'max_size' => 10000,
+            ]
+        ],
+        'processing' => [
+            'driver' => 'scheduler',
+            'workers' => [
+                'mode' => 'auto', // single, auto, fixed
+                'connection' => 'device_metrics',
+                'concurrency' => 1,
+            ],
+        ],
+        'state' => [
+            'driver' => 'redis',
+            'prefix' => 'device_metrics',
+            'connection' => 'default',
+        ],
         'enabled' => [
             \Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\DeviceCount::class,
             \Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\VerifiedDeviceCount::class,

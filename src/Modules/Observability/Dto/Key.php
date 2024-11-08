@@ -6,6 +6,7 @@ use JsonSerializable;
 use Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
+use Ninja\DeviceTracker\Modules\Observability\ValueObjects\TimeWindow;
 use Stringable;
 
 final class Key implements JsonSerializable, Stringable
@@ -64,6 +65,14 @@ final class Key implements JsonSerializable, Stringable
             window: AggregationWindow::from($data['window']),
             dimensions: DimensionCollection::from($data['dimensions']),
             slot: $data['slot']
+        );
+    }
+
+    public function asTimeWindow(): TimeWindow
+    {
+        return TimeWindow::fromSlot(
+            slot: $this->slot,
+            window: $this->window
         );
     }
 

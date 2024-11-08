@@ -14,6 +14,7 @@ use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Exceptions\InvalidMetricException;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\HandlerFactory;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Registry;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Storage\Contracts\MetricStorage;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Storage\RedisMetricStorage;
 use Throwable;
 
@@ -29,7 +30,7 @@ final readonly class MetricAggregator
 {
     private Collection $windows;
 
-    public function __construct(private RedisMetricStorage $storage)
+    public function __construct(private MetricStorage $storage)
     {
         $this->windows = collect(config("devices.metrics.aggregation.windows", [
             AggregationWindow::Realtime,

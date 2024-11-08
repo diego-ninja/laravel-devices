@@ -65,7 +65,7 @@ final readonly class TimeWindow implements JsonSerializable, Stringable
 
     public function duration(): int
     {
-        return $this->to->diffInSeconds($this->from);
+        return $this->from->diffInSeconds($this->to);
     }
 
     public function contains(Carbon $timestamp): bool
@@ -116,5 +116,15 @@ final readonly class TimeWindow implements JsonSerializable, Stringable
     public function jsonSerialize(): array
     {
         return $this->array();
+    }
+
+    public function key(string $prefix): string
+    {
+        return sprintf(
+            '%s:*:%s:%d:*',
+            $prefix,
+            $this->window->value,
+            $this->slot
+        );
     }
 }

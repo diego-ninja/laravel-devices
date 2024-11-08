@@ -8,9 +8,11 @@ use Illuminate\Support\Facades\Redis;
 use Ninja\DeviceTracker\Modules\Observability\Dto\Key;
 use Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Storage\Contracts\MetricStorage;
+use Ninja\DeviceTracker\Modules\Observability\ValueObjects\TimeWindow;
 use Throwable;
 
-final readonly class RedisMetricStorage
+final readonly class RedisMetricStorage implements MetricStorage
 {
     public function __construct(private string $prefix)
     {
@@ -70,14 +72,22 @@ final readonly class RedisMetricStorage
         }
     }
 
-    public function keys(string $pattern): array
+    public function keys(?string $pattern = null): array
     {
+        if (empty($pattern)) {
+            $pattern = sprintf('%s:*', $this->prefix);
+        }
+
         $keys = Redis::keys($this->prefix($pattern)) ?: [];
         return array_map(fn($key) => $this->strip($key), $keys);
     }
 
-    public function delete(array $keys): void
+    public function delete(TimeWindow|array $keys): void
     {
+        if ($keys instanceof TimeWindow) {
+            $keys = $this->keys($keys->key($this->prefix));
+        }
+
         if (empty($keys)) {
             return;
         }
@@ -108,6 +118,11 @@ final readonly class RedisMetricStorage
             'total' => array_sum($counts),
             'by_type' => $counts
         ];
+    }
+
+    public function expired(TimeWindow $window): bool
+    {
+        return $window->to->lt(now());
     }
 
     public function prune(AggregationWindow $window, Carbon $before): int

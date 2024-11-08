@@ -8,7 +8,7 @@ use Log;
 use Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\HandlerFactory;
-use Ninja\DeviceTracker\Modules\Observability\Metrics\Storage\RedisMetricStorage;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Storage\Contracts\MetricStorage;
 use Ninja\DeviceTracker\Modules\Observability\Processors\Items\Window;
 use Ninja\DeviceTracker\Modules\Observability\Processors\WindowProcessor;
 use Ninja\DeviceTracker\Modules\Observability\ValueObjects\TimeWindow;
@@ -18,7 +18,7 @@ final readonly class MetricManager
 {
     public function __construct(
         private WindowProcessor $windowProcessor,
-        private RedisMetricStorage $storage,
+        private MetricStorage $storage,
         private StateManager $stateManager
     ) {
     }

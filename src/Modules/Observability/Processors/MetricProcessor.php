@@ -7,7 +7,7 @@ use Ninja\DeviceTracker\Modules\Observability\Dto\Key;
 use Ninja\DeviceTracker\Modules\Observability\Exceptions\MetricHandlerNotFoundException;
 use Ninja\DeviceTracker\Modules\Observability\MetricMerger;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\HandlerFactory;
-use Ninja\DeviceTracker\Modules\Observability\Metrics\Storage\RedisMetricStorage;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Storage\Contracts\MetricStorage;
 use Ninja\DeviceTracker\Modules\Observability\Processors\Contracts\Processable;
 use Ninja\DeviceTracker\Modules\Observability\Processors\Contracts\Processor;
 use Ninja\DeviceTracker\Modules\Observability\Processors\Items\Metric;
@@ -17,7 +17,7 @@ final readonly class MetricProcessor implements Processor
 {
     public function __construct(
         private MetricMerger $merger,
-        private RedisMetricStorage $storage
+        private MetricStorage $storage
     ) {
     }
 
