@@ -47,7 +47,7 @@ final class WindowProcessor implements Processor
 
             $this->state->success($window);
         } catch (Throwable $e) {
-            $this->state->error($window);
+            $this->state->error($window->window);
             throw $e;
         }
     }

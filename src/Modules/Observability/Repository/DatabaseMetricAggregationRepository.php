@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use DB;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricAggregationRepository;
 use Ninja\DeviceTracker\Modules\Observability\Dto\Dimension;
@@ -15,6 +16,7 @@ use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\ValueObjects\MetricCriteria;
 use Ninja\DeviceTracker\Modules\Observability\ValueObjects\TimeRange;
+use Throwable;
 
 class DatabaseMetricAggregationRepository implements MetricAggregationRepository
 {
@@ -23,16 +25,12 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
     public function store(
         MetricName $name,
         MetricType $type,
-        float|string $value,
+        float|string|array $value,
         DimensionCollection $dimensions,
         Carbon $timestamp,
         AggregationWindow $window
     ): void {
-        $storedValue = match ($type) {
-            MetricType::Summary,
-            MetricType::Histogram => is_string($value) ? $value : json_encode($value),
-            default => (string) $value
-        };
+        $storedValue = $this->formatValueForStorage($type, $value);
 
         DB::table(self::METRIC_AGGREGATION_TABLE)->insert([
             'name' => $name->value,
@@ -55,7 +53,13 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
         return $this->buildQuery($name, $dimensions, $window, $from, $to)
             ->orderBy('timestamp')
             ->get()
-            ->map(fn($metric) => $this->formatMetricFromStorage($metric));
+            ->map(function ($metric) {
+                $metric->value = $this->parseStoredValue(
+                    MetricType::from($metric->type),
+                    $metric->value
+                );
+                return $metric;
+            });
     }
 
     public function latest(
@@ -213,7 +217,7 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
         string $aggregation,
         ?TimeRange $timeRange = null,
         ?DimensionCollection $dimensions = null
-    ): mixed {
+    ): float {
         $query = $this->buildQuery($name, $dimensions);
 
         if ($timeRange) {
@@ -291,14 +295,31 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
 
     private function formatValueForStorage(MetricType $type, mixed $value): string
     {
-        return match ($type) {
-            MetricType::Counter,
-            MetricType::Gauge => (string) ($value['value'] ?? $value),
-            MetricType::Rate => (string) ($value['rate'] ?? $value),
-            MetricType::Average => (string) ($value['avg'] ?? $value),
-            MetricType::Summary,
-            MetricType::Histogram => is_string($value) ? $value : json_encode($value)
-        };
+        try {
+            return match ($type) {
+                MetricType::Counter,
+                MetricType::Gauge => (string) ($value['value'] ?? $value),
+                MetricType::Rate => (string) ($value['rate'] ?? $value),
+                MetricType::Average => (string) ($value['avg'] ?? $value),
+                MetricType::Summary,
+                MetricType::Histogram => is_string($value) ? $value : json_encode($value)
+            };
+        } catch (Throwable $e) {
+            Log::error('Failed to format metric value', [
+                'type' => $type->value,
+                'value' => json_encode($value),
+                'error' => $e->getMessage()
+            ]);
+            throw new InvalidArgumentException(
+                sprintf(
+                    'Invalid value format for metric type %s: %s',
+                    $type->value,
+                    json_encode($value)
+                ),
+                0,
+                $e
+            );
+        }
     }
 
     private function formatMetricFromStorage(object $metric): array
@@ -332,6 +353,6 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
             return 0.0;
         }
 
-        return is_numeric($value) ? (float)$value : 0.0;
+        return is_numeric($value) ? (float) $value : 0.0;
     }
 }

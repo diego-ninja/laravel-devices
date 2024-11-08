@@ -18,7 +18,7 @@ final class HandlerFactory
      */
     public static function compute(MetricType $type, array $rawValue): float|array
     {
-        $handler = self::$handlers->get($type);
+        $handler = self::handlers()->get($type);
         if (!$handler) {
             throw MetricHandlerNotFoundException::forType($type);
         }
