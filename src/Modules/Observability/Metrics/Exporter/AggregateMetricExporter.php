@@ -40,7 +40,7 @@ final readonly class AggregateMetricExporter extends AbstractMetricExporter
     {
         $windows = AggregationWindow::wide();
         foreach ($windows as $window) {
-            if (!$this->repository->empty($window)) {
+            if ($this->repository->hasMetrics($window)) {
                 return $window;
             }
         }

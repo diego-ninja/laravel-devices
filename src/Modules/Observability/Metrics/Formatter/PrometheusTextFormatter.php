@@ -43,8 +43,7 @@ final readonly class PrometheusTextFormatter
     {
         $labelPairs = [];
         foreach ($metric['labels'] as $label) {
-            [$name, $value] = $label;
-            $labelPairs[] = sprintf('%s="%s"', $name, $this->label($value));
+            $labelPairs[] = sprintf('%s="%s"', $label["name"], $this->label($label["value"]));
         }
 
         $labels = empty($labelPairs) ? '' : '{' . implode(',', $labelPairs) . '}';

@@ -260,12 +260,12 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
         return $this->parseNumericValue($result);
     }
 
-    public function empty(AggregationWindow $window): bool
+    public function hasMetrics(AggregationWindow $window): bool
     {
         return DB::table(self::METRIC_AGGREGATION_TABLE)
             ->where('window', $window->value)
-            ->where('timestamp', '<', now()->sub($window->retention()))
-            ->doesntExist();
+            ->where('timestamp', '>=', now()->sub($window->retention()))
+            ->exists();
     }
 
     public function prune(AggregationWindow $window, Carbon $before): int

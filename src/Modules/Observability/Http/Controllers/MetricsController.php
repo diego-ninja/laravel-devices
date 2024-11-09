@@ -11,7 +11,7 @@ class MetricsController extends Controller
 {
     public function aggregated(AggregateMetricExporter $exporter): Response
     {
-        $this->response($exporter->export());
+        return $this->response($exporter->export());
     }
 
     public function realtime(RealtimeMetricExporter $exporter): Response
