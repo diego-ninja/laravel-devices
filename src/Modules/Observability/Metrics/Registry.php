@@ -8,12 +8,12 @@ use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Exceptions\InvalidMetricException;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\AbstractMetricDefinition;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Providers\Contracts\MetricProvider;
 
 class Registry
 {
     private static bool $initialized = false;
     private static Collection $metrics;
-
 
     /**
      * @throws InvalidMetricException
