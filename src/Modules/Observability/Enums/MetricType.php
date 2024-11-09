@@ -10,6 +10,7 @@ enum MetricType: string
     case Summary = 'summary';
     case Average = 'average';
     case Rate = 'rate';
+    case Percentage = 'percentage';
 
     public static function values(): array
     {
@@ -20,6 +21,7 @@ enum MetricType: string
             self::Summary->value,
             self::Average->value,
             self::Rate->value,
+            self::Percentage->value,
         ];
     }
 
@@ -32,6 +34,7 @@ enum MetricType: string
             self::Summary,
             self::Average,
             self::Rate,
+            self::Percentage,
         ];
     }
 }

@@ -14,7 +14,7 @@ class VerificationRate extends AbstractMetricDefinition
             name: MetricName::DeviceVerificationRate,
             type: MetricType::Rate,
             description: 'Rate of device verifications per hour',
-            unit: 'verifications/hour',
+            unit: 'hour',
             required_dimensions: ['platform_family'],
             allowed_dimensions: [
                 'browser_family',

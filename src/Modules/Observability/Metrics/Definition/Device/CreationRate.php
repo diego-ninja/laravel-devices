@@ -14,7 +14,7 @@ class CreationRate extends AbstractMetricDefinition
             name: MetricName::DeviceCreationRate,
             type: MetricType::Rate,
             description: 'Rate of new device registrations per hour',
-            unit: 'devices/hour',
+            unit: 'hour',
             required_dimensions: ['platform_family'],
             allowed_dimensions: [
                 'browser_family',

@@ -1,10 +1,11 @@
 <?php
 
-namespace Ninja\DeviceTracker\Modules\Observability\ValueObjects;
+namespace Ninja\DeviceTracker\Modules\Observability\Repository;
 
 use Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
+use Ninja\DeviceTracker\Modules\Observability\ValueObjects\TimeRange;
 
 class MetricCriteria
 {

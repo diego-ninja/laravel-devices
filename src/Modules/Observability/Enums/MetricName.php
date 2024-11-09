@@ -26,8 +26,8 @@ enum MetricName: string
     case DeviceCount = 'device_count';
     case HijackedDeviceCount = 'hijacked_device_count';
     case VerifiedDeviceCount = 'verified_device_count';
-    case VerifiedDeviceRate = 'verified_device_rate';
-    case HijackedDeviceRate = 'hijacked_device_rate';
+    case VerifiedDevicePercentage = 'verified_device_percentage';
+    case HijackedDevicePercentage = 'hijacked_device_percentage';
     case RiskScoreAverage = 'risk_score_average';
     case DeviceFingerprintChanges = 'device_fingerprint_changes';
     case DevicePlatformDistribution = 'device_platform_distribution';
@@ -65,4 +65,9 @@ enum MetricName: string
     case BehaviorInteractionRate = 'behavior_interaction_rate';
     case BehaviorSessionFrequency = 'behavior_session_frequency';
     case BehaviorTimeOfDay = 'behavior_time_of_day';
+
+    public function forPrometheus(): string
+    {
+        return str_replace(['.', '-', ' '], '_', strtolower($this->value));
+    }
 }

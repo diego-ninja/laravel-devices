@@ -1,11 +1,6 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Ninja\DeviceTracker\Modules\Fingerprinting\Http\Controllers\FingerprintController;
-
-Route::get('tracking/pixel/{ref}', [FingerprintController::class, 'pixel'])
-    ->name('tracking.pixel')
-    ->middleware('web');
 
 Route::group([
     'as' => 'device::',

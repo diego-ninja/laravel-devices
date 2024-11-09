@@ -114,8 +114,8 @@ final readonly class DeviceMetricCollector
         gauge(MetricName::HijackedDeviceCount->value, $hijacked);
 
         if ($total > 0) {
-            gauge(MetricName::VerifiedDeviceRate->value, $verified / $total * 100);
-            gauge(MetricName::HijackedDeviceRate->value, $hijacked / $total * 100);
+            gauge(MetricName::VerifiedDevicePercentage->value, $verified / $total * 100);
+            gauge(MetricName::HijackedDevicePercentage->value, $hijacked / $total * 100);
         }
 
         $this->distributions();

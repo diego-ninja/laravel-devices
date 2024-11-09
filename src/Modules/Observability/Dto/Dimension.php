@@ -18,6 +18,11 @@ final readonly class Dimension implements \JsonSerializable
         ];
     }
 
+    public function asLabel(): array
+    {
+        return [$this->name => $this->value];
+    }
+
     public static function from(string|array|Dimension $data): self
     {
         if ($data instanceof self) {

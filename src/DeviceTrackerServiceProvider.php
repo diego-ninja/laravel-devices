@@ -41,6 +41,10 @@ class DeviceTrackerServiceProvider extends ServiceProvider
 
         if (Config::get('devices.load_routes')) {
             $this->loadRoutesFrom(__DIR__ . '/../routes/devices.php');
+
+            if (Config::get('devices.observability_enabled')) {
+                $this->loadRoutesFrom(__DIR__ . '/../routes/metrics.php');
+            }
         }
     }
 

@@ -14,7 +14,7 @@ use Ninja\DeviceTracker\Modules\Observability\Dto\DimensionCollection;
 use Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
-use Ninja\DeviceTracker\Modules\Observability\ValueObjects\MetricCriteria;
+use Ninja\DeviceTracker\Modules\Observability\Repository\Dto\Metric;
 use Ninja\DeviceTracker\Modules\Observability\ValueObjects\TimeRange;
 use Throwable;
 
@@ -66,12 +66,12 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
         MetricName $name,
         ?DimensionCollection $dimensions = null,
         ?AggregationWindow $window = null
-    ): ?array {
+    ): ?Metric {
         $result = $this->buildQuery($name, $dimensions, $window)
             ->latest('timestamp')
             ->first();
 
-        return $result ? $this->formatMetricFromStorage($result) : null;
+        return $result ? Metric::from($result) : null;
     }
 
     public function findByType(MetricType $type): Collection
@@ -80,7 +80,7 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
             ->where('type', $type->value)
             ->orderBy('timestamp')
             ->get()
-            ->map(fn($metric) => $this->formatMetricFromStorage($metric));
+            ->map(fn($data) => Metric::from($data));
     }
 
     public function findByTimeRange(TimeRange $timeRange, array $names = []): Collection
@@ -95,7 +95,7 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
         return $query
             ->orderBy('timestamp')
             ->get()
-            ->map(fn($metric) => $this->formatMetricFromStorage($metric));
+            ->map(fn($metric) => Metric::from($metric));
     }
 
     public function findByCriteria(MetricCriteria $criteria): Collection
@@ -134,7 +134,7 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
         return $query
             ->orderBy('timestamp')
             ->get()
-            ->map(fn($metric) => $this->formatMetricFromStorage($metric));
+            ->map(fn($metric) => Metric::from($metric));
     }
 
     public function stats(
@@ -329,20 +329,6 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
                 $e
             );
         }
-    }
-
-    private function formatMetricFromStorage(object $metric): array
-    {
-        $type = MetricType::from($metric->type);
-
-        return [
-            'name' => $metric->name,
-            'type' => $metric->type,
-            'value' => $this->parseStoredValue($type, $metric->value),
-            'dimensions' => json_decode($metric->dimensions, true),
-            'timestamp' => Carbon::parse($metric->timestamp),
-            'window' => $metric->window
-        ];
     }
 
     private function parseStoredValue(MetricType $type, string $value): mixed
