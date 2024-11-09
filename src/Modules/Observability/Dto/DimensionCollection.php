@@ -8,7 +8,7 @@ final class DimensionCollection extends Collection implements \JsonSerializable,
 {
     public function array(): array
     {
-        return $this->map->array()->all();
+        return $this->toArray();
     }
 
     public static function from(string|array $data): self

@@ -3,7 +3,6 @@
 namespace Ninja\DeviceTracker\Modules\Observability\Processors;
 
 use InvalidArgumentException;
-use Ninja\DeviceTracker\Modules\Observability\Dto\Key;
 use Ninja\DeviceTracker\Modules\Observability\Exceptions\MetricHandlerNotFoundException;
 use Ninja\DeviceTracker\Modules\Observability\MetricMerger;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\HandlerFactory;
@@ -31,18 +30,17 @@ final readonly class MetricProcessor implements Processor
             throw new InvalidArgumentException('Invalid processable type');
         }
 
-        $metadata = Key::decode($item->key());
-        $value = $this->storage->value($item->key(), $item->type());
+        $value = $this->storage->value($item->key());
 
         if (empty($value)) {
             return;
         }
 
         $this->merger->store(
-            name: $metadata->name,
-            type: $item->type(),
-            value: HandlerFactory::compute($item->type(), $value),
-            dimensions: $metadata->dimensions,
+            name: $item->key()->name,
+            type: $item->key()->type,
+            value: HandlerFactory::compute($item->key()->type, $value),
+            dimensions: $item->key()->dimensions,
             timeWindow: $item->window()
         );
     }

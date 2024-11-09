@@ -42,6 +42,19 @@ enum AggregationWindow: string
         };
     }
 
+    public function pattern(?Carbon $timestamp = null): string
+    {
+        if ($timestamp) {
+            return sprintf(
+                '*:*:%s:%d:*',
+                $this->value,
+                $this->timeslot($timestamp)
+            );
+        }
+
+        return sprintf('*:*:%s:*:*', $this->value);
+    }
+
     public function next(): ?AggregationWindow
     {
         return match ($this) {

@@ -16,9 +16,11 @@ final class Key implements JsonSerializable, Stringable
         public MetricType $type,
         public AggregationWindow $window,
         public DimensionCollection $dimensions,
-        public ?int $slot = null
+        public ?int $slot = null,
+        public ?string $prefix = null
     ) {
         $this->slot = $this->slot ?? $this->window->timeslot(now());
+        $this->prefix = $this->prefix ?? config('devices.metrics.aggregation.prefix');
     }
 
     public static function decode(string $key): self
@@ -30,7 +32,7 @@ final class Key implements JsonSerializable, Stringable
                 type: MetricType::from($parts[2]),
                 window: AggregationWindow::from($parts[3]),
                 dimensions: DimensionCollection::from($parts[5]),
-                slot: (int) $parts[4],
+                slot: (int) $parts[4]
             );
         }
 
@@ -88,6 +90,18 @@ final class Key implements JsonSerializable, Stringable
 
     public function __toString(): string
     {
+        if ($this->prefix) {
+            return sprintf(
+                "%s:%s:%s:%s:%d:%s",
+                $this->prefix,
+                $this->name->value,
+                $this->type->value,
+                $this->window->value,
+                $this->slot,
+                $this->dimensions
+            );
+        }
+
         return sprintf(
             "%s:%s:%s:%d:%s",
             $this->name->value,

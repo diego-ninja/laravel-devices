@@ -38,11 +38,16 @@ final class DeviceMetricsServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(MetricStorage::class, function ($app) {
-            return new RedisMetricStorage(config('devices.metrics.aggregation.prefix'));
+            return new RedisMetricStorage(
+                prefix: config('devices.metrics.aggregation.prefix'),
+                connection: config('devices.metrics.storage.connection')
+            );
         });
 
         $this->app->singleton(StateStorage::class, function ($app) {
-            return new RedisStateStorage(config('devices.metrics.aggregation.prefix'));
+            return new RedisStateStorage(
+                prefix: config('devices.metrics.aggregation.prefix')
+            );
         });
 
         $this->app->singleton(StateManager::class, function ($app) {

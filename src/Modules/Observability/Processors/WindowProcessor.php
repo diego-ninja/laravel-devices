@@ -28,7 +28,8 @@ final class WindowProcessor implements Processor
         private readonly TypeProcessor $typeProcessor,
         private readonly MetricMerger $merger,
         private readonly MetricStorage $storage,
-        private readonly StateManager $state
+        private readonly StateManager $state,
+        private readonly bool $processPending = false
     ) {
         $this->keys = collect();
     }
@@ -42,8 +43,10 @@ final class WindowProcessor implements Processor
         try {
             $window = $item->window();
 
-            $this->processPending($window->window);
             $this->processWindow($window);
+            if ($this->processPending) {
+                $this->processPending($window->window);
+            }
         } catch (Throwable $e) {
             $this->state->error($window->window);
             throw $e;
@@ -106,7 +109,7 @@ final class WindowProcessor implements Processor
 
     public function pending(AggregationWindow $windowType): Collection
     {
-        return collect($this->storage->keys())
+        return collect($this->storage->keys($windowType->pattern()))
             ->map(function ($key) {
                 return Key::decode($key)->asTimeWindow();
             })
@@ -114,6 +117,7 @@ final class WindowProcessor implements Processor
                 return
                     $window->window === $windowType &&
                     $window->from->lt(now()) &&
+                    $window->slot < $windowType->timeslot(now()) &&
                     !$this->processed($window);
             })
             ->unique(fn(TimeWindow $w) => $w->slot);

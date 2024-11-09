@@ -56,7 +56,8 @@ final readonly class MetricAggregator
                         name: $name,
                         type: $type,
                         window: $window,
-                        dimensions: $dimensions
+                        dimensions: $dimensions,
+                        prefix: config('devices.metrics.aggregation.prefix')
                     ),
                     $value
                 );
@@ -69,26 +70,6 @@ final readonly class MetricAggregator
                 ]);
             }
         }
-    }
-
-    private function persist(Key $key, float $value): void
-    {
-        Redis::pipeline(function ($pipe) use ($key, $value) {
-            $timestamp = now();
-            match ($key->type) {
-                MetricType::Counter => $pipe->incrbyfloat((string) $key, $value),
-                MetricType::Gauge => $pipe->set((string) $key, $value),
-                MetricType::Histogram,
-                MetricType::Summary,
-                MetricType::Rate => $pipe->zadd((string) $key, $timestamp->timestamp, json_encode([
-                    'value' => $value,
-                    'timestamp' => $timestamp
-                ])),
-                MetricType::Average => $pipe->zadd((string) $key, $timestamp->timestamp, $value)
-            };
-
-            $pipe->expire($key, $key->window->seconds() * 2);
-        });
     }
 
     /**

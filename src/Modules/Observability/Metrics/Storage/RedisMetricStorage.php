@@ -3,6 +3,7 @@
 namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Storage;
 
 use Carbon\Carbon;
+use Illuminate\Redis\Connections\Connection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Ninja\DeviceTracker\Modules\Observability\Dto\Key;
@@ -14,16 +15,19 @@ use Throwable;
 
 final readonly class RedisMetricStorage implements MetricStorage
 {
-    public function __construct(private string $prefix)
+    private Connection $redis;
+
+    public function __construct(private string $prefix, private string $connection = 'default')
     {
+        $this->redis = Redis::connection($this->connection);
     }
 
     public function store(Key $key, float $value): void
     {
-        $metricKey = $this->prefix((string) $key);
+        $metricKey = $this->prefix($key);
 
         try {
-            Redis::pipeline(function ($pipe) use ($key, $metricKey, $value) {
+            $this->redis->pipeline(function ($pipe) use ($key, $metricKey, $value) {
                 $timestamp = now();
 
                 match ($key->type) {
@@ -50,22 +54,29 @@ final readonly class RedisMetricStorage implements MetricStorage
         }
     }
 
-    public function value(string $key, MetricType $type): array
+    public function value(Key $key): array
     {
-        $metricKey = $this->prefix($key);
+        Log::info('Getting metric value', [
+            'key' => (string) $key,
+            'type' => $key->type->value,
+            'value' => Redis::get($key)
+        ]);
+
         try {
-            return match ($type) {
+            $value = match ($key->type) {
                 MetricType::Counter,
-                MetricType::Gauge => [['value' => (float) Redis::get($metricKey)]],
+                MetricType::Gauge => [['value' => (float) $this->redis->get($key)]],
                 MetricType::Histogram,
-                MetricType::Average => $this->histogram($metricKey),
+                MetricType::Average => $this->histogram($key),
                 MetricType::Summary,
-                MetricType::Rate => $this->timestamped($metricKey)
+                MetricType::Rate => $this->timestamped($key)
             };
+
+            return $value;
         } catch (Throwable $e) {
             Log::error('Failed to get metric value', [
-                'key' => $key,
-                'type' => $type->value,
+                'key' => (string) $key,
+                'type' => $key->type->value,
                 'error' => $e->getMessage()
             ]);
             return [];
@@ -78,7 +89,7 @@ final readonly class RedisMetricStorage implements MetricStorage
             $pattern = sprintf('%s:*', $this->prefix);
         }
 
-        $keys = Redis::keys($this->prefix($pattern)) ?: [];
+        $keys = $this->redis->keys($this->prefix($pattern)) ?: [];
         return array_map(fn($key) => $this->strip($key), $keys);
     }
 
@@ -94,7 +105,7 @@ final readonly class RedisMetricStorage implements MetricStorage
 
         $metricKeys = array_map(fn($key) => $this->prefix($key), $keys);
 
-        Redis::pipeline(function ($pipe) use ($metricKeys) {
+        $this->redis->pipeline(function ($pipe) use ($metricKeys) {
             foreach ($metricKeys as $key) {
                 $pipe->del($key);
             }
@@ -147,8 +158,8 @@ final readonly class RedisMetricStorage implements MetricStorage
     public function health(): array
     {
         try {
-            $info = Redis::info();
-            $keyspace = Redis::info('keyspace');
+            $info = $this->redis->info();
+            $keyspace = $this->redis->info('keyspace');
 
             return [
                 'status' => 'healthy',
@@ -186,7 +197,7 @@ final readonly class RedisMetricStorage implements MetricStorage
 
     private function histogram(string $key): array
     {
-        $values = Redis::zrange($key, 0, -1, ['WITHSCORES' => true]);
+        $values = $this->redis->zrange($key, 0, -1, ['WITHSCORES' => true]);
         if (empty($values)) {
             return [];
         }
@@ -199,7 +210,7 @@ final readonly class RedisMetricStorage implements MetricStorage
 
     private function timestamped(string $key): array
     {
-        $values = Redis::zrange($key, 0, -1, ['WITHSCORES' => true]);
+        $values = $this->redis->zrange($key, 0, -1, ['WITHSCORES' => true]);
         if (empty($values)) {
             return [];
         }
@@ -207,15 +218,17 @@ final readonly class RedisMetricStorage implements MetricStorage
         return array_map(function ($value, $score) {
             $decoded = json_decode($value, true);
             return [
-                'value' => (float)($decoded['value'] ?? $value),
-                'timestamp' => (int)$score
+                'value' => (float) ($decoded['value'] ?? $value),
+                'timestamp' => (int) $score
             ];
         }, array_keys($values), array_values($values));
     }
 
-    private function prefix(string $key): string
+    private function prefix(string|Key $key): string
     {
-        if (str_starts_with($key, $this->prefix . ':')) {
+        $key = $key instanceof Key ? (string) $key : $key;
+
+        if (str_starts_with($key, sprintf("%s:", $this->prefix))) {
             return $key;
         }
 
@@ -224,6 +237,12 @@ final readonly class RedisMetricStorage implements MetricStorage
 
     private function strip(string $key): string
     {
+        $redisPrefix = config('database.redis.options.prefix', '');
+
+        if (str_starts_with($key, $redisPrefix)) {
+            $key = substr($key, strlen($redisPrefix));
+        }
+
         if (str_starts_with($key, $this->prefix . ':')) {
             return substr($key, strlen($this->prefix) + 1);
         }

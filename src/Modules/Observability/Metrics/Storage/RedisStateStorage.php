@@ -3,6 +3,7 @@
 namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Storage;
 
 use Carbon\Carbon;
+use Illuminate\Redis\Connections\Connection;
 use Illuminate\Support\Facades\Redis;
 use Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Storage\Contracts\StateStorage;
@@ -13,13 +14,16 @@ final readonly class RedisStateStorage implements StateStorage
 {
     private string $prefix;
 
-    public function __construct(?string $prefix = null)
+    private Connection $redis;
+
+    public function __construct(?string $prefix = null, string $connection = 'default')
     {
         $this->prefix = $prefix ?: config('devices.metrics.aggregation.prefix');
+        $this->redis = Redis::connection($connection);
     }
     public function get(string $key): ?string
     {
-        return Redis::get($this->prefix($key));
+        return $this->redis->get($this->prefix($key));
     }
 
     public function set(string $key, string $value, ?int $ttl = null): void
@@ -27,45 +31,45 @@ final readonly class RedisStateStorage implements StateStorage
         $key = $this->prefix($key);
 
         if ($ttl) {
-            Redis::setex($key, $ttl, $value);
+            $this->redis->setex($key, $ttl, $value);
         } else {
-            Redis::set($key, $value);
+            $this->redis->set($key, $value);
         }
     }
 
     public function increment(string $key): int
     {
-        return (int) Redis::incr($this->prefix($key));
+        return (int) $this->redis->incr($this->prefix($key));
     }
 
     public function delete(string $key): void
     {
-        Redis::del($this->prefix($key));
+        $this->redis->del($this->prefix($key));
     }
 
     public function hSet(string $key, string $field, string $value): void
     {
-        Redis::hset($this->prefix($key), $field, $value);
+        $this->redis->hset($this->prefix($key), $field, $value);
     }
 
     public function hGet(string $key, string $field): ?string
     {
-        return Redis::hget($this->prefix($key), $field);
+        return $this->redis->hget($this->prefix($key), $field);
     }
 
     public function hExists(string $key, string $field): bool
     {
-        return (bool) Redis::hexists($this->prefix($key), $field);
+        return (bool) $this->redis->hexists($this->prefix($key), $field);
     }
 
     public function hGetAll(string $key): array
     {
-        return Redis::hgetall($this->prefix($key)) ?: [];
+        return $this->redis->hgetall($this->prefix($key)) ?: [];
     }
 
     public function hDel(string $key, string $field): void
     {
-        Redis::hdel($this->prefix($key), $field);
+        $this->redis->hdel($this->prefix($key), $field);
     }
     public function clean(): int
     {
@@ -75,14 +79,14 @@ final readonly class RedisStateStorage implements StateStorage
     public function state(AggregationWindow $window): array
     {
         $pattern = $this->prefix(sprintf('window:%s:*', $window->value));
-        $keys = Redis::keys($pattern);
+        $keys = $this->redis->keys($pattern);
 
         $state = [];
 
         foreach ($keys as $key => $data) {
             $$key = $this->strip($key);
             $windowKey = str_replace(sprintf("window:%s:", $window->value), '', $key);
-            $state[$windowKey] = Redis::get($key);
+            $state[$windowKey] = $this->redis->get($key);
         }
 
         return $state;
@@ -90,7 +94,7 @@ final readonly class RedisStateStorage implements StateStorage
 
     public function pipeline(callable $callback): array
     {
-        return Redis::pipeline($callback);
+        return $this->redis->pipeline($callback);
     }
 
     public function batch(array $operations): void
@@ -111,7 +115,7 @@ final readonly class RedisStateStorage implements StateStorage
     public function lock(string $key, int $timeout = 10): bool
     {
         $lockKey = $this->prefix(sprintf('lock:%s', $key));
-        return (bool) Redis::set($lockKey, '1', 'NX', 'EX', $timeout);
+        return (bool) $this->redis->set($lockKey, '1', 'NX', 'EX', $timeout);
     }
 
     /**
@@ -120,7 +124,7 @@ final readonly class RedisStateStorage implements StateStorage
     public function release(string $key): void
     {
         $lockKey = $this->prefix(sprintf('lock:%s', $key));
-        Redis::del($lockKey);
+        $this->redis->del($lockKey);
     }
 
     public function withLock(string $key, callable $callback, int $timeout = 10): mixed
@@ -142,7 +146,7 @@ final readonly class RedisStateStorage implements StateStorage
         $normalizedPattern = $this->prefix($pattern);
 
         do {
-            [$cursor, $keys] = Redis::scan($cursor, [
+            [$cursor, $keys] = $this->redis->scan($cursor, [
                 'match' => $normalizedPattern,
                 'count' => $count
             ]);
@@ -159,7 +163,7 @@ final readonly class RedisStateStorage implements StateStorage
     public function health(): array
     {
         try {
-            $info = Redis::info();
+            $info = $this->redis->info();
 
             return [
                 'status' => 'healthy',
@@ -186,7 +190,7 @@ final readonly class RedisStateStorage implements StateStorage
 
     private function prefix(string $key): string
     {
-        if (str_starts_with($key, $this->prefix . ':')) {
+        if (str_contains($key, sprintf("%s:", $this->prefix))) {
             return $key;
         }
 

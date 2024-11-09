@@ -4,6 +4,7 @@ namespace Ninja\DeviceTracker\Modules\Observability\Processors;
 
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
+use Ninja\DeviceTracker\Modules\Observability\Dto\Key;
 use Ninja\DeviceTracker\Modules\Observability\Exceptions\MetricHandlerNotFoundException;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Storage\Contracts\MetricStorage;
 use Ninja\DeviceTracker\Modules\Observability\Processors\Contracts\Processable;
@@ -37,8 +38,7 @@ final readonly class TypeProcessor implements Processor
 
         foreach ($keys as $key) {
             $metric = new Metric(
-                $key,
-                $item->type(),
+                Key::decode($key),
                 $item->window()
             );
 
