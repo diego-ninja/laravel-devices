@@ -5,6 +5,7 @@ namespace Ninja\DeviceTracker\Modules\Observability\Provider;
 use Carbon\Laravel\ServiceProvider;
 use Event;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Support\Facades\Config;
 use Ninja\DeviceTracker\Events\DeviceCreatedEvent;
 use Ninja\DeviceTracker\Events\DeviceDeletedEvent;
 use Ninja\DeviceTracker\Events\DeviceHijackedEvent;
@@ -107,6 +108,10 @@ final class DeviceMetricsServiceProvider extends ServiceProvider
         $this->app->singleton(DeviceMetricCollector::class, function ($app) {
             return new DeviceMetricCollector();
         });
+
+        if (config('devices.observability.enabled') && config('devices.load_routes')) {
+            $this->loadRoutesFrom(__DIR__ . '/../../../../routes/metrics.php');
+        }
     }
 
     public function boot(): void

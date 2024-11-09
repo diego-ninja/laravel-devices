@@ -21,7 +21,7 @@ readonly class Metric implements JsonSerializable
     ) {
     }
 
-    public static function from(string|array|Metric $data): self
+    public static function from(string|array|\stdClass|Metric $data): self
     {
         if ($data instanceof self) {
             return $data;
@@ -31,12 +31,16 @@ readonly class Metric implements JsonSerializable
             $data = json_decode($data, true);
         }
 
+        if ($data instanceof \stdClass) {
+            $data = (array) $data;
+        }
+
         return new self(
             name: MetricName::tryFrom($data['name']),
             type: MetricType::tryFrom($data['type']),
             value: $data['value'],
             timestamp: Carbon::parse($data['timestamp']),
-            dimensions: DimensionCollection::from($data['dimensions']),
+            dimensions: DimensionCollection::from(json_decode($data['dimensions'], true)),
             window: AggregationWindow::tryFrom($data['window']),
         );
     }

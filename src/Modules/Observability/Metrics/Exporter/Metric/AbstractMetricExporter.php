@@ -41,9 +41,9 @@ abstract readonly class AbstractMetricExporter implements Exportable
 
     public function labels(): array
     {
-        return $this->dimensions->each(function (Dimension $dimension) {
-            return $dimension->asLabel();
-        });
+        return $this->dimensions->map(function (Dimension $dimension) {
+            return $dimension->array();
+        })->toArray();
     }
 
     public function value(?string $key = null): string

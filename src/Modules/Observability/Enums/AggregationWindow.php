@@ -3,6 +3,7 @@
 namespace Ninja\DeviceTracker\Modules\Observability\Enums;
 
 use Carbon\Carbon;
+use DateInterval;
 
 enum AggregationWindow: string
 {
@@ -21,6 +22,26 @@ enum AggregationWindow: string
             self::Weekly => 604800,
             self::Monthly => 2592000,
         };
+    }
+
+    public function interval(): DateInterval
+    {
+        return match ($this) {
+            self::Realtime => new DateInterval('PT1M'),
+            self::Hourly => new DateInterval('PT1H'),
+            self::Daily => new DateInterval('P1D'),
+            self::Weekly => new DateInterval('P1W'),
+            self::Monthly => new DateInterval('P1M')
+        };
+    }
+
+    public function retention(): DateInterval
+    {
+        return DateInterval::createFromDateString(
+            config(
+                sprintf('devices.observability.aggregation.retention.%s', $this->value),
+            )
+        );
     }
 
     public function timeslot(?Carbon $timestamp = null): int
@@ -74,6 +95,28 @@ enum AggregationWindow: string
             self::Daily->value,
             self::Weekly->value,
             self::Monthly->value,
+        ];
+    }
+
+    public static function wide(): array
+    {
+        return [
+            self::Monthly,
+            self::Weekly,
+            self::Daily,
+            self::Hourly,
+            self::Realtime,
+        ];
+    }
+
+    public static function narrow(): array
+    {
+        return [
+            self::Realtime,
+            self::Hourly,
+            self::Daily,
+            self::Weekly,
+            self::Monthly,
         ];
     }
 }

@@ -80,7 +80,22 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
             ->where('type', $type->value)
             ->orderBy('timestamp')
             ->get()
-            ->map(fn($data) => Metric::from($data));
+            ->map(function (\stdClass $metric) {
+                return Metric::from($metric);
+            });
+    }
+
+    public function findByTypeAndWindow(MetricType $type, AggregationWindow $window): Collection
+    {
+        return DB::table(self::METRIC_AGGREGATION_TABLE)
+            ->where('type', $type->value)
+            ->where('window', $window->value)
+            ->where('timestamp', '>=', now()->sub($window->retention()))
+            ->orderBy('timestamp')
+            ->get()
+            ->map(function (\stdClass $metric) {
+                return Metric::from($metric);
+            });
     }
 
     public function findByTimeRange(TimeRange $timeRange, array $names = []): Collection
@@ -244,6 +259,15 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
 
         return $this->parseNumericValue($result);
     }
+
+    public function empty(AggregationWindow $window): bool
+    {
+        return DB::table(self::METRIC_AGGREGATION_TABLE)
+            ->where('window', $window->value)
+            ->where('timestamp', '<', now()->sub($window->retention()))
+            ->doesntExist();
+    }
+
     public function prune(AggregationWindow $window, Carbon $before): int
     {
         return DB::table(self::METRIC_AGGREGATION_TABLE)

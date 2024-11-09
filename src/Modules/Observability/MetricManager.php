@@ -58,8 +58,7 @@ final readonly class MetricManager
         }
 
         try {
-            $retention = $this->getRetentionPeriod($window);
-            $before = now()->sub($retention);
+            $before = now()->sub($window->retention());
 
             $prunedCount = $this->storage->prune($window, $before);
 
@@ -91,7 +90,7 @@ final readonly class MetricManager
                         'last_processing' => $this->last($window)?->toDateTimeString(),
                         'error_count' => $this->errors($window),
                         'interval_seconds' => $window->seconds(),
-                        'retention_period' => $this->getRetentionPeriod($window)
+                        'retention_period' => $window->retention()->days
                     ]
                 ])->all(),
             'metrics_count' => $this->count(),
@@ -139,14 +138,6 @@ final readonly class MetricManager
     private function enabled(AggregationWindow $window): bool
     {
         return $this->windows()->contains($window);
-    }
-
-    private function getRetentionPeriod(AggregationWindow $window): string
-    {
-        return config(
-            sprintf('devices.observability.retention.%s', $window->value),
-            '7 days'
-        );
     }
 
     private function count(): array
