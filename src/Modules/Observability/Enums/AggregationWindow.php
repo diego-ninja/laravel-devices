@@ -12,6 +12,8 @@ enum AggregationWindow: string
     case Daily = 'daily';
     case Weekly = 'weekly';
     case Monthly = 'monthly';
+    case Yearly = 'yearly';
+
 
     public function seconds(): int
     {
@@ -21,6 +23,7 @@ enum AggregationWindow: string
             self::Daily => 86400,
             self::Weekly => 604800,
             self::Monthly => 2592000,
+            self::Yearly => 31536000,
         };
     }
 
@@ -31,7 +34,8 @@ enum AggregationWindow: string
             self::Hourly => new DateInterval('PT1H'),
             self::Daily => new DateInterval('P1D'),
             self::Weekly => new DateInterval('P1W'),
-            self::Monthly => new DateInterval('P1M')
+            self::Monthly => new DateInterval('P1M'),
+            self::Yearly => new DateInterval('P1Y'),
         };
     }
 
@@ -55,6 +59,7 @@ enum AggregationWindow: string
     public function previous(): ?AggregationWindow
     {
         return match ($this) {
+            self::Yearly => self::Monthly,
             self::Monthly => self::Weekly,
             self::Weekly => self::Daily,
             self::Daily => self::Hourly,
@@ -83,6 +88,7 @@ enum AggregationWindow: string
             self::Hourly => self::Daily,
             self::Daily => self::Weekly,
             self::Weekly => self::Monthly,
+            self::Monthly => self::Yearly,
             default => null,
         };
     }
@@ -95,12 +101,14 @@ enum AggregationWindow: string
             self::Daily->value,
             self::Weekly->value,
             self::Monthly->value,
+            self::Yearly->value,
         ];
     }
 
     public static function wide(): array
     {
         return [
+            self::Yearly,
             self::Monthly,
             self::Weekly,
             self::Daily,
@@ -117,6 +125,7 @@ enum AggregationWindow: string
             self::Daily,
             self::Weekly,
             self::Monthly,
+            self::Yearly,
         ];
     }
 }
