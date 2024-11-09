@@ -71,7 +71,7 @@ final class HandlerFactory
         self::$handlers->add(
             MetricType::Histogram,
             new Histogram(
-                config('devices.metrics.buckets', [])
+                config('devices.observability.buckets', [])
             )
         );
 
@@ -83,14 +83,14 @@ final class HandlerFactory
         self::$handlers->add(
             MetricType::Rate,
             new Rate(
-                config('devices.metrics.rate_interval', 3600)
+                config('devices.observability.rate_interval', 3600)
             )
         );
 
         self::$handlers->add(
             MetricType::Summary,
             new Summary(
-                config('devices.metrics.quantiles', [0.5, 0.9, 0.95, 0.99])
+                config('devices.observability.quantiles', [0.5, 0.9, 0.95, 0.99])
             )
         );
     }

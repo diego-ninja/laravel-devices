@@ -74,6 +74,15 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
         return $result ? $this->formatMetricFromStorage($result) : null;
     }
 
+    public function findByType(MetricType $type): Collection
+    {
+        return DB::table(self::METRIC_AGGREGATION_TABLE)
+            ->where('type', $type->value)
+            ->orderBy('timestamp')
+            ->get()
+            ->map(fn($metric) => $this->formatMetricFromStorage($metric));
+    }
+
     public function findByTimeRange(TimeRange $timeRange, array $names = []): Collection
     {
         $query = DB::table(self::METRIC_AGGREGATION_TABLE)

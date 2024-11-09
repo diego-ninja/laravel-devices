@@ -4,6 +4,7 @@ namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device;
 
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
+use Ninja\DeviceTracker\Modules\Observability\Enums\Quantile;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\AbstractMetricDefinition;
 
 class VerificationLatencyDistribution extends AbstractMetricDefinition
@@ -20,9 +21,9 @@ class VerificationLatencyDistribution extends AbstractMetricDefinition
                 'browser_family',
                 'device_type',
             ],
-            quantiles: [0.5, 0.75, 0.90, 0.95, 0.99],
-            min: 0, // 7 días
-            max: 86400 * 7 // Ahora sí es soportado por AbstractMetricDefinition
+            quantiles: Quantile::scale(),
+            min: 0,
+            max: 86400 * 7
         );
     }
 }

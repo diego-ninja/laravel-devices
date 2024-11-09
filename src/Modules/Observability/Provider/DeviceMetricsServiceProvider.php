@@ -39,14 +39,15 @@ final class DeviceMetricsServiceProvider extends ServiceProvider
     {
         $this->app->singleton(MetricStorage::class, function ($app) {
             return new RedisMetricStorage(
-                prefix: config('devices.metrics.aggregation.prefix'),
-                connection: config('devices.metrics.storage.connection')
+                prefix: config('devices.observability.prefix'),
+                connection: config('devices.observability.storage.connection')
             );
         });
 
         $this->app->singleton(StateStorage::class, function ($app) {
             return new RedisStateStorage(
-                prefix: config('devices.metrics.aggregation.prefix')
+                prefix: config('devices.observability.prefix'),
+                connection: config('devices.observability.state.connection')
             );
         });
 
@@ -112,13 +113,17 @@ final class DeviceMetricsServiceProvider extends ServiceProvider
     {
         Registry::initialize();
         $this->listen();
+        $this->schedule();
 
         if ($this->app->runningInConsole()) {
             $this->commands([
                 ProcessMetricsCommand::class
             ]);
         }
+    }
 
+    private function schedule(): void
+    {
         $this->app->booted(function () {
             $schedule = $this->app->make(Schedule::class);
 

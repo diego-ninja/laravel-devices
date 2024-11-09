@@ -19,7 +19,7 @@ class StateManager
         private readonly StateStorage $storage,
         private string $prefix = '',
     ) {
-        $this->prefix = $prefix ?: config('devices.metrics.aggregation.prefix');
+        $this->prefix = $prefix ?: config('devices.observability.prefix');
     }
 
     public function success(TimeWindow $window): void

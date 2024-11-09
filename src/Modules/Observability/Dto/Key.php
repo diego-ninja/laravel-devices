@@ -20,7 +20,7 @@ final class Key implements JsonSerializable, Stringable
         public ?string $prefix = null
     ) {
         $this->slot = $this->slot ?? $this->window->timeslot(now());
-        $this->prefix = $this->prefix ?? config('devices.metrics.aggregation.prefix');
+        $this->prefix = $this->prefix ?? config('devices.observability.prefix');
     }
 
     public static function decode(string $key): self

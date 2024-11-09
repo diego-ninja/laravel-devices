@@ -112,7 +112,7 @@ final class ProcessMetricsCommand extends Command
         }
 
         $retention = config(
-            sprintf('devices.metrics.retention.%s', $window->value),
+            sprintf('devices.observability.aggregation.retention.%s', $window->value),
             '7 days'
         );
 
@@ -139,7 +139,7 @@ final class ProcessMetricsCommand extends Command
                 ['Last Processing', $this->processor->state()->last($window)?->diffForHumans() ?? 'Never'],
                 ['Error Count', $this->processor->state()->errors($window)],
                 ['Window Type', $window->value],
-                ['Retention Period', config(sprintf('devices.metrics.retention.%s', $window->value), '7 days')],
+                ['Retention Period', config(sprintf('devices.observability.aggregation.retention.%s', $window->value), '7 days')],
                 ['Pending Windows', $this->processor->pending($window)->count()]
             ]
         );

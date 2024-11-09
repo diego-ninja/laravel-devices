@@ -18,7 +18,7 @@ final readonly class RedisStateStorage implements StateStorage
 
     public function __construct(?string $prefix = null, string $connection = 'default')
     {
-        $this->prefix = $prefix ?: config('devices.metrics.aggregation.prefix');
+        $this->prefix = $prefix ?: config('devices.observability.prefix');
         $this->redis = Redis::connection($connection);
     }
     public function get(string $key): ?string

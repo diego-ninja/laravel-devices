@@ -130,7 +130,7 @@ final readonly class MetricManager
 
     private function windows(): Collection
     {
-        return collect(config('devices.metrics.aggregation.windows', [
+        return collect(config('devices.observability.aggregation.windows', [
             AggregationWindow::Realtime,
             AggregationWindow::Hourly
         ]));
@@ -144,7 +144,7 @@ final readonly class MetricManager
     private function getRetentionPeriod(AggregationWindow $window): string
     {
         return config(
-            sprintf('devices.metrics.retention.%s', $window->value),
+            sprintf('devices.observability.retention.%s', $window->value),
             '7 days'
         );
     }

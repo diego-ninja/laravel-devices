@@ -28,13 +28,13 @@ abstract class AbstractMetricDefinition implements Arrayable
         private readonly ?float $min = null,
         private readonly ?float $max = null,
     ) {
-        $this->allowed_dimensions = array_merge(config('devices.metrics.labels', []), $allowed_dimensions);
+        $this->allowed_dimensions = array_merge(config('devices.observability.dimensions', []), $allowed_dimensions);
         $this->buckets = match ($type) {
-            MetricType::Histogram => $buckets ?: config('devices.metrics.buckets', []),
+            MetricType::Histogram => $buckets ?: config('devices.observability.buckets', []),
             default => []
         };
         $this->quantiles = match ($type) {
-            MetricType::Summary => $quantiles ?: [0.5, 0.9, 0.95, 0.99],
+            MetricType::Summary => $quantiles ?: config('devices.observability.quantiles', []),
             default => []
         };
     }

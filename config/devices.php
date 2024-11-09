@@ -454,17 +454,18 @@ return [
         'Mozilla/5.0 (Linux; U; Android 13; pl-pl; Xiaomi 13 Build/TKQ1.220905.001) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/100.0.4896.127 Mobile Safari/537.36 XiaoMi/MiuiBrowser/13.28.0-gn'
     ],
 
-    'metrics' => [
+    'observability' => [
+        'enabled' => true,
+        'prefix' => 'device_metrics',
         'storage' => [
-            'driver' => 'redis',
-            'prefix' => 'device_metrics',
+            'driver' => 'redis', // redis, memory (with Octane)
             'connection' => 'default',
             'memory' => [
                 'max_size' => 10000,
             ]
         ],
         'processing' => [
-            'driver' => 'scheduler',
+            'driver' => 'scheduler', // scheduler, worker
             'workers' => [
                 'mode' => 'auto', // single, auto, fixed
                 'connection' => 'device_metrics',
@@ -472,11 +473,10 @@ return [
             ],
         ],
         'state' => [
-            'driver' => 'redis',
-            'prefix' => 'device_metrics',
+            'driver' => 'redis', // redis, memory (with Octane)
             'connection' => 'default',
         ],
-        'enabled' => [
+        'metrics' => [
             \Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\DeviceCount::class,
             \Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\VerifiedDeviceCount::class,
             \Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\HijackedDeviceCount::class,
@@ -493,17 +493,10 @@ return [
             \Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\Lifespan::class
         ],
         'dimensions' => ["device_uuid", "session_uuid"],
-        'buckets' => [
-            'seconds' => [0.01, 0.05, 0.1, 0.5, 1, 2.5, 5, 10],
-            'milliseconds' => [1, 5, 10, 50, 100, 500, 1000, 5000],
-            'bytes' => [1024, 1024 * 1024, 10 * 1024 * 1024, 100 * 1024 * 1024],
-            'score' => [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9],
-            'default' => [1, 2, 5, 10, 20, 50, 100, 200, 500, 1000]
-        ],
-        'quantiles' => [0.5, 0.9, 0.95, 0.99],
+        'buckets' => \Ninja\DeviceTracker\Modules\Observability\Enums\Bucket::Default->scale(),
+        'quantiles' => \Ninja\DeviceTracker\Modules\Observability\Enums\Quantile::scale(),
         'rate_interval' => 3600,
         'aggregation' => [
-            'prefix' => 'device_metrics',
             'windows' => [
                 \Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow::Realtime,
                 \Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow::Hourly,

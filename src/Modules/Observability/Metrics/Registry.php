@@ -45,7 +45,7 @@ class Registry
         }
 
         self::$metrics = collect();
-        foreach (config('devices.metrics.enabled') as $metric) {
+        foreach (config('devices.observability.metrics') as $metric) {
             self::register($metric::create());
         }
         self::$initialized = true;

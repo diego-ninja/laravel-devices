@@ -37,7 +37,7 @@ final class MemoryStateStorage implements StateStorage
         $this->counterStorage->column('value', Table::TYPE_INT);
         $this->counterStorage->create();
 
-        $this->prefix = $prefix ?: config('devices.metrics.aggregation.prefix');
+        $this->prefix = $prefix ?: config('devices.observability.prefix');
     }
 
     public function get(string $key): ?string
@@ -308,7 +308,7 @@ final class MemoryStateStorage implements StateStorage
                 'error' => $e->getMessage()
             ];
 
-            if (!config('devices.metrics.storage.continue_on_error', true)) {
+            if (!config('devices.observability.storage.continue_on_error', true)) {
                 throw $e;
             }
         } finally {

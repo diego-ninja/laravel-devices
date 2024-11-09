@@ -32,7 +32,7 @@ final readonly class MetricAggregator
 
     public function __construct(private MetricStorage $storage)
     {
-        $this->windows = collect(config("devices.metrics.aggregation.windows", [
+        $this->windows = collect(config("devices.observability.aggregation.windows", [
             AggregationWindow::Realtime,
             AggregationWindow::Hourly
         ]));
@@ -57,7 +57,7 @@ final readonly class MetricAggregator
                         type: $type,
                         window: $window,
                         dimensions: $dimensions,
-                        prefix: config('devices.metrics.aggregation.prefix')
+                        prefix: config('devices.observability.prefix')
                     ),
                     $value
                 );
