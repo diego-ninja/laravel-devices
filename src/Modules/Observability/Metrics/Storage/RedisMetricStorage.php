@@ -3,6 +3,7 @@
 namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Storage;
 
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Redis\Connections\Connection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
@@ -40,10 +41,10 @@ final readonly class RedisMetricStorage implements MetricStorage
                         'timestamp' => $timestamp
                     ])),
                     MetricType::Average => $pipe->zadd($metricKey, $timestamp->timestamp, $value),
-                    MetricType::Percentage => throw new \Exception('To be implemented')
+                    MetricType::Percentage => throw new Exception('To be implemented')
                 };
 
-                $pipe->expire($metricKey, $key->window->seconds() * 2);
+                $pipe->expire($metricKey, now()->add($key->window->retention())->timestamp);
             });
         } catch (Throwable $e) {
             Log::error('Failed to store metric', [
@@ -65,7 +66,7 @@ final readonly class RedisMetricStorage implements MetricStorage
                 MetricType::Average => $this->histogram($key),
                 MetricType::Summary,
                 MetricType::Rate => $this->timestamped($key),
-                MetricType::Percentage => throw new \Exception('To be implemented')
+                MetricType::Percentage => throw new Exception('To be implemented')
             };
         } catch (Throwable $e) {
             Log::error('Failed to get metric value', [

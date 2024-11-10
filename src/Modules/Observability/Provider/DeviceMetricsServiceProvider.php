@@ -3,26 +3,15 @@
 namespace Ninja\DeviceTracker\Modules\Observability\Provider;
 
 use Carbon\Laravel\ServiceProvider;
-use Event;
 use Illuminate\Console\Scheduling\Schedule;
-use Illuminate\Support\Facades\Config;
-use Ninja\DeviceTracker\Events\DeviceCreatedEvent;
-use Ninja\DeviceTracker\Events\DeviceDeletedEvent;
-use Ninja\DeviceTracker\Events\DeviceHijackedEvent;
-use Ninja\DeviceTracker\Events\DeviceVerifiedEvent;
+use Laravel\Octane\Facades\Octane;
 use Ninja\DeviceTracker\Modules\Observability\Collectors\DeviceMetricCollector;
 use Ninja\DeviceTracker\Modules\Observability\Console\Commands\ProcessMetricsCommand;
+use Ninja\DeviceTracker\Modules\Observability\Console\Commands\PruneMetricsCommand;
 use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricAggregationRepository;
-use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
+use Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation;
 use Ninja\DeviceTracker\Modules\Observability\MetricAggregator;
-use Ninja\DeviceTracker\Modules\Observability\MetricMerger;
 use Ninja\DeviceTracker\Modules\Observability\MetricManager;
-use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Average;
-use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Counter;
-use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Gauge;
-use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Histogram;
-use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Rate;
-use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Summary;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Registry;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Storage\Contracts\MetricStorage;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Storage\Contracts\StateStorage;
@@ -33,6 +22,8 @@ use Ninja\DeviceTracker\Modules\Observability\Processors\TypeProcessor;
 use Ninja\DeviceTracker\Modules\Observability\Processors\WindowProcessor;
 use Ninja\DeviceTracker\Modules\Observability\Repository\DatabaseMetricAggregationRepository;
 use Ninja\DeviceTracker\Modules\Observability\StateManager;
+use Ninja\DeviceTracker\Modules\Observability\Tasks\ProcessMetricsTask;
+use Ninja\DeviceTracker\Modules\Observability\ValueObjects\TimeWindow;
 
 final class DeviceMetricsServiceProvider extends ServiceProvider
 {
@@ -62,16 +53,10 @@ final class DeviceMetricsServiceProvider extends ServiceProvider
             return new DatabaseMetricAggregationRepository();
         });
 
-        $this->app->singleton(MetricMerger::class, function ($app) {
-            return new MetricMerger(
-                $app->make(MetricAggregationRepository::class)
-            );
-        });
-
         $this->app->singleton(MetricProcessor::class, function ($app) {
             return new MetricProcessor(
-                $app->make(MetricMerger::class),
-                $app->make(MetricStorage::class)
+                $app->make(MetricStorage::class),
+                $app->make(MetricAggregationRepository::class)
             );
         });
 
@@ -85,7 +70,6 @@ final class DeviceMetricsServiceProvider extends ServiceProvider
         $this->app->singleton(WindowProcessor::class, function ($app) {
             return new WindowProcessor(
                 $app->make(TypeProcessor::class),
-                $app->make(MetricMerger::class),
                 $app->make(MetricStorage::class),
                 $app->make(StateManager::class)
             );
@@ -122,7 +106,8 @@ final class DeviceMetricsServiceProvider extends ServiceProvider
 
         if ($this->app->runningInConsole()) {
             $this->commands([
-                ProcessMetricsCommand::class
+                ProcessMetricsCommand::class,
+                PruneMetricsCommand::class
             ]);
         }
     }
@@ -132,35 +117,40 @@ final class DeviceMetricsServiceProvider extends ServiceProvider
         $this->app->booted(function () {
             $schedule = $this->app->make(Schedule::class);
 
-            $schedule->command('devices:metrics realtime')
+            $schedule->command('devices:metrics:process realtime')
                 ->everyMinute()
                 ->withoutOverlapping();
 
-            $schedule->command('devices:metrics hourly --prune')
+            $schedule->command('devices:metrics:process hourly --process-pending')
                 ->hourly()
                 ->withoutOverlapping();
 
-            $schedule->command('devices:metrics daily --prune')
+            $schedule->command('devices:metrics:process daily --prune')
                 ->daily()
                 ->withoutOverlapping();
 
-            $schedule->command('devices:metrics weekly --prune')
+            $schedule->command('devices:metrics:process weekly --prune')
                 ->weekly()
                 ->withoutOverlapping();
 
-            $schedule->command('devices:metrics monthly --prune')
+            $schedule->command('devices:metrics:process monthly --prune')
                 ->monthly()
                 ->withoutOverlapping();
+        });
+    }
+
+    private function tick(): void
+    {
+        $this->app->booted(function () {
+            Octane::tick('realtime', function () {
+                ProcessMetricsTask::with(TimeWindow::forAggregation(Aggregation::Realtime))();
+            })->seconds(60);
         });
     }
 
     private function listen(): void
     {
         $collector = $this->app->make(DeviceMetricCollector::class);
-
-        Event::listen(DeviceCreatedEvent::class, fn(DeviceCreatedEvent $event) => $collector->handleDeviceCreated($event));
-        Event::listen(DeviceVerifiedEvent::class, fn(DeviceVerifiedEvent $event) => $collector->handleDeviceVerified($event));
-        Event::listen(DeviceHijackedEvent::class, fn(DeviceHijackedEvent $event) => $collector->handleDeviceHijacked($event));
-        Event::listen(DeviceDeletedEvent::class, fn(DeviceDeletedEvent $event) => $collector->handleDeviceDeleted($event));
+        $collector->listen();
     }
 }

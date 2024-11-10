@@ -16,7 +16,7 @@ use Throwable;
 
 final class ProcessMetricsCommand extends Command
 {
-    protected $signature = 'devices:metrics
+    protected $signature = 'devices:metrics:process
         {window : Window to process (realtime, hourly, daily, weekly, monthly)}
         {--prune : Prune old data}
         {--process-pending : Process pending windows before current window}
@@ -30,21 +30,21 @@ final class ProcessMetricsCommand extends Command
     }
     public function handle(): void
     {
-        $window = Aggregation::tryFrom($this->argument('window'));
+        $aggregation = Aggregation::tryFrom($this->argument('window'));
 
         try {
-            $this->process($window);
-            $this->prune($window);
-            $this->stats($window);
+            $this->process(TimeWindow::forAggregation($aggregation));
+            $this->prune($aggregation);
+            $this->stats($aggregation);
         } catch (Throwable $e) {
-            $this->handleError($e, $window);
+            $this->handleError($e, $aggregation);
         }
     }
 
     /**
      * @throws Throwable
      */
-    private function process(Aggregation $window): void
+    private function process(TimeWindow $window): void
     {
         if ($this->option('process-pending')) {
             $this->processPending($window);
@@ -53,9 +53,9 @@ final class ProcessMetricsCommand extends Command
         ProcessMetricsTask::with($window)();
     }
 
-    private function processPending(Aggregation $window): void
+    private function processPending(TimeWindow $window): void
     {
-        $pendingWindows = $this->processor->pending($window);
+        $pendingWindows = $this->processor->pending($window->aggregation);
 
         if ($pendingWindows->isEmpty()) {
             $this->info('No pending windows found.');
@@ -65,7 +65,7 @@ final class ProcessMetricsCommand extends Command
         $this->info(sprintf(
             'Found %d pending %s windows to process',
             $pendingWindows->count(),
-            $window->value
+            $window->aggregation->value
         ));
 
         $table = [];
@@ -73,16 +73,16 @@ final class ProcessMetricsCommand extends Command
             $this->info(sprintf('Processing pending window: %s', $pendingWindow));
 
             try {
-                ProcessMetricsTask::with($pendingWindow->window)();
+                ProcessMetricsTask::with($pendingWindow, $this->getOutput())();
                 $table[] = [
-                    $pendingWindow->window->value,
+                    $pendingWindow->aggregation->value,
                     $pendingWindow->from->toDateTimeString(),
                     $pendingWindow->to->toDateTimeString(),
                     'Success'
                 ];
             } catch (Throwable $e) {
                 $table[] = [
-                    $pendingWindow->window->value,
+                    $pendingWindow->aggregation->value,
                     $pendingWindow->from->toDateTimeString(),
                     $pendingWindow->to->toDateTimeString(),
                     'Failed: ' . $e->getMessage()
@@ -106,7 +106,7 @@ final class ProcessMetricsCommand extends Command
             return;
         }
 
-        PruneMetricsTask::with($window)();
+        PruneMetricsTask::with($window, $this->getOutput())();
     }
 
     private function stats(Aggregation $window): void

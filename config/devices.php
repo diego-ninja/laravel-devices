@@ -465,12 +465,7 @@ return [
             ]
         ],
         'processing' => [
-            'driver' => 'scheduler', // scheduler, worker
-            'workers' => [
-                'mode' => 'auto', // single, auto, fixed
-                'connection' => 'device_metrics',
-                'concurrency' => 1,
-            ],
+            'driver' => 'scheduler', // scheduler, task (with Octane)
         ],
         'state' => [
             'driver' => 'redis', // redis, memory (with Octane)

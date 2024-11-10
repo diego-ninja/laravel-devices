@@ -3,6 +3,7 @@
 namespace Ninja\DeviceTracker\Modules\Observability\Collectors;
 
 use DB;
+use Illuminate\Support\Facades\Event;
 use Ninja\DeviceTracker\Enums\DeviceStatus;
 use Ninja\DeviceTracker\Events\DeviceCreatedEvent;
 use Ninja\DeviceTracker\Events\DeviceDeletedEvent;
@@ -14,6 +15,14 @@ use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 
 final readonly class DeviceMetricCollector
 {
+    public function listen(): void
+    {
+        Event::listen(DeviceCreatedEvent::class, fn(DeviceCreatedEvent $event) => $this->handleDeviceCreated($event));
+        Event::listen(DeviceVerifiedEvent::class, fn(DeviceVerifiedEvent $event) => $this->handleDeviceVerified($event));
+        Event::listen(DeviceHijackedEvent::class, fn(DeviceHijackedEvent $event) => $this->handleDeviceHijacked($event));
+        Event::listen(DeviceDeletedEvent::class, fn(DeviceDeletedEvent $event) => $this->handleDeviceDeleted($event));
+    }
+
     public function all(): void
     {
         $this->base();

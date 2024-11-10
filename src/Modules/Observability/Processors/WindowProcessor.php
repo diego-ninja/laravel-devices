@@ -2,15 +2,12 @@
 
 namespace Ninja\DeviceTracker\Modules\Observability\Processors;
 
-use Carbon\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Ninja\DeviceTracker\Modules\Observability\Dto\Key;
 use Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Exceptions\MetricHandlerNotFoundException;
-use Ninja\DeviceTracker\Modules\Observability\MetricMerger;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Storage\Contracts\MetricStorage;
 use Ninja\DeviceTracker\Modules\Observability\Processors\Contracts\Processable;
 use Ninja\DeviceTracker\Modules\Observability\Processors\Contracts\Processor;
@@ -26,10 +23,8 @@ final class WindowProcessor implements Processor
 
     public function __construct(
         private readonly TypeProcessor $typeProcessor,
-        private readonly MetricMerger $merger,
         private readonly MetricStorage $storage,
-        private readonly StateManager $state,
-        private readonly bool $processPending = false
+        private readonly StateManager $state
     ) {
         $this->keys = collect();
     }
@@ -42,11 +37,6 @@ final class WindowProcessor implements Processor
 
         try {
             $window = $item->window();
-
-            if ($this->processPending) {
-                $this->processPending($window->aggregation);
-            }
-
             $this->processWindow($window);
         } catch (Throwable $e) {
             $this->state->error($window->aggregation);
@@ -75,37 +65,7 @@ final class WindowProcessor implements Processor
             $this->typeProcessor->process($type);
         }
 
-        if ($window->aggregation !== Aggregation::Realtime) {
-            $this->merger->merge($window);
-        }
-
         $this->state->success($window);
-    }
-
-    private function processPending(Aggregation $windowType): void
-    {
-        $this->pending($windowType)
-            ->sortBy(fn(TimeWindow $w) => $w->from->timestamp)
-            ->each(function (TimeWindow $window) {
-                try {
-                    $this->processWindow($window);
-                    $this->storage->delete($window);
-
-                    Log::info('Successfully processed pending window', [
-                        'window' => $window->aggregation->value,
-                        'from' => $window->from->toDateTimeString(),
-                        'to' => $window->to->toDateTimeString()
-                    ]);
-                } catch (Throwable $e) {
-                    Log::error('Failed to process pending window', [
-                        'window' => $window->aggregation->value,
-                        'from' => $window->from->toDateTimeString(),
-                        'to' => $window->to->toDateTimeString(),
-                        'error' => $e->getMessage()
-                    ]);
-                    return;
-                }
-            });
     }
 
     public function pending(Aggregation $windowType): Collection
@@ -128,5 +88,4 @@ final class WindowProcessor implements Processor
     {
         return $this->state->wasSuccess($window);
     }
-
 }
