@@ -2,7 +2,7 @@
 
 namespace Ninja\DeviceTracker\Modules\Observability\Repository;
 
-use Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow;
+use Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\ValueObjects\TimeRange;
@@ -12,7 +12,7 @@ class MetricCriteria
     /**
      * @param MetricName[]|null $names
      * @param MetricType[]|null $types
-     * @param AggregationWindow[]|null $windows
+     * @param Aggregation[]|null $windows
      */
     public function __construct(
         public ?array $names = null,
@@ -33,7 +33,7 @@ class MetricCriteria
         return new self(types: [$type]);
     }
 
-    public static function forWindow(AggregationWindow $window): self
+    public static function forWindow(Aggregation $window): self
     {
         return new self(windows: [$window]);
     }

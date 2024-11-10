@@ -5,7 +5,7 @@ namespace Ninja\DeviceTracker\Modules\Observability;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Log;
-use Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow;
+use Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\HandlerFactory;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Storage\Contracts\MetricStorage;
@@ -23,7 +23,7 @@ final readonly class MetricManager
     ) {
     }
 
-    public function process(AggregationWindow $window): void
+    public function process(Aggregation $window): void
     {
         if (!$this->enabled($window)) {
             Log::warning('Attempted to process disabled window', [
@@ -51,7 +51,7 @@ final readonly class MetricManager
         }
     }
 
-    public function prune(AggregationWindow $window): int
+    public function prune(Aggregation $window): int
     {
         if (!$this->enabled($window)) {
             return 0;
@@ -85,7 +85,7 @@ final readonly class MetricManager
                 ->map(fn(MetricType $type) => $type->value)
                 ->all(),
             'windows' => $this->windows()
-                ->mapWithKeys(fn(AggregationWindow $window) => [
+                ->mapWithKeys(fn(Aggregation $window) => [
                     $window->value => [
                         'last_processing' => $this->last($window)?->toDateTimeString(),
                         'error_count' => $this->errors($window),
@@ -98,17 +98,17 @@ final readonly class MetricManager
         ];
     }
 
-    public function last(AggregationWindow $window): ?Carbon
+    public function last(Aggregation $window): ?Carbon
     {
         return $this->stateManager->last($window);
     }
 
-    public function errors(AggregationWindow $window): int
+    public function errors(Aggregation $window): int
     {
         return $this->stateManager->errors($window);
     }
 
-    public function reset(AggregationWindow $window): void
+    public function reset(Aggregation $window): void
     {
         $this->stateManager->reset($window);
     }
@@ -130,12 +130,12 @@ final readonly class MetricManager
     private function windows(): Collection
     {
         return collect(config('devices.observability.aggregation.windows', [
-            AggregationWindow::Realtime,
-            AggregationWindow::Hourly
+            Aggregation::Realtime,
+            Aggregation::Hourly
         ]));
     }
 
-    private function enabled(AggregationWindow $window): bool
+    private function enabled(Aggregation $window): bool
     {
         return $this->windows()->contains($window);
     }
@@ -174,7 +174,7 @@ final readonly class MetricManager
         return $totalErrors > 10 ? 'degraded' : 'warning';
     }
 
-    private function handleError(Throwable $e, AggregationWindow $window): void
+    private function handleError(Throwable $e, Aggregation $window): void
     {
         Log::error('Failed to process metrics', [
             'window' => $window->value,

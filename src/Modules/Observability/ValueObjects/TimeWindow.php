@@ -5,7 +5,7 @@ namespace Ninja\DeviceTracker\Modules\Observability\ValueObjects;
 use Carbon\Carbon;
 use InvalidArgumentException;
 use JsonSerializable;
-use Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow;
+use Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation;
 use Stringable;
 
 final readonly class TimeWindow implements JsonSerializable, Stringable
@@ -14,14 +14,14 @@ final readonly class TimeWindow implements JsonSerializable, Stringable
         public Carbon $from,
         public Carbon $to,
         public int $slot,
-        public AggregationWindow $window
+        public Aggregation $window
     ) {
         if ($this->from->gt($this->to)) {
             throw new InvalidArgumentException('From date must be before or equal to to date');
         }
     }
 
-    public static function forAggregation(AggregationWindow $window, ?Carbon $timestamp = null): self
+    public static function forAggregation(Aggregation $window, ?Carbon $timestamp = null): self
     {
         $timestamp ??= now();
         $windowSeconds = $window->seconds();
@@ -35,7 +35,7 @@ final readonly class TimeWindow implements JsonSerializable, Stringable
         );
     }
 
-    public static function fromSlot(int $slot, AggregationWindow $window): self
+    public static function fromSlot(int $slot, Aggregation $window): self
     {
         $windowSeconds = $window->seconds();
 

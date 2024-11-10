@@ -11,7 +11,7 @@ use InvalidArgumentException;
 use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricAggregationRepository;
 use Ninja\DeviceTracker\Modules\Observability\Dto\Dimension;
 use Ninja\DeviceTracker\Modules\Observability\Dto\DimensionCollection;
-use Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow;
+use Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Repository\Dto\Metric;
@@ -28,7 +28,7 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
         float|string|array $value,
         DimensionCollection $dimensions,
         Carbon $timestamp,
-        AggregationWindow $window
+        Aggregation $window
     ): void {
         $storedValue = $this->formatValueForStorage($type, $value);
 
@@ -44,11 +44,11 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
     }
 
     public function query(
-        ?MetricName $name = null,
+        ?MetricName          $name = null,
         ?DimensionCollection $dimensions = null,
-        ?AggregationWindow $window = null,
-        ?Carbon $from = null,
-        ?Carbon $to = null
+        ?Aggregation         $window = null,
+        ?Carbon              $from = null,
+        ?Carbon              $to = null
     ): Collection {
         return $this->buildQuery($name, $dimensions, $window, $from, $to)
             ->orderBy('timestamp')
@@ -65,7 +65,7 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
     public function latest(
         MetricName $name,
         ?DimensionCollection $dimensions = null,
-        ?AggregationWindow $window = null
+        ?Aggregation $window = null
     ): ?Metric {
         $result = $this->buildQuery($name, $dimensions, $window)
             ->latest('timestamp')
@@ -85,7 +85,7 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
             });
     }
 
-    public function findByTypeAndWindow(MetricType $type, AggregationWindow $window): Collection
+    public function findByTypeAndWindow(MetricType $type, Aggregation $window): Collection
     {
         return DB::table(self::METRIC_AGGREGATION_TABLE)
             ->where('type', $type->value)
@@ -153,10 +153,10 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
     }
 
     public function stats(
-        MetricName $name,
+        MetricName           $name,
         ?DimensionCollection $dimensions = null,
-        ?AggregationWindow $window = null,
-        ?TimeRange $timeRange = null
+        ?Aggregation         $window = null,
+        ?TimeRange           $timeRange = null
     ): array {
         $query = $this->buildQuery($name, $dimensions, $window);
 
@@ -260,7 +260,7 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
         return $this->parseNumericValue($result);
     }
 
-    public function hasMetrics(AggregationWindow $window): bool
+    public function hasMetrics(Aggregation $window): bool
     {
         return DB::table(self::METRIC_AGGREGATION_TABLE)
             ->where('window', $window->value)
@@ -268,8 +268,10 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
             ->exists();
     }
 
-    public function prune(AggregationWindow $window, Carbon $before): int
+    public function prune(Aggregation $window): int
     {
+        $before = now()->sub($window->retention());
+
         return DB::table(self::METRIC_AGGREGATION_TABLE)
             ->where('window', $window->value)
             ->where('timestamp', '<', $before)
@@ -289,11 +291,11 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
     }
 
     private function buildQuery(
-        ?MetricName $name = null,
+        ?MetricName          $name = null,
         ?DimensionCollection $dimensions = null,
-        ?AggregationWindow $window = null,
-        ?Carbon $from = null,
-        ?Carbon $to = null
+        ?Aggregation         $window = null,
+        ?Carbon              $from = null,
+        ?Carbon              $to = null
     ): Builder {
         $query = DB::table(self::METRIC_AGGREGATION_TABLE);
 

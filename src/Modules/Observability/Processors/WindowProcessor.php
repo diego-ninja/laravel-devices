@@ -7,7 +7,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Ninja\DeviceTracker\Modules\Observability\Dto\Key;
-use Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow;
+use Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Exceptions\MetricHandlerNotFoundException;
 use Ninja\DeviceTracker\Modules\Observability\MetricMerger;
@@ -74,14 +74,14 @@ final class WindowProcessor implements Processor
             $this->typeProcessor->process($type);
         }
 
-        if ($window->window !== AggregationWindow::Realtime) {
+        if ($window->window !== Aggregation::Realtime) {
             $this->merger->merge($window);
         }
 
         $this->state->success($window);
     }
 
-    private function processPending(AggregationWindow $windowType): void
+    private function processPending(Aggregation $windowType): void
     {
         $this->pending($windowType)
             ->sortBy(fn(TimeWindow $w) => $w->from->timestamp)
@@ -107,7 +107,7 @@ final class WindowProcessor implements Processor
             });
     }
 
-    public function pending(AggregationWindow $windowType): Collection
+    public function pending(Aggregation $windowType): Collection
     {
         return collect($this->storage->keys($windowType->pattern()))
             ->map(function ($key) {

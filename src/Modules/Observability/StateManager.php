@@ -4,7 +4,7 @@ namespace Ninja\DeviceTracker\Modules\Observability;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Redis;
-use Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow;
+use Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Storage\Contracts\StateStorage;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Storage\RedisMetricStorage;
 use Ninja\DeviceTracker\Modules\Observability\ValueObjects\TimeWindow;
@@ -50,30 +50,30 @@ class StateManager
         );
     }
 
-    public function error(AggregationWindow $window): void
+    public function error(Aggregation $window): void
     {
         $this->storage->increment($this->key(self::ERROR_COUNT_KEY, $window->value));
     }
 
-    public function last(AggregationWindow $window): ?Carbon
+    public function last(Aggregation $window): ?Carbon
     {
         $timestamp = $this->storage->get($this->key(self::LAST_PROCESSING_KEY, $window->value));
         return $timestamp ? Carbon::createFromTimestamp($timestamp) : null;
     }
 
-    public function errors(AggregationWindow $window): int
+    public function errors(Aggregation $window): int
     {
         return (int) $this->storage->get($this->key(self::ERROR_COUNT_KEY, $window->value)) ?? 0;
     }
 
-    public function reset(AggregationWindow $window): void
+    public function reset(Aggregation $window): void
     {
         $this->storage->delete($this->key(self::ERROR_COUNT_KEY, $window->value));
     }
 
     public function clean(Carbon $before): void
     {
-        foreach (AggregationWindow::cases() as $window) {
+        foreach (Aggregation::cases() as $window) {
             $processedWindows = $this->storage->hgetall(
                 $this->key(self::PROCESSED_WINDOWS_KEY, $window->value)
             );

@@ -5,10 +5,12 @@ namespace Ninja\DeviceTracker\Modules\Observability\Console\Commands;
 use DateInterval;
 use Illuminate\Console\Command;
 use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricAggregationRepository;
-use Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow;
+use Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation;
 use Ninja\DeviceTracker\Modules\Observability\MetricManager;
 use Ninja\DeviceTracker\Modules\Observability\Processors\Items\Window;
 use Ninja\DeviceTracker\Modules\Observability\Processors\WindowProcessor;
+use Ninja\DeviceTracker\Modules\Observability\Tasks\ProcessMetricsTask;
+use Ninja\DeviceTracker\Modules\Observability\Tasks\PruneMetricsTask;
 use Ninja\DeviceTracker\Modules\Observability\ValueObjects\TimeWindow;
 use Throwable;
 
@@ -28,11 +30,11 @@ final class ProcessMetricsCommand extends Command
     }
     public function handle(): void
     {
-        $window = AggregationWindow::tryFrom($this->argument('window'));
+        $window = Aggregation::tryFrom($this->argument('window'));
 
         try {
-            $this->processWindow($window);
-            $this->pruneIfRequested($window);
+            $this->process($window);
+            $this->prune($window);
             $this->stats($window);
         } catch (Throwable $e) {
             $this->handleError($e, $window);
@@ -42,19 +44,16 @@ final class ProcessMetricsCommand extends Command
     /**
      * @throws Throwable
      */
-    private function processWindow(AggregationWindow $window): void
+    private function process(Aggregation $window): void
     {
-        $timeWindow = TimeWindow::forAggregation($window);
-
         if ($this->option('process-pending')) {
             $this->processPending($window);
         }
 
-        $this->info(sprintf('Processing window: %s', $timeWindow));
-        $this->processor->process(new Window($timeWindow));
+        ProcessMetricsTask::with($window)();
     }
 
-    private function processPending(AggregationWindow $window): void
+    private function processPending(Aggregation $window): void
     {
         $pendingWindows = $this->processor->pending($window);
 
@@ -74,8 +73,7 @@ final class ProcessMetricsCommand extends Command
             $this->info(sprintf('Processing pending window: %s', $pendingWindow));
 
             try {
-                $this->processor->process(new Window($pendingWindow));
-
+                ProcessMetricsTask::with($pendingWindow->window)();
                 $table[] = [
                     $pendingWindow->window->value,
                     $pendingWindow->from->toDateTimeString(),
@@ -102,36 +100,16 @@ final class ProcessMetricsCommand extends Command
         );
     }
 
-    /**
-     * @throws \DateMalformedIntervalStringException
-     */
-    private function pruneIfRequested(AggregationWindow $window): void
+    private function prune(Aggregation $window): void
     {
         if (!$this->option('prune')) {
             return;
         }
 
-        $retention = config(
-            sprintf('devices.observability.aggregation.retention.%s', $window->value),
-            '7 days'
-        );
-
-        $before = now()->sub(new DateInterval($retention));
-
-        $this->info(sprintf(
-            'Pruning data before %s',
-            $before->toDateTimeString()
-        ));
-
-        $deleted = $this->repository->prune($window, $before);
-
-        $this->info(sprintf(
-            'Pruned %d records',
-            $deleted
-        ));
+        PruneMetricsTask::with($window)();
     }
 
-    private function stats(AggregationWindow $window): void
+    private function stats(Aggregation $window): void
     {
         $this->table(
             ['Metric', 'Value'],
@@ -145,7 +123,7 @@ final class ProcessMetricsCommand extends Command
         );
     }
 
-    private function handleError(Throwable $e, AggregationWindow $window): void
+    private function handleError(Throwable $e, Aggregation $window): void
     {
         $this->error(sprintf(
             'Processing failed for %s window. Error: %s',

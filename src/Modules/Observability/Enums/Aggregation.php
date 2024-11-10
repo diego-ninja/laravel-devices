@@ -5,7 +5,7 @@ namespace Ninja\DeviceTracker\Modules\Observability\Enums;
 use Carbon\Carbon;
 use DateInterval;
 
-enum AggregationWindow: string
+enum Aggregation: string
 {
     case Realtime = 'realtime';
     case Hourly = 'hourly';
@@ -56,7 +56,7 @@ enum AggregationWindow: string
         return floor($timestamp->timestamp / $seconds) * $seconds;
     }
 
-    public function previous(): ?AggregationWindow
+    public function previous(): ?Aggregation
     {
         return match ($this) {
             self::Yearly => self::Monthly,
@@ -81,7 +81,7 @@ enum AggregationWindow: string
         return sprintf('*:*:%s:*:*', $this->value);
     }
 
-    public function next(): ?AggregationWindow
+    public function next(): ?Aggregation
     {
         return match ($this) {
             self::Realtime => self::Hourly,

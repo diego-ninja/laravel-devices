@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Ninja\DeviceTracker\Modules\Observability\Dto\DimensionCollection;
 use Ninja\DeviceTracker\Modules\Observability\Dto\Key;
-use Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow;
+use Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Exceptions\InvalidMetricException;
@@ -33,8 +33,8 @@ final readonly class MetricAggregator
     public function __construct(private MetricStorage $storage)
     {
         $this->windows = collect(config("devices.observability.aggregation.windows", [
-            AggregationWindow::Realtime,
-            AggregationWindow::Hourly
+            Aggregation::Realtime,
+            Aggregation::Hourly
         ]));
     }
 
@@ -103,7 +103,7 @@ final readonly class MetricAggregator
         return $this->windows;
     }
 
-    public function enabled(AggregationWindow $window): bool
+    public function enabled(Aggregation $window): bool
     {
         return $this->windows->contains($window);
     }

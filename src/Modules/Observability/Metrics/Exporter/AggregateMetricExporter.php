@@ -3,7 +3,7 @@
 namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Exporter;
 
 use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricAggregationRepository;
-use Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow;
+use Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Exporter\Metric\Factory;
 use Ninja\DeviceTracker\Modules\Observability\Repository\Dto\Metric;
@@ -36,9 +36,9 @@ final readonly class AggregateMetricExporter extends AbstractMetricExporter
         return $result;
     }
 
-    private function window(): ?AggregationWindow
+    private function window(): ?Aggregation
     {
-        $windows = AggregationWindow::wide();
+        $windows = Aggregation::wide();
         foreach ($windows as $window) {
             if ($this->repository->hasMetrics($window)) {
                 return $window;

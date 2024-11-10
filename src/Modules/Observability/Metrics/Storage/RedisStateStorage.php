@@ -5,7 +5,7 @@ namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Storage;
 use Carbon\Carbon;
 use Illuminate\Redis\Connections\Connection;
 use Illuminate\Support\Facades\Redis;
-use Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow;
+use Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Storage\Contracts\StateStorage;
 use RuntimeException;
 use Throwable;
@@ -76,7 +76,7 @@ final readonly class RedisStateStorage implements StateStorage
         return 0;
     }
 
-    public function state(AggregationWindow $window): array
+    public function state(Aggregation $window): array
     {
         $pattern = $this->prefix(sprintf('window:%s:*', $window->value));
         $keys = $this->redis->keys($pattern);

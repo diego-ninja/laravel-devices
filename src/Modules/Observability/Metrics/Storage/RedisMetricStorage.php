@@ -7,7 +7,7 @@ use Illuminate\Redis\Connections\Connection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 use Ninja\DeviceTracker\Modules\Observability\Dto\Key;
-use Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow;
+use Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Storage\Contracts\MetricStorage;
 use Ninja\DeviceTracker\Modules\Observability\ValueObjects\TimeWindow;
@@ -112,7 +112,7 @@ final readonly class RedisMetricStorage implements MetricStorage
         });
     }
 
-    public function count(AggregationWindow $window): array
+    public function count(Aggregation $window): array
     {
         $counts = [];
         foreach (MetricType::cases() as $type) {
@@ -136,7 +136,7 @@ final readonly class RedisMetricStorage implements MetricStorage
         return $window->to->lt(now());
     }
 
-    public function prune(AggregationWindow $window, Carbon $before): int
+    public function prune(Aggregation $window, Carbon $before): int
     {
         $pattern = sprintf(
             '%s:*:%s:%d:*',

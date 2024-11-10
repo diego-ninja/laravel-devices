@@ -4,7 +4,7 @@ namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Storage\Contracts;
 
 use Carbon\Carbon;
 use Ninja\DeviceTracker\Modules\Observability\Dto\Key;
-use Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow;
+use Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation;
 use Ninja\DeviceTracker\Modules\Observability\ValueObjects\TimeWindow;
 
 interface MetricStorage
@@ -14,7 +14,7 @@ interface MetricStorage
     public function keys(string $pattern): array;
     public function delete(TimeWindow|array $keys): void;
     public function expired(TimeWindow $window): bool;
-    public function prune(AggregationWindow $window, Carbon $before): int;
-    public function count(AggregationWindow $window): array;
+    public function prune(Aggregation $window, Carbon $before): int;
+    public function count(Aggregation $window): array;
     public function health(): array;
 }

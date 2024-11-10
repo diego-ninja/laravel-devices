@@ -3,7 +3,7 @@
 namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Storage;
 
 use Illuminate\Support\Facades\Log;
-use Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow;
+use Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Storage\Contracts\StateStorage;
 use RuntimeException;
 use Swoole\Table;
@@ -257,7 +257,7 @@ final class MemoryStateStorage implements StateStorage
         return $count;
     }
 
-    public function state(AggregationWindow $window): array
+    public function state(Aggregation $window): array
     {
         $prefix = sprintf('window:%s:', $window->value);
         $result = [];

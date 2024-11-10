@@ -5,7 +5,7 @@ namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Storage;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Ninja\DeviceTracker\Modules\Observability\Dto\Key;
-use Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow;
+use Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Storage\Contracts\MetricStorage;
 use Ninja\DeviceTracker\Modules\Observability\ValueObjects\TimeWindow;
@@ -141,7 +141,7 @@ class MemoryMetricStorage implements MetricStorage
         return count($this->keys($pattern)) === 0;
     }
 
-    public function prune(AggregationWindow $window, Carbon $before): int
+    public function prune(Aggregation $window, Carbon $before): int
     {
         $count = 0;
         $timestamp = $before->timestamp;
@@ -156,7 +156,7 @@ class MemoryMetricStorage implements MetricStorage
         return $count;
     }
 
-    public function count(AggregationWindow $window): array
+    public function count(Aggregation $window): array
     {
         $counts = [];
         foreach (MetricType::cases() as $type) {

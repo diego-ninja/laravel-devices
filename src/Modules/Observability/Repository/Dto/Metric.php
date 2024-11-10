@@ -5,7 +5,7 @@ namespace Ninja\DeviceTracker\Modules\Observability\Repository\Dto;
 use Carbon\Carbon;
 use JsonSerializable;
 use Ninja\DeviceTracker\Modules\Observability\Dto\DimensionCollection;
-use Ninja\DeviceTracker\Modules\Observability\Enums\AggregationWindow;
+use Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 
@@ -17,7 +17,7 @@ readonly class Metric implements JsonSerializable
         public float|array $value,
         public Carbon $timestamp,
         public DimensionCollection $dimensions,
-        public AggregationWindow $window
+        public Aggregation $window
     ) {
     }
 
@@ -41,7 +41,7 @@ readonly class Metric implements JsonSerializable
             value: $data['value'],
             timestamp: Carbon::parse($data['timestamp']),
             dimensions: DimensionCollection::from(json_decode($data['dimensions'], true)),
-            window: AggregationWindow::tryFrom($data['window']),
+            window: Aggregation::tryFrom($data['window']),
         );
     }
 
