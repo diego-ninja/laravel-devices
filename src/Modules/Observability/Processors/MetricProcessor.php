@@ -10,6 +10,7 @@ use Ninja\DeviceTracker\Modules\Observability\Metrics\Storage\Contracts\MetricSt
 use Ninja\DeviceTracker\Modules\Observability\Processors\Contracts\Processable;
 use Ninja\DeviceTracker\Modules\Observability\Processors\Contracts\Processor;
 use Ninja\DeviceTracker\Modules\Observability\Processors\Items\Metric;
+use Ninja\DeviceTracker\Modules\Observability\Repository\Dto\Metric as MetricDto;
 use Throwable;
 
 final readonly class MetricProcessor implements Processor
@@ -36,13 +37,15 @@ final readonly class MetricProcessor implements Processor
             return;
         }
 
-        $this->repository->store(
+        $metric = new MetricDto(
             name: $item->key()->name,
             type: $item->key()->type,
             value: HandlerFactory::compute($item->key()->type, $value),
-            dimensions: $item->key()->dimensions,
             timestamp: $item->window()->from,
-            window: $item->window()->aggregation
+            dimensions: $item->key()->dimensions,
+            aggregation: $item->window()->aggregation
         );
+
+        $this->repository->store($metric);
     }
 }

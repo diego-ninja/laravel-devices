@@ -10,6 +10,7 @@ return new class extends Migration {
     {
         Schema::create(self::TABLE, function (Blueprint $table) {
             $table->id();
+            $table->string(('metric_fingerprint'));
             $table->string('name');
             $table->string('type');
             $table->float('value');
@@ -18,7 +19,7 @@ return new class extends Migration {
             $table->string('window');
             $table->timestamps();
 
-            $table->unique(['name', 'type', 'window', 'timestamp', 'dimensions'], 'device_metrics_unique');
+            $table->unique('metric_fingerprint', 'device_metrics_unique');
 
             $table->index(['name', 'timestamp']);
             $table->index(['window', 'timestamp']);

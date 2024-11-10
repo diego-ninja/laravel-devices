@@ -17,8 +17,20 @@ readonly class Metric implements JsonSerializable
         public float|array $value,
         public Carbon $timestamp,
         public DimensionCollection $dimensions,
-        public Aggregation $window
+        public Aggregation $aggregation
     ) {
+    }
+
+    public function fingerprint(): string
+    {
+        return hash('sha256', sprintf(
+            '%s:%s:%s:%s:%s',
+            $this->name->value,
+            $this->type->value,
+            $this->dimensions->implode(':'),
+            $this->aggregation->value,
+            $this->timestamp->toIso8601String(),
+        ));
     }
 
     public static function from(string|array|\stdClass|Metric $data): self
@@ -41,7 +53,7 @@ readonly class Metric implements JsonSerializable
             value: $data['value'],
             timestamp: Carbon::parse($data['timestamp']),
             dimensions: DimensionCollection::from(json_decode($data['dimensions'], true)),
-            window: Aggregation::tryFrom($data['window']),
+            aggregation: Aggregation::tryFrom($data['window']),
         );
     }
 
@@ -53,7 +65,7 @@ readonly class Metric implements JsonSerializable
             'value' => $this->value,
             'timestamp' => $this->timestamp->format(DATE_ATOM),
             'dimensions' => $this->dimensions->array(),
-            'window' => $this->window->value,
+            'aggregation' => $this->aggregation->value,
         ];
     }
 

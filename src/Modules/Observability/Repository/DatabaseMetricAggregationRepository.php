@@ -22,24 +22,14 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
 {
     public const METRIC_AGGREGATION_TABLE = 'device_metrics';
 
-    public function store(
-        MetricName $name,
-        MetricType $type,
-        float|string|array $value,
-        DimensionCollection $dimensions,
-        Carbon $timestamp,
-        Aggregation $window
-    ): void {
+    public function store(Metric $metric): void
+    {
         try {
-            $storedValue = $this->formatValueForStorage($type, $value);
+            $storedValue = $this->formatValueForStorage($metric->type, $metric->value);
 
             DB::table(self::METRIC_AGGREGATION_TABLE)->updateOrInsert(
                 [
-                    'name' => $name->value,
-                    'type' => $type->value,
-                    'dimensions' => $dimensions->json(),
-                    'timestamp' => $timestamp,
-                    'window' => $window->value,
+                    'metric_fingerprint' => $metric->fingerprint(),
                 ],
                 [
                     'value' => $storedValue,
@@ -49,14 +39,8 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
             );
         } catch (Throwable $e) {
             Log::error('Failed to store metric', [
-                'name' => $name->value,
-                'type' => $type->value,
-                'value' => json_encode($value),
-                'dimensions' => $dimensions->json(),
-                'timestamp' => $timestamp->format(DATE_ATOM),
-                'window' => $window->value,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'metric' => $metric->array(),
+                'error' => $e->getMessage()
             ]);
 
             throw $e;
