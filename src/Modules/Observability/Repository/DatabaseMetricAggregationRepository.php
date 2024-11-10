@@ -32,8 +32,12 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
                     'metric_fingerprint' => $metric->fingerprint(),
                 ],
                 [
+                    'name' => $metric->name->value,
+                    'type' => $metric->type->value,
+                    'window' => $metric->aggregation->value,
+                    'dimensions' => $metric->dimensions->toJson(),
+                    'timestamp' => $metric->timestamp,
                     'value' => $storedValue,
-                    'created_at' => now(),
                     'updated_at' => now(),
                 ]
             );

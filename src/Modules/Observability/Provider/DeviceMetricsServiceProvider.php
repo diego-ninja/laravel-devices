@@ -102,7 +102,11 @@ final class DeviceMetricsServiceProvider extends ServiceProvider
     {
         Registry::initialize();
         $this->listen();
-        $this->schedule();
+        if (config('devices.observability.processing.driver') === 'scheduler') {
+            $this->schedule();
+        } else {
+            $this->tick();
+        }
 
         if ($this->app->runningInConsole()) {
             $this->commands([
@@ -117,35 +121,17 @@ final class DeviceMetricsServiceProvider extends ServiceProvider
         $this->app->booted(function () {
             $schedule = $this->app->make(Schedule::class);
 
-            $schedule->command('devices:metrics:process realtime')
+            $schedule->command('devices:metrics:process realtime --process-pending')
                 ->everyMinute()
-                ->withoutOverlapping();
-
-            $schedule->command('devices:metrics:process hourly --process-pending')
-                ->hourly()
-                ->withoutOverlapping();
-
-            $schedule->command('devices:metrics:process daily --prune')
-                ->daily()
-                ->withoutOverlapping();
-
-            $schedule->command('devices:metrics:process weekly --prune')
-                ->weekly()
-                ->withoutOverlapping();
-
-            $schedule->command('devices:metrics:process monthly --prune')
-                ->monthly()
                 ->withoutOverlapping();
         });
     }
 
     private function tick(): void
     {
-        $this->app->booted(function () {
-            Octane::tick('realtime', function () {
-                ProcessMetricsTask::with(TimeWindow::forAggregation(Aggregation::Realtime))();
-            })->seconds(60);
-        });
+        Octane::tick('realtime', function () {
+            ProcessMetricsTask::with(TimeWindow::forAggregation(Aggregation::Realtime))();
+        })->seconds(Aggregation::Realtime->seconds());
     }
 
     private function listen(): void
