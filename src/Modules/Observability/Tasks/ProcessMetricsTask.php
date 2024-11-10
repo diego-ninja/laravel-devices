@@ -28,12 +28,8 @@ final readonly class ProcessMetricsTask
 
             $next = $this->window->next();
             while ($next !== null) {
-                if (!$this->processor->state()->wasSuccess($next)) {
-                    $this->output?->info(sprintf('Processing %s window: [%s]', $next->aggregation->value, $next));
-                    $this->processor->process(new Window($next));
-                } else {
-                    $this->output?->writeln(sprintf('Window %s already processed [%s]', $next->aggregation->value, $next));
-                }
+                $this->output?->info(sprintf('Processing %s window: [%s]', $next->aggregation->value, $next));
+                $this->processor->process(new Window($next));
                 $next = $next->next();
             }
         } catch (Throwable $e) {
