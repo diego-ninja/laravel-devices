@@ -70,7 +70,7 @@ final readonly class MetricMerger
                 '%s:%s:%s',
                 $metric->name->value,
                 $metric->type->value,
-                $metric->dimensions->json()
+                $metric->dimensions
             );
         });
     }
@@ -81,13 +81,13 @@ final readonly class MetricMerger
     private function mergeGroups(Collection $groups, TimeWindow $timeWindow): void
     {
         foreach ($groups as $groupKey => $groupMetrics) {
-            [$name, $type, $dimensionsJson] = explode(':', $groupKey);
+            [$name, $type, $dimensions] = explode(':', $groupKey);
 
             try {
                 $this->mergeMetricValues(
                     name: MetricName::from($name),
                     type: MetricType::from($type),
-                    dimensions: json_decode($dimensionsJson, true),
+                    dimensions: json_decode(base64_decode($dimensions), true),
                     values: $groupMetrics->toArray(),
                     timeWindow: $timeWindow
                 );
@@ -113,7 +113,7 @@ final readonly class MetricMerger
     ): void {
         try {
             $processedValues = array_map(
-                fn($metric) => $this->prepareValueForMerge($type, $metric['value']),
+                fn(Metric $metric) => $this->prepareValueForMerge($type, $metric->value),
                 $values
             );
 
