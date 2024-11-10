@@ -85,12 +85,12 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
             });
     }
 
-    public function findByTypeAndWindow(MetricType $type, Aggregation $window): Collection
+    public function findAggregatedByType(MetricType $type, Aggregation $aggregation): Collection
     {
         return DB::table(self::METRIC_AGGREGATION_TABLE)
             ->where('type', $type->value)
-            ->where('window', $window->value)
-            ->where('timestamp', '>=', now()->sub($window->retention()))
+            ->where('window', $aggregation->value)
+            ->where('timestamp', '>=', now()->sub($aggregation->retention()))
             ->orderBy('timestamp')
             ->get()
             ->map(function (\stdClass $metric) {

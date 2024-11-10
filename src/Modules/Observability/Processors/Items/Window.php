@@ -16,7 +16,7 @@ final readonly class Window implements Processable
     {
         return sprintf(
             'window:%s:%d',
-            $this->window->window->value,
+            $this->window->aggregation->value,
             $this->window->slot
         );
     }

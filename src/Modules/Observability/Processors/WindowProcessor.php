@@ -43,12 +43,13 @@ final class WindowProcessor implements Processor
         try {
             $window = $item->window();
 
-            $this->processWindow($window);
             if ($this->processPending) {
-                $this->processPending($window->window);
+                $this->processPending($window->aggregation);
             }
+
+            $this->processWindow($window);
         } catch (Throwable $e) {
-            $this->state->error($window->window);
+            $this->state->error($window->aggregation);
             throw $e;
         }
     }
@@ -74,7 +75,7 @@ final class WindowProcessor implements Processor
             $this->typeProcessor->process($type);
         }
 
-        if ($window->window !== Aggregation::Realtime) {
+        if ($window->aggregation !== Aggregation::Realtime) {
             $this->merger->merge($window);
         }
 
@@ -91,13 +92,13 @@ final class WindowProcessor implements Processor
                     $this->storage->delete($window);
 
                     Log::info('Successfully processed pending window', [
-                        'window' => $window->window->value,
+                        'window' => $window->aggregation->value,
                         'from' => $window->from->toDateTimeString(),
                         'to' => $window->to->toDateTimeString()
                     ]);
                 } catch (Throwable $e) {
                     Log::error('Failed to process pending window', [
-                        'window' => $window->window->value,
+                        'window' => $window->aggregation->value,
                         'from' => $window->from->toDateTimeString(),
                         'to' => $window->to->toDateTimeString(),
                         'error' => $e->getMessage()
@@ -115,7 +116,7 @@ final class WindowProcessor implements Processor
             })
             ->filter(function (TimeWindow $window) use ($windowType) {
                 return
-                    $window->window === $windowType &&
+                    $window->aggregation === $windowType &&
                     $window->from->lt(now()) &&
                     $window->slot < $windowType->timeslot(now()) &&
                     !$this->processed($window);

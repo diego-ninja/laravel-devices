@@ -26,17 +26,17 @@ class StateManager
     {
         $this->storage->pipeline(function ($pipe) use ($window) {
             $pipe->set(
-                $this->key(self::LAST_PROCESSING_KEY, $window->window->value),
+                $this->key(self::LAST_PROCESSING_KEY, $window->aggregation->value),
                 $window->from->timestamp
             );
 
             $pipe->hset(
-                $this->key(self::PROCESSED_WINDOWS_KEY, $window->window->value),
+                $this->key(self::PROCESSED_WINDOWS_KEY, $window->aggregation->value),
                 $this->getWindowIdentifier($window),
                 json_encode([
                     'timestamp' => $window->from->timestamp,
                     'processed_at' => Carbon::now()->timestamp,
-                    'window' => $window->window->value,
+                    'window' => $window->aggregation->value,
                 ])
             );
         });
@@ -45,7 +45,7 @@ class StateManager
     public function wasSuccess(TimeWindow $window): bool
     {
         return $this->storage->hExists(
-            $this->key(self::PROCESSED_WINDOWS_KEY, $window->window->value),
+            $this->key(self::PROCESSED_WINDOWS_KEY, $window->aggregation->value),
             $this->getWindowIdentifier($window)
         );
     }
@@ -94,7 +94,7 @@ class StateManager
     {
         return sprintf(
             '%s:%d',
-            $window->window->value,
+            $window->aggregation->value,
             $window->slot
         );
     }

@@ -8,7 +8,7 @@ use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Exporter\Metric\Factory;
 use Ninja\DeviceTracker\Modules\Observability\Repository\Dto\Metric;
 
-final readonly class AggregateMetricExporter extends AbstractMetricExporter
+final readonly class AggregatedMetricExporter extends AbstractMetricExporter
 {
     public function __construct(
         private MetricAggregationRepository $repository
@@ -17,15 +17,15 @@ final readonly class AggregateMetricExporter extends AbstractMetricExporter
     }
     protected function collect(): array
     {
-        $window = $this->window();
-        if ($window === null) {
+        $aggregation = $this->aggregation();
+        if ($aggregation === null) {
             return [];
         }
 
         $result = [];
 
         foreach (MetricType::cases() as $type) {
-            $metrics = $this->repository->findByTypeAndWindow($type, $window);
+            $metrics = $this->repository->findAggregatedByType($type, $aggregation);
             $exportedMetrics = $metrics->map(function (Metric $metric) {
                 return Factory::create($metric)->export();
             })->toArray();
@@ -36,7 +36,7 @@ final readonly class AggregateMetricExporter extends AbstractMetricExporter
         return $result;
     }
 
-    private function window(): ?Aggregation
+    private function aggregation(): ?Aggregation
     {
         $windows = Aggregation::wide();
         foreach ($windows as $window) {

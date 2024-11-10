@@ -2,15 +2,17 @@
 
 namespace Ninja\DeviceTracker\Modules\Observability\Tasks;
 
+use Illuminate\Console\Concerns\InteractsWithIO;
 use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricAggregationRepository;
 use Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation;
-use Symfony\Component\Console\Output\OutputInterface;
 
 final readonly class PruneMetricsTask
 {
+    use InteractsWithIO;
+
     private MetricAggregationRepository $repository;
 
-    private function __construct(private Aggregation $aggregation, private ?OutputInterface $output = null)
+    private function __construct(private Aggregation $aggregation)
     {
         $this->repository = app(MetricAggregationRepository::class);
     }
@@ -26,10 +28,6 @@ final readonly class PruneMetricsTask
 
     public static function with(Aggregation $aggregation): self
     {
-        if (app()->runningInConsole()) {
-            return new self($aggregation, app(OutputInterface::class));
-        }
-
         return new self($aggregation);
     }
 }

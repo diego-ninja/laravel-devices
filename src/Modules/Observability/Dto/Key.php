@@ -74,7 +74,7 @@ final class Key implements JsonSerializable, Stringable
     {
         return TimeWindow::fromSlot(
             slot: $this->slot,
-            window: $this->window
+            aggregation: $this->window
         );
     }
 

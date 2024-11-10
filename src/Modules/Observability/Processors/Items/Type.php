@@ -19,7 +19,7 @@ final readonly class Type implements Processable
         return sprintf(
             'metric_type:%s:%s:%d',
             $this->type->value,
-            $this->window->window->value,
+            $this->window->aggregation->value,
             $this->window->slot
         );
     }

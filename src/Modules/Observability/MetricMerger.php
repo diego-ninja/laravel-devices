@@ -9,6 +9,7 @@ use Ninja\DeviceTracker\Modules\Observability\Dto\DimensionCollection;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\HandlerFactory;
+use Ninja\DeviceTracker\Modules\Observability\Repository\Dto\Metric;
 use Ninja\DeviceTracker\Modules\Observability\ValueObjects\TimeWindow;
 use Throwable;
 
@@ -47,7 +48,7 @@ final readonly class MetricMerger
                 value: $value,
                 dimensions: $dimensions,
                 timestamp: $timeWindow->from,
-                window: $timeWindow->window
+                window: $timeWindow->aggregation
             );
         } catch (Throwable $e) {
             Log::error('Failed to store metric', [
@@ -64,12 +65,12 @@ final readonly class MetricMerger
 
     private function groupMetrics(Collection $metrics): Collection
     {
-        return $metrics->groupBy(function ($metric) {
+        return $metrics->groupBy(function (Metric $metric) {
             return sprintf(
                 '%s:%s:%s',
-                $metric['name'],
-                $metric['type'],
-                json_encode($metric['dimensions'])
+                $metric->name->value,
+                $metric->type->value,
+                $metric->dimensions->json()
             );
         });
     }

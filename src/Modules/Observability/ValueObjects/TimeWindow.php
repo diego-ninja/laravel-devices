@@ -14,53 +14,52 @@ final readonly class TimeWindow implements JsonSerializable, Stringable
         public Carbon $from,
         public Carbon $to,
         public int $slot,
-        public Aggregation $window
+        public Aggregation $aggregation
     ) {
         if ($this->from->gt($this->to)) {
             throw new InvalidArgumentException('From date must be before or equal to to date');
         }
     }
 
-    public static function forAggregation(Aggregation $window, ?Carbon $timestamp = null): self
+    public static function forAggregation(Aggregation $aggregation, ?Carbon $timestamp = null): self
     {
         $timestamp ??= now();
-        $windowSeconds = $window->seconds();
+        $windowSeconds = $aggregation->seconds();
         $slot = floor($timestamp->timestamp / $windowSeconds) * $windowSeconds;
 
         return new self(
             from: Carbon::createFromTimestamp($slot),
             to: Carbon::createFromTimestamp($slot + $windowSeconds),
             slot: $slot,
-            window: $window
+            aggregation: $aggregation
         );
     }
 
-    public static function fromSlot(int $slot, Aggregation $window): self
+    public static function fromSlot(int $slot, Aggregation $aggregation): self
     {
-        $windowSeconds = $window->seconds();
+        $windowSeconds = $aggregation->seconds();
 
         return new self(
             from: Carbon::createFromTimestamp($slot),
             to: Carbon::createFromTimestamp($slot + $windowSeconds),
             slot: $slot,
-            window: $window
+            aggregation: $aggregation
         );
     }
 
     public function previous(): self
     {
-        return self::fromSlot(
-            slot: $this->slot - $this->window->seconds(),
-            window: $this->window
-        );
+        return self::forAggregation($this->aggregation->previous());
     }
 
-    public function next(): self
+    public function next(): ?self
     {
-        return self::fromSlot(
-            slot: $this->slot + $this->window->seconds(),
-            window: $this->window
-        );
+        $aggregation = $this->aggregation->next();
+        if ($aggregation === null) {
+            return null;
+        }
+
+        return self::forAggregation($aggregation);
     }
 
     public function duration(): int
@@ -86,13 +85,23 @@ final readonly class TimeWindow implements JsonSerializable, Stringable
         );
     }
 
+    public static function from(string|array $data): self
+    {
+        return new self(
+            from: Carbon::parse($data['from']),
+            to: Carbon::parse($data['to']),
+            slot: $data['slot'],
+            aggregation: Aggregation::tryFrom($data['aggregation'])
+        );
+    }
+
     public function array(): array
     {
         return [
             'from' => $this->from->toDateTimeString(),
             'to' => $this->to->toDateTimeString(),
             'slot' => $this->slot,
-            'window' => $this->window->value,
+            'aggregation' => $this->aggregation->value,
             'duration' => $this->duration()
         ];
     }
@@ -106,7 +115,7 @@ final readonly class TimeWindow implements JsonSerializable, Stringable
     {
         return sprintf(
             '[%s] %s -> %s (slot: %d)',
-            $this->window->value,
+            $this->aggregation->value,
             $this->from->toDateTimeString(),
             $this->to->toDateTimeString(),
             $this->slot
@@ -123,7 +132,7 @@ final readonly class TimeWindow implements JsonSerializable, Stringable
         return sprintf(
             '%s:*:%s:%d:*',
             $prefix,
-            $this->window->value,
+            $this->aggregation->value,
             $this->slot
         );
     }

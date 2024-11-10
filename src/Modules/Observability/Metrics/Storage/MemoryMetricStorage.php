@@ -134,7 +134,7 @@ class MemoryMetricStorage implements MetricStorage
         $pattern = sprintf(
             '%s:*:%s:%d:*',
             $this->prefix,
-            $window->window->value,
+            $window->aggregation->value,
             $window->slot
         );
 

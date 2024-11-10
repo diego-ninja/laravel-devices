@@ -4,12 +4,12 @@ namespace Ninja\DeviceTracker\Modules\Observability\Http\Controllers;
 
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
-use Ninja\DeviceTracker\Modules\Observability\Metrics\Exporter\AggregateMetricExporter;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Exporter\AggregatedMetricExporter;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Exporter\RealtimeMetricExporter;
 
 class MetricsController extends Controller
 {
-    public function aggregated(AggregateMetricExporter $exporter): Response
+    public function aggregated(AggregatedMetricExporter $exporter): Response
     {
         return $this->response($exporter->export());
     }
