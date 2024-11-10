@@ -18,8 +18,12 @@ return new class extends Migration {
             $table->string('window');
             $table->timestamps();
 
+            $table->unique(['name', 'type', 'window', 'timestamp', 'dimensions'], 'device_metrics_unique');
+
             $table->index(['name', 'timestamp']);
             $table->index(['window', 'timestamp']);
+            $table->index(['type', 'window']);
+            $table->index(['name', 'type', 'window']);
             $table->index('name');
         });
     }

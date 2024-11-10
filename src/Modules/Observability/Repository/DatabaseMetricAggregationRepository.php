@@ -30,25 +30,45 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
         Carbon $timestamp,
         Aggregation $window
     ): void {
-        $storedValue = $this->formatValueForStorage($type, $value);
+        try {
+            $storedValue = $this->formatValueForStorage($type, $value);
 
-        DB::table(self::METRIC_AGGREGATION_TABLE)->insert([
-            'name' => $name->value,
-            'type' => $type->value,
-            'value' => $storedValue,
-            'dimensions' => $dimensions->json(),
-            'timestamp' => $timestamp,
-            'window' => $window->value,
-            'created_at' => now()
-        ]);
+            DB::table(self::METRIC_AGGREGATION_TABLE)->updateOrInsert(
+                [
+                    'name' => $name->value,
+                    'type' => $type->value,
+                    'dimensions' => $dimensions->json(),
+                    'timestamp' => $timestamp,
+                    'window' => $window->value,
+                ],
+                [
+                    'value' => $storedValue,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]
+            );
+        } catch (Throwable $e) {
+            Log::error('Failed to store metric', [
+                'name' => $name->value,
+                'type' => $type->value,
+                'value' => json_encode($value),
+                'dimensions' => $dimensions->json(),
+                'timestamp' => $timestamp->format(DATE_ATOM),
+                'window' => $window->value,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            throw $e;
+        }
     }
 
     public function query(
-        ?MetricName          $name = null,
+        ?MetricName $name = null,
         ?DimensionCollection $dimensions = null,
-        ?Aggregation         $window = null,
-        ?Carbon              $from = null,
-        ?Carbon              $to = null
+        ?Aggregation $window = null,
+        ?Carbon $from = null,
+        ?Carbon $to = null
     ): Collection {
         return $this->buildQuery($name, $dimensions, $window, $from, $to)
             ->orderBy('timestamp')
@@ -153,10 +173,10 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
     }
 
     public function stats(
-        MetricName           $name,
+        MetricName $name,
         ?DimensionCollection $dimensions = null,
-        ?Aggregation         $window = null,
-        ?TimeRange           $timeRange = null
+        ?Aggregation $window = null,
+        ?TimeRange $timeRange = null
     ): array {
         $query = $this->buildQuery($name, $dimensions, $window);
 
@@ -291,11 +311,11 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
     }
 
     private function buildQuery(
-        ?MetricName          $name = null,
+        ?MetricName $name = null,
         ?DimensionCollection $dimensions = null,
-        ?Aggregation         $window = null,
-        ?Carbon              $from = null,
-        ?Carbon              $to = null
+        ?Aggregation $window = null,
+        ?Carbon $from = null,
+        ?Carbon $to = null
     ): Builder {
         $query = DB::table(self::METRIC_AGGREGATION_TABLE);
 

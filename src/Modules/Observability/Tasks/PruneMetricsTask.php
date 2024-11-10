@@ -2,17 +2,15 @@
 
 namespace Ninja\DeviceTracker\Modules\Observability\Tasks;
 
-use Illuminate\Console\Concerns\InteractsWithIO;
+use Illuminate\Console\OutputStyle;
 use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricAggregationRepository;
 use Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation;
 
 final readonly class PruneMetricsTask
 {
-    use InteractsWithIO;
-
     private MetricAggregationRepository $repository;
 
-    private function __construct(private Aggregation $aggregation)
+    private function __construct(private Aggregation $aggregation, private ?OutputStyle $output = null)
     {
         $this->repository = app(MetricAggregationRepository::class);
     }
@@ -20,14 +18,18 @@ final readonly class PruneMetricsTask
     public function __invoke(): void
     {
         $before = now()->sub($this->aggregation->retention());
-        $this->output?->writeln(sprintf('Pruning metrics older than %s', $before->toDateTimeString()));
+        $this->output?->info(sprintf('Pruning metrics older than %s', $before->toDateTimeString()));
 
         $deleted = $this->repository->prune($this->aggregation);
-        $this->output?->writeln(sprintf('Pruned %d metrics', $deleted));
+        $this->output?->info(sprintf('Pruned %d metrics', $deleted));
     }
 
-    public static function with(Aggregation $aggregation): self
+    public static function with(Aggregation $aggregation, ?OutputStyle $output = null): self
     {
+        if (app()->runningInConsole()) {
+            return new self($aggregation, $output);
+        }
+
         return new self($aggregation);
     }
 }

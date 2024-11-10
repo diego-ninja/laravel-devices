@@ -39,7 +39,8 @@ final readonly class RedisMetricStorage implements MetricStorage
                         'value' => $value,
                         'timestamp' => $timestamp
                     ])),
-                    MetricType::Average => $pipe->zadd($metricKey, $timestamp->timestamp, $value)
+                    MetricType::Average => $pipe->zadd($metricKey, $timestamp->timestamp, $value),
+                    MetricType::Percentage => throw new \Exception('To be implemented')
                 };
 
                 $pipe->expire($metricKey, $key->window->seconds() * 2);
@@ -56,23 +57,16 @@ final readonly class RedisMetricStorage implements MetricStorage
 
     public function value(Key $key): array
     {
-        Log::info('Getting metric value', [
-            'key' => (string) $key,
-            'type' => $key->type->value,
-            'value' => Redis::get($key)
-        ]);
-
         try {
-            $value = match ($key->type) {
+            return match ($key->type) {
                 MetricType::Counter,
                 MetricType::Gauge => [['value' => (float) $this->redis->get($key)]],
                 MetricType::Histogram,
                 MetricType::Average => $this->histogram($key),
                 MetricType::Summary,
-                MetricType::Rate => $this->timestamped($key)
+                MetricType::Rate => $this->timestamped($key),
+                MetricType::Percentage => throw new \Exception('To be implemented')
             };
-
-            return $value;
         } catch (Throwable $e) {
             Log::error('Failed to get metric value', [
                 'key' => (string) $key,
