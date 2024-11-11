@@ -3,10 +3,10 @@
 namespace Ninja\DeviceTracker\Modules\Observability\Tasks;
 
 use Illuminate\Console\OutputStyle;
-use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricAggregationRepository;
 use Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation;
 use Ninja\DeviceTracker\Modules\Observability\Enums\Storage;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Storage\Contracts\MetricStorage;
+use Ninja\DeviceTracker\Modules\Observability\Repository\Contracts\MetricAggregationRepository;
 
 final readonly class PruneMetricsTask
 {

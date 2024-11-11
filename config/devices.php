@@ -472,30 +472,23 @@ return [
             'connection' => 'default',
         ],
         'metrics' => [
-            \Ninja\DeviceTracker\Modules\Observability\Metrics\Providers\DeviceMetricProvider::METRICS,
-            \Ninja\DeviceTracker\Modules\Observability\Metrics\Providers\SessionMetricProvider::METRICS
+            'providers' => [
+                \Ninja\DeviceTracker\Modules\Observability\Metrics\Providers\DeviceMetricProvider::class,
+                \Ninja\DeviceTracker\Modules\Observability\Metrics\Providers\SessionMetricProvider::class
+
+            ],
+            "collectors" => [
+                \Ninja\DeviceTracker\Modules\Observability\Collectors\DeviceMetricCollector::class,
+                \Ninja\DeviceTracker\Modules\Observability\Collectors\SessionMetricCollector::class
+            ]
         ],
         'dimensions' => ["device_uuid", "session_uuid"],
         'buckets' => \Ninja\DeviceTracker\Modules\Observability\Enums\Bucket::Default->scale(),
         'quantiles' => \Ninja\DeviceTracker\Modules\Observability\Enums\Quantile::scale(),
         'rate_interval' => 3600,
         'aggregation' => [
-            'windows' => [
-                \Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation::Realtime,
-                \Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation::Hourly,
-                \Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation::Daily,
-                \Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation::Weekly,
-                \Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation::Monthly,
-                \Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation::Yearly
-            ],
-            'retention' => [
-                \Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation::Realtime->value => '1 hour',
-                \Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation::Hourly->value => '1 day',
-                \Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation::Daily->value => '1 week',
-                \Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation::Weekly->value => '1 month',
-                \Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation::Monthly->value => '1 year',
-                \Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation::Yearly->value => '10 years'
-            ]
+            'windows' => \Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation::cases(), // Realtime, Hourly, Daily, Weekly, Monthly, Yearly
+            'retention' => [] //Override default retention period for each aggregation window
         ]
     ]
 ];

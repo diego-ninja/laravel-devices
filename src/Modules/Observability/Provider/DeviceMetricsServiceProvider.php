@@ -8,7 +8,6 @@ use Laravel\Octane\Facades\Octane;
 use Ninja\DeviceTracker\Modules\Observability\Collectors\DeviceMetricCollector;
 use Ninja\DeviceTracker\Modules\Observability\Console\Commands\ProcessMetricsCommand;
 use Ninja\DeviceTracker\Modules\Observability\Console\Commands\PruneMetricsCommand;
-use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricAggregationRepository;
 use Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation;
 use Ninja\DeviceTracker\Modules\Observability\MetricAggregator;
 use Ninja\DeviceTracker\Modules\Observability\MetricManager;
@@ -20,6 +19,7 @@ use Ninja\DeviceTracker\Modules\Observability\Metrics\Storage\RedisStateStorage;
 use Ninja\DeviceTracker\Modules\Observability\Processors\MetricProcessor;
 use Ninja\DeviceTracker\Modules\Observability\Processors\TypeProcessor;
 use Ninja\DeviceTracker\Modules\Observability\Processors\WindowProcessor;
+use Ninja\DeviceTracker\Modules\Observability\Repository\Contracts\MetricAggregationRepository;
 use Ninja\DeviceTracker\Modules\Observability\Repository\DatabaseMetricAggregationRepository;
 use Ninja\DeviceTracker\Modules\Observability\StateManager;
 use Ninja\DeviceTracker\Modules\Observability\Tasks\ProcessMetricsTask;
@@ -100,8 +100,9 @@ final class DeviceMetricsServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        Registry::initialize();
+        $this->registerMetrics();
         $this->listen();
+
         if (config('devices.observability.processing.driver') === 'scheduler') {
             $this->schedule();
         } else {
@@ -136,7 +137,20 @@ final class DeviceMetricsServiceProvider extends ServiceProvider
 
     private function listen(): void
     {
-        $collector = $this->app->make(DeviceMetricCollector::class);
-        $collector->listen();
+        $collectors = config('devices.observability.metrics.collectors', []);
+
+        foreach ($collectors as $collector) {
+            $this->app->make($collector)->listen();
+        }
+    }
+
+    private function registerMetrics(): void
+    {
+        $providers = config('devices.observability.metrics.providers', []);
+        foreach ($providers as $provider) {
+            $this->app->make($provider)->register();
+        }
+
+        Registry::initialize();
     }
 }

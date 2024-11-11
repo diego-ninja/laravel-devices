@@ -2,6 +2,7 @@
 
 namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers;
 
+use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricValue;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Exceptions\MetricHandlerNotFoundException;
 
@@ -16,7 +17,7 @@ final class HandlerFactory
     /**
      * @throws MetricHandlerNotFoundException
      */
-    public static function compute(MetricType $type, array $rawValue): float|array
+    public static function compute(MetricType $type, array $rawValue): MetricValue
     {
         $handler = self::handlers()->get($type);
         if (!$handler) {
@@ -29,21 +30,7 @@ final class HandlerFactory
     /**
      * @throws MetricHandlerNotFoundException
      */
-    public static function merge(MetricType $type, array $windows): float|array
-    {
-        $handler = self::handlers()->get($type);
-
-        if (!$handler) {
-            throw MetricHandlerNotFoundException::forType($type);
-        }
-
-        return $handler->merge($windows);
-    }
-
-    /**
-     * @throws MetricHandlerNotFoundException
-     */
-    public static function validate(MetricType $type, float $value): bool
+    public static function validate(MetricType $type, MetricValue $value): bool
     {
         $handler = self::handlers()->get($type);
 

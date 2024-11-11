@@ -4,107 +4,97 @@ namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Storage;
 
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricValue;
 use Ninja\DeviceTracker\Modules\Observability\Dto\Key;
+use Ninja\DeviceTracker\Modules\Observability\Dto\Value\AverageMetricValue;
+use Ninja\DeviceTracker\Modules\Observability\Dto\Value\CounterMetricValue;
+use Ninja\DeviceTracker\Modules\Observability\Dto\Value\GaugeMetricValue;
+use Ninja\DeviceTracker\Modules\Observability\Dto\Value\HistogramMetricValue;
+use Ninja\DeviceTracker\Modules\Observability\Dto\Value\PercentageMetricValue;
+use Ninja\DeviceTracker\Modules\Observability\Dto\Value\RateMetricValue;
+use Ninja\DeviceTracker\Modules\Observability\Dto\Value\SummaryMetricValue;
 use Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
+use Ninja\DeviceTracker\Modules\Observability\Exceptions\MetricHandlerNotFoundException;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\HandlerFactory;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Storage\Contracts\MetricStorage;
 use Ninja\DeviceTracker\Modules\Observability\ValueObjects\TimeWindow;
 use Swoole\Table;
 use Throwable;
 
-class MemoryMetricStorage implements MetricStorage
+final readonly class MemoryMetricStorage implements MetricStorage
 {
-    private readonly Table $storage;
-    public function __construct(int $max = 10000, private readonly ?string $prefix = null)
-    {
+    private Table $storage;
+    private Table $index;
+
+    public function __construct(
+        private ?string $prefix = null,
+        int $max = 10000
+    ) {
         $this->storage = new Table($max);
         $this->storage->column('value', Table::TYPE_STRING, 1024);
+        $this->storage->column('type', Table::TYPE_STRING, 32);
         $this->storage->column('timestamp', Table::TYPE_INT);
         $this->storage->column('expire_at', Table::TYPE_INT);
         $this->storage->create();
+
+        $this->index = new Table($max);
+        $this->storage->column('keys', Table::TYPE_STRING, 4096);
+        $this->storage->column('expire_at', Table::TYPE_INT);
+        $this->storage->create();
     }
-    public function store(Key $key, float $value): void
+
+    public function store(Key $key, MetricValue $value): void
     {
         try {
+            $storageKey = $this->prefix($key);
             $timestamp = time();
             $expireAt = $timestamp + ($key->window->seconds() * 2);
-            $normalizedKey = $this->prefix($key);
+            $indexKey = $this->getIndexKey($key->window, $key->type);
 
-            $storedValue = match ($key->type) {
-                MetricType::Counter,
-                MetricType::Gauge,
-                MetricType::Average => (string) $value,
-                MetricType::Rate,
-                MetricType::Summary,
-                MetricType::Histogram => json_encode([
-                    'value' => $value,
-                    'timestamp' => $timestamp
-                ]),
+            match ($key->type) {
+                MetricType::Counter => $this->storeCounter($storageKey, $value, $timestamp, $expireAt),
+                default => $this->storeMetric($storageKey, $value, $key->type, $timestamp, $expireAt)
             };
 
-            $this->storage->set($normalizedKey, [
-                'value' => $storedValue,
-                'timestamp' => $timestamp,
-                'expire_at' => $expireAt
-            ]);
+            $this->updateIndex($indexKey, $storageKey, $expireAt);
+
         } catch (Throwable $e) {
             Log::error('Failed to store metric in memory', [
                 'key' => (string)$key,
-                'value' => $value,
                 'error' => $e->getMessage()
             ]);
-
             throw $e;
         }
     }
 
-    public function value(string $key, MetricType $type): array
+    /**
+     * @throws MetricHandlerNotFoundException
+     */
+    public function value(Key $key): MetricValue
     {
-        $normalizedKey = $this->prefix($key);
-        $data = $this->storage->get($normalizedKey);
+        $data = $this->storage->get($this->prefix($key));
 
         if (!$data || $data['expire_at'] < time()) {
-            return [];
+            return $this->emptyValue($key->type);
         }
 
-        try {
-            return match ($type) {
-                MetricType::Counter,
-                MetricType::Gauge,
-                MetricType::Average => [[
-                    'value' => (float)$data['value'],
-                    'timestamp' => $data['timestamp']
-                ]],
-                MetricType::Rate,
-                MetricType::Summary,
-                MetricType::Histogram => [
-                    json_decode($data['value'], true)
-                ]
-            };
-        } catch (Throwable $e) {
-            Log::error('Failed to get metric value from memory', [
-                'key' => $key,
-                'type' => $type->value,
-                'error' => $e->getMessage()
-            ]);
-
-            return [];
-        }
+        $values = $this->extractValues($data);
+        return HandlerFactory::compute($key->type, $values);
     }
 
     public function keys(string $pattern): array
     {
-        $normalizedPattern = $this->prefix($pattern);
-        $pattern = str_replace('*', '.*', $normalizedPattern);
-
+        $normalizedPattern = str_replace('*', '.*', $pattern);
         $keys = [];
+
         foreach ($this->storage as $key => $data) {
             if ($data['expire_at'] < time()) {
                 $this->storage->del($key);
                 continue;
             }
 
-            if (preg_match("/$pattern/", $key)) {
+            if (preg_match("/$normalizedPattern/", $key)) {
                 $keys[] = $this->strip($key);
             }
         }
@@ -114,40 +104,34 @@ class MemoryMetricStorage implements MetricStorage
 
     public function delete(TimeWindow|array $keys): void
     {
-
         if ($keys instanceof TimeWindow) {
             $keys = $this->keys($keys->key($this->prefix));
         }
 
-        if (empty($keys)) {
-            return;
-        }
-
         foreach ($keys as $key) {
-            $normalizedKey = $this->prefix($key);
-            $this->storage->del($normalizedKey);
+            $this->storage->del($this->prefix($key));
         }
     }
 
     public function expired(TimeWindow $window): bool
     {
-        $pattern = sprintf(
-            '%s:*:%s:%d:*',
-            $this->prefix,
-            $window->aggregation->value,
-            $window->slot
-        );
+        $indexKey = $this->getIndexKey($window);
+        $data = $this->index->get($indexKey);
 
-        return count($this->keys($pattern)) === 0;
+        if (!$data || $data['expire_at'] < time()) {
+            return true;
+        }
+
+        return empty(json_decode($data['keys'], true));
     }
 
     public function prune(Aggregation $window, Carbon $before): int
     {
         $count = 0;
-        $timestamp = $before->timestamp;
+        $beforeTimestamp = $before->timestamp;
 
         foreach ($this->storage as $key => $data) {
-            if ($data['timestamp'] < $timestamp) {
+            if ($data['timestamp'] < $beforeTimestamp || $data['expire_at'] < time()) {
                 $this->storage->del($key);
                 $count++;
             }
@@ -188,12 +172,87 @@ class MemoryMetricStorage implements MetricStorage
         ];
     }
 
-    private function prefix(string $key): string
+    private function storeCounter(string $key, MetricValue $value, int $timestamp, int $expireAt): void
     {
-        if (str_starts_with($key, $this->prefix . ':')) {
-            return $key;
+        $current = $this->storage->get($key);
+        $newValue = $current ?
+            (float)json_decode($current['value'], true)['value'] + $value->value() :
+            $value->value();
+
+        $this->storage->set($key, [
+            'value' => json_encode(['value' => $newValue]),
+            'type' => MetricType::Counter->value,
+            'timestamp' => $timestamp,
+            'expire_at' => $expireAt
+        ]);
+    }
+
+    private function storeMetric(string $key, MetricValue $value, MetricType $type, int $timestamp, int $expireAt): void
+    {
+        $this->storage->set($key, [
+            'value' => json_encode([
+                'value' => $value->value(),
+                'timestamp' => $timestamp
+            ]),
+            'type' => $type->value,
+            'timestamp' => $timestamp,
+            'expire_at' => $expireAt
+        ]);
+    }
+
+    private function updateIndex(string $indexKey, string $storageKey, int $expireAt): void
+    {
+        $current = $this->index->get($indexKey);
+        $keys = $current ? json_decode($current['keys'], true) : [];
+
+        if (!in_array($storageKey, $keys)) {
+            $keys[] = $storageKey;
         }
 
+        $this->index->set($indexKey, [
+            'keys' => json_encode($keys),
+            'expire_at' => $expireAt
+        ]);
+    }
+
+    private function getIndexKey(TimeWindow|Aggregation $window, ?MetricType $type = null): string
+    {
+        if ($window instanceof TimeWindow) {
+            return sprintf('index:%s:%d', $window->aggregation->value, $window->slot);
+        }
+
+        return $type ?
+            sprintf('index:%s:%s', $window->value, $type->value) :
+            sprintf('index:%s', $window->value);
+    }
+
+    private function extractValues(array $data): array
+    {
+        $decoded = json_decode($data['value'], true);
+        return [
+            [
+                'value' => $decoded['value'],
+                'timestamp' => $decoded['timestamp'] ?? $data['timestamp']
+            ]
+        ];
+    }
+
+    private function emptyValue(MetricType $type): MetricValue
+    {
+        return match ($type) {
+            MetricType::Counter => CounterMetricValue::empty(),
+            MetricType::Gauge => GaugeMetricValue::empty(),
+            MetricType::Histogram => HistogramMetricValue::empty(),
+            MetricType::Summary => SummaryMetricValue::empty(),
+            MetricType::Average => AverageMetricValue::empty(),
+            MetricType::Rate => RateMetricValue::empty(),
+            MetricType::Percentage => PercentageMetricValue::empty(),
+        };
+    }
+
+    private function prefix(string|Key $key): string
+    {
+        $key = $key instanceof Key ? (string)$key : $key;
         return sprintf('%s:%s', $this->prefix, $key);
     }
 
@@ -202,7 +261,6 @@ class MemoryMetricStorage implements MetricStorage
         if (str_starts_with($key, $this->prefix . ':')) {
             return substr($key, strlen($this->prefix) + 1);
         }
-
         return $key;
     }
 }

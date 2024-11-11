@@ -8,11 +8,20 @@ use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
-use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricAggregationRepository;
+use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricValue;
 use Ninja\DeviceTracker\Modules\Observability\Dto\Dimension;
 use Ninja\DeviceTracker\Modules\Observability\Dto\DimensionCollection;
+use Ninja\DeviceTracker\Modules\Observability\Dto\Value\AverageMetricValue;
+use Ninja\DeviceTracker\Modules\Observability\Dto\Value\CounterMetricValue;
+use Ninja\DeviceTracker\Modules\Observability\Dto\Value\GaugeMetricValue;
+use Ninja\DeviceTracker\Modules\Observability\Dto\Value\HistogramMetricValue;
+use Ninja\DeviceTracker\Modules\Observability\Dto\Value\PercentageMetricValue;
+use Ninja\DeviceTracker\Modules\Observability\Dto\Value\RateMetricValue;
+use Ninja\DeviceTracker\Modules\Observability\Dto\Value\SummaryMetricValue;
 use Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\HandlerFactory;
+use Ninja\DeviceTracker\Modules\Observability\Repository\Contracts\MetricAggregationRepository;
 use Ninja\DeviceTracker\Modules\Observability\Repository\Dto\Metric;
 use Ninja\DeviceTracker\Modules\Observability\ValueObjects\TimeRange;
 use Throwable;
@@ -24,19 +33,19 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
     public function store(Metric $metric): void
     {
         try {
-            $storedValue = $this->formatValueForStorage($metric->type, $metric->value);
-
             DB::table(self::METRIC_AGGREGATION_TABLE)->updateOrInsert(
                 [
                     'metric_fingerprint' => $metric->fingerprint(),
                 ],
                 [
-                    'name' => $metric->name->value,
+                    'name' => $metric->name,
                     'type' => $metric->type->value,
                     'window' => $metric->aggregation->value,
                     'dimensions' => $metric->dimensions->toJson(),
                     'timestamp' => $metric->timestamp,
-                    'value' => $storedValue,
+                    'value' => $metric->value->serialize(),
+                    'computed' => $metric->value->value(),
+                    'metadata' => json_encode($metric->value->metadata()),
                     'updated_at' => now(),
                 ]
             );
@@ -50,6 +59,11 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
         }
     }
 
+    public function query(): MetricQueryBuilder
+    {
+        return new MetricQueryBuilder(DB::table(self::METRIC_AGGREGATION_TABLE));
+    }
+
     public function query(
         ?string $name = null,
         ?DimensionCollection $dimensions = null,
@@ -60,12 +74,19 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
         return $this->buildQuery($name, $dimensions, $window, $from, $to)
             ->orderBy('timestamp')
             ->get()
-            ->map(function ($metric) {
-                $metric->value = $this->parseStoredValue(
-                    MetricType::from($metric->type),
-                    $metric->value
+            ->map(function ($row) {
+                return new Metric(
+                    name: $row->name,
+                    type: MetricType::from($row->type),
+                    value: $this->buildValue(
+                        MetricType::from($row->type),
+                        $row->value,
+                        json_decode($row->metadata, true)
+                    ),
+                    timestamp: Carbon::parse($row->timestamp),
+                    dimensions: DimensionCollection::from(json_decode($row->dimensions, true)),
+                    aggregation: Aggregation::from($row->window),
                 );
-                return $metric;
             });
     }
 
@@ -100,8 +121,19 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
             ->where('timestamp', '>=', now()->sub($aggregation->retention()))
             ->orderBy('timestamp')
             ->get()
-            ->map(function (\stdClass $metric) {
-                return Metric::from($metric);
+            ->map(function (\stdClass $row) {
+                return new Metric(
+                    name: $row->name,
+                    type: MetricType::from($row->type),
+                    value: $this->buildValue(
+                        MetricType::from($row->type),
+                        $row->value,
+                        json_decode($row->metadata, true)
+                    ),
+                    timestamp: Carbon::parse($row->timestamp),
+                    dimensions: DimensionCollection::from(json_decode($row->dimensions, true)),
+                    aggregation: Aggregation::from($row->window),
+                );
             });
     }
 
@@ -211,38 +243,6 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
             ->pluck('value');
     }
 
-    public function timeseries(
-        string $name,
-        string $interval,
-        ?TimeRange $timeRange = null,
-        ?DimensionCollection $dimensions = null
-    ): Collection {
-        $query = $this->buildQuery($name, $dimensions);
-
-        if ($timeRange) {
-            $query->whereBetween('timestamp', [$timeRange->from, $timeRange->to]);
-        }
-
-        return $query->select([
-            DB::raw(sprintf(
-                "DATE_FORMAT(timestamp, '%s') as time",
-                $this->getTimeFormat($interval)
-            )),
-            'type',
-            'value',
-            'window'
-        ])
-            ->orderBy('time')
-            ->get()
-            ->map(function ($row) {
-                $row->value = $this->parseStoredValue(
-                    MetricType::from($row->type),
-                    $row->value
-                );
-                return $row;
-            });
-    }
-
     public function aggregate(
         string $name,
         string $aggregation,
@@ -255,16 +255,14 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
             $query->whereBetween('timestamp', [$timeRange->from, $timeRange->to]);
         }
 
-        $result = match ($aggregation) {
+        return match ($aggregation) {
             'count' => $query->count(),
-            'sum' => $query->sum(DB::raw('CAST(value AS FLOAT)')),
-            'avg' => $query->avg(DB::raw('CAST(value AS FLOAT)')),
-            'min' => $query->min(DB::raw('CAST(value AS FLOAT)')),
-            'max' => $query->max(DB::raw('CAST(value AS FLOAT)')),
-            default => throw new InvalidArgumentException("Unknown aggregation: {$aggregation}")
+            'sum' => $query->sum('computed') ?? 0,
+            'avg' => $query->avg('computed') ?? 0,
+            'min' => $query->min('computed') ?? 0,
+            'max' => $query->max('computed') ?? 0,
+            default => throw new InvalidArgumentException(sprintf('Invalid aggregation: %s', $aggregation))
         };
-
-        return $this->parseNumericValue($result);
     }
 
     public function hasMetrics(Aggregation $window): bool
@@ -283,18 +281,6 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
             ->where('window', $window->value)
             ->where('timestamp', '<', $before)
             ->delete();
-    }
-
-    private function getTimeFormat(string $interval): string
-    {
-        return match ($interval) {
-            'minute' => '%Y-%m-%d %H:%i:00',
-            'hour' => '%Y-%m-%d %H:00:00',
-            'day' => '%Y-%m-%d 00:00:00',
-            'week' => '%Y-%u-1',
-            'month' => '%Y-%m-01',
-            default => '%Y-%m-%d %H:%i:%s'
-        };
     }
 
     private function buildQuery(
@@ -335,52 +321,29 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
         return $query;
     }
 
-    private function formatValueForStorage(MetricType $type, mixed $value): string
+    private function buildValue(MetricType $type, string $stored, ?array $metadata = null): MetricValue
     {
         try {
-            return match ($type) {
-                MetricType::Counter,
-                MetricType::Gauge => (string) ($value['value'] ?? $value),
-                MetricType::Rate => (string) ($value['rate'] ?? $value),
-                MetricType::Average => (string) ($value['avg'] ?? $value),
-                MetricType::Summary,
-                MetricType::Histogram => is_string($value) ? $value : json_encode($value)
-            };
+            return HandlerFactory::compute($type, [
+                ['value' => $stored, 'metadata' => $metadata]
+            ]);
         } catch (Throwable $e) {
-            Log::error('Failed to format metric value', [
+            Log::error('Failed to reconstruct metric value', [
                 'type' => $type->value,
-                'value' => json_encode($value),
+                'stored' => $stored,
+                'metadata' => $metadata,
                 'error' => $e->getMessage()
             ]);
-            throw new InvalidArgumentException(
-                sprintf(
-                    'Invalid value format for metric type %s: %s',
-                    $type->value,
-                    json_encode($value)
-                ),
-                0,
-                $e
-            );
-        }
-    }
 
-    private function parseStoredValue(MetricType $type, string $value): mixed
-    {
-        return match ($type) {
-            MetricType::Summary,
-            MetricType::Histogram => json_decode($value, true),
-            MetricType::Counter,
-            MetricType::Gauge,
-            MetricType::Rate,
-            MetricType::Average => $this->parseNumericValue($value)
-        };
-    }
-    private function parseNumericValue(mixed $value): float
-    {
-        if ($value === null) {
-            return 0.0;
+            return match ($type) {
+                MetricType::Counter => CounterMetricValue::empty(),
+                MetricType::Gauge => GaugeMetricValue::empty(),
+                MetricType::Histogram => HistogramMetricValue::empty(),
+                MetricType::Summary => SummaryMetricValue::empty(),
+                MetricType::Average => AverageMetricValue::empty(),
+                MetricType::Rate => RateMetricValue::empty(),
+                MetricType::Percentage => PercentageMetricValue::empty(),
+            };
         }
-
-        return is_numeric($value) ? (float) $value : 0.0;
     }
 }

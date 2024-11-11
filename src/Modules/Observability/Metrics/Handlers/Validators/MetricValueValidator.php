@@ -2,6 +2,8 @@
 
 namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Validators;
 
+use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricValue;
+
 final class MetricValueValidator
 {
     private function __construct()
@@ -9,7 +11,7 @@ final class MetricValueValidator
     }
 
     public static function validate(
-        float $value,
+        MetricValue $value,
         ?float $min = null,
         ?float $max = null,
         bool $allowNegative = false
@@ -26,6 +28,6 @@ final class MetricValueValidator
             return false;
         }
 
-        return !is_infinite($value) && !is_nan($value);
+        return !is_infinite($value->value()) && !is_nan($value->value());
     }
 }

@@ -41,11 +41,19 @@ enum Aggregation: string
 
     public function retention(): DateInterval
     {
-        return DateInterval::createFromDateString(
-            config(
-                sprintf('devices.observability.aggregation.retention.%s', $this->value),
-            )
-        );
+        $config_key = sprintf('devices.observability.aggregation.retention.%s', $this->value);
+        if (config($config_key)) {
+            return DateInterval::createFromDateString(config($config_key));
+        }
+
+        return match ($this) {
+            self::Realtime => DateInterval::createFromDateString('1 hour'),
+            self::Hourly => DateInterval::createFromDateString('1 day'),
+            self::Daily => DateInterval::createFromDateString('1 week'),
+            self::Weekly => DateInterval::createFromDateString('1 month'),
+            self::Monthly => DateInterval::createFromDateString('1 year'),
+            self::Yearly => DateInterval::createFromDateString('10 years'),
+        };
     }
 
     public function timeslot(?Carbon $timestamp = null): int

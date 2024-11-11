@@ -11,7 +11,7 @@ final readonly class HistogramExporter extends AbstractMetricExporter
 
         foreach ($buckets as $bucket => $count) {
             $metrics[] = [
-                'name' => sprintf('%s_bucket', $this->name->value),
+                'name' => sprintf('%s_bucket', $this->name),
                 'type' => $this->type->value,
                 'help' => sprintf("%s (bucket)", $this->help()),
                 'value' => $count,
@@ -20,7 +20,7 @@ final readonly class HistogramExporter extends AbstractMetricExporter
         }
 
         $metrics[] = [
-            'name' => sprintf('%s_sum', $this->name->value),
+            'name' => sprintf('%s_sum', $this->name),
             'type' => $this->type->value,
             'help' => sprintf("%s (sum)", $this->help()),
             'value' => $this->value["sum"],
@@ -28,7 +28,7 @@ final readonly class HistogramExporter extends AbstractMetricExporter
         ];
 
         $metrics[] = [
-            'name' => sprintf('%s_count', $this->name->value),
+            'name' => sprintf('%s_count', $this->name),
             'type' => $this->type->value,
             'help' => sprintf("%s (count)", $this->help()),
             'value' => $this->value["count"],

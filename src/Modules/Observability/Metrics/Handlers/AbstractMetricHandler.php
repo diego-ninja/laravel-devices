@@ -3,42 +3,42 @@
 namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers;
 
 use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricHandler;
+use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricValue;
+use Ninja\DeviceTracker\Modules\Observability\Exceptions\InvalidMetricException;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Traits\HandlesMetricValues;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Validators\MetricValueValidator;
 
 abstract class AbstractMetricHandler implements MetricHandler
 {
-    use HandlesMetricValues;
-
-    protected float $min;
-    protected float $max;
-    protected bool $allowNegative;
-
-    public function __construct(?float $min = null, ?float $max = null, bool $allowNegative = false)
+    public function validate(array $values): bool
     {
-        $this->min = $min ?? PHP_FLOAT_MIN;
-        $this->max = $max ?? PHP_FLOAT_MAX;
-        $this->allowNegative = $allowNegative;
+        try {
+            foreach ($values as $value) {
+                if (!isset($value['value']) || !is_numeric($value['value'])) {
+                    return false;
+                }
+                if ($value['value'] < 0 && !$this->allowsNegative()) {
+                    return false;
+                }
+            }
+            return true;
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
-
-    abstract public function compute(array $values): float|array;
-    abstract public function merge(array $windows): float|array;
-    public function validate(float $value): bool
+    protected function allowsNegative(): bool
     {
-        return MetricValueValidator::validate(
-            value: $value,
-            min: $this->min,
-            max: $this->max,
-            allowNegative: $this->allowNegative
-        );
+        return false;
     }
 
-    protected function filter(array $values): array
+    /**
+     * @throws InvalidMetricException
+     */
+    protected function validateOrFail(array $values): void
     {
-        return array_filter(
-            $this->normalize($values),
-            fn($value) => $this->validate($value)
-        );
+        if (!$this->validate($values)) {
+            throw new InvalidMetricException('Invalid metric values');
+        }
     }
 }

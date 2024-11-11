@@ -2,13 +2,10 @@
 
 namespace Ninja\DeviceTracker\Modules\Observability\Console\Commands;
 
-use DateInterval;
 use Illuminate\Console\Command;
-use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricAggregationRepository;
 use Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation;
-use Ninja\DeviceTracker\Modules\Observability\MetricManager;
-use Ninja\DeviceTracker\Modules\Observability\Processors\Items\Window;
 use Ninja\DeviceTracker\Modules\Observability\Processors\WindowProcessor;
+use Ninja\DeviceTracker\Modules\Observability\Repository\Contracts\MetricAggregationRepository;
 use Ninja\DeviceTracker\Modules\Observability\Tasks\ProcessMetricsTask;
 use Ninja\DeviceTracker\Modules\Observability\Tasks\PruneMetricsTask;
 use Ninja\DeviceTracker\Modules\Observability\ValueObjects\TimeWindow;

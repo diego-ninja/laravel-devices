@@ -3,6 +3,7 @@
 namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Definition;
 
 use Illuminate\Contracts\Support\Arrayable;
+use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricValue;
 use Ninja\DeviceTracker\Modules\Observability\Dto\DimensionCollection;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Exceptions\InvalidMetricException;
@@ -47,7 +48,7 @@ abstract class AbstractMetricDefinition implements Arrayable
      */
     public function valid(
         MetricType $type,
-        float $value,
+        MetricValue $value,
         DimensionCollection $dimensions,
         bool $throwException = true
     ): bool {
@@ -61,7 +62,7 @@ abstract class AbstractMetricDefinition implements Arrayable
             }
 
             if (!MetricValueValidator::validate($value, $this->min, $this->max)) {
-                throw InvalidMetricException::valueOutOfRange($this->name, $value, $this->min, $this->max);
+                throw InvalidMetricException::valueOutOfRange($this->name, $value->value(), $this->min, $this->max);
             }
 
             return true;
@@ -112,6 +113,16 @@ abstract class AbstractMetricDefinition implements Arrayable
     public function options(): array
     {
         return $this->options;
+    }
+
+    public function min(): ?float
+    {
+        return $this->min;
+    }
+
+    public function max(): ?float
+    {
+        return $this->max;
     }
 
     public function toArray(): array

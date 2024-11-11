@@ -25,15 +25,11 @@ final readonly class RealtimeMetricExporter extends AbstractMetricExporter
                 $decodedKey = Key::decode($key);
                 $value = $this->storage->value($key);
 
-                if (empty($value)) {
-                    continue;
-                }
-
                 $metrics[] = [
                     'name' => $this->name($decodedKey->name),
                     'type' => MetricType::Gauge->value,
                     'help' => "Real-time metric: {$decodedKey->name}",
-                    'value' => $value[0]['value'],
+                    'value' => $value->value(),
                     'labels' => [
                         ...$this->labels($decodedKey->dimensions),
                         'window' => $decodedKey->window->value

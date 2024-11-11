@@ -10,7 +10,7 @@ final readonly class PercentageExporter extends AbstractMetricExporter implement
     public function export(): array
     {
         return [
-            'name' => $this->name->value,
+            'name' => $this->name,
             'type' => $this->type->value,
             'help' => Registry::get($this->name)->description(),
             'value' => $this->value(),

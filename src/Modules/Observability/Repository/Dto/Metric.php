@@ -4,6 +4,7 @@ namespace Ninja\DeviceTracker\Modules\Observability\Repository\Dto;
 
 use Carbon\Carbon;
 use JsonSerializable;
+use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricValue;
 use Ninja\DeviceTracker\Modules\Observability\Dto\DimensionCollection;
 use Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
@@ -13,7 +14,7 @@ readonly class Metric implements JsonSerializable
     public function __construct(
         public string $name,
         public MetricType $type,
-        public float|array $value,
+        public MetricValue $value,
         public Carbon $timestamp,
         public DimensionCollection $dimensions,
         public Aggregation $aggregation

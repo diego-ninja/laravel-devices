@@ -11,7 +11,7 @@ final readonly class SummaryExporter extends AbstractMetricExporter
 
         foreach ($quantiles as $quantile => $value) {
             $metrics[] = [
-                'name' => $this->name->value,
+                'name' => $this->name,
                 'type' => $this->type->value,
                 'help' => sprintf("%s (quantile)", $this->help()),
                 'value' => $value,
@@ -20,7 +20,7 @@ final readonly class SummaryExporter extends AbstractMetricExporter
         }
 
         $metrics[] = [
-            'name' => sprintf('%s_sum', $this->name->value),
+            'name' => sprintf('%s_sum', $this->name),
             'type' => $this->type->value,
             'help' => sprintf("%s (sum)", $this->help()),
             'value' => $this->value["sum"],
@@ -28,7 +28,7 @@ final readonly class SummaryExporter extends AbstractMetricExporter
         ];
 
         $metrics[] = [
-            'name' => sprintf('%s_count', $this->name->value),
+            'name' => sprintf('%s_count', $this->name),
             'type' => $this->type->value,
             'help' => sprintf("%s (count)", $this->help()),
             'value' => $this->value["count"],

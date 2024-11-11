@@ -2,45 +2,50 @@
 
 namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers;
 
-class Percentage extends AbstractMetricHandler
+use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricValue;
+use Ninja\DeviceTracker\Modules\Observability\Dto\Value\PercentageMetricValue;
+
+final class Percentage extends AbstractMetricHandler
 {
-    public function compute(array $values): array
+    public function compute(array $values): MetricValue
     {
-        $validValues = $this->filter($values);
-        if (empty($validValues)) {
-            return [
-                'value' => 0,
-                'total' => 0,
-                'percentage' => 0,
-                'count' => 0
-            ];
+        $this->validateOrFail($values);
+
+        if (empty($values)) {
+            return PercentageMetricValue::empty();
         }
 
-        $latest = end($validValues);
+        $partialSum = 0;
+        $totalSum = 0;
 
-        return [
-            'value' => $latest['value'] ?? 0,
-            'total' => $latest['total'] ?? 0,
-            'percentage' => $latest['total'] > 0
-                ? ($latest['value'] / $latest['total']) * 100
-                : 0,
-            'count' => count($validValues)
-        ];
+        foreach ($values as $value) {
+            $partialSum += $value['value'];
+            $totalSum += $value['metadata']['total'] ?? $value['value'];
+        }
+
+        return new PercentageMetricValue(
+            value: $partialSum,
+            total: $totalSum,
+            count: count($values)
+        );
     }
 
-    public function merge(array $windows): array
+    public function validate(array $values): bool
     {
-        $latest = collect($windows)
-            ->sortByDesc('timestamp')
-            ->first();
+        if (!parent::validate($values)) {
+            return false;
+        }
 
-        return [
-            'value' => $latest['value'] ?? 0,
-            'total' => $latest['total'] ?? 0,
-            'percentage' => $latest['total'] > 0
-                ? ($latest['value'] / $latest['total']) * 100
-                : 0,
-            'count' => count($windows)
-        ];
+        try {
+            foreach ($values as $value) {
+                $total = $value['metadata']['total'] ?? $value['value'];
+                if ($total < 0 || $value['value'] > $total) {
+                    return false;
+                }
+            }
+            return true;
+        } catch (\Throwable) {
+            return false;
+        }
     }
 }

@@ -19,6 +19,17 @@ class InvalidMetricException extends Exception
         );
     }
 
+    public static function invalidValue(string $name, float $value): self
+    {
+        return new self(
+            sprintf(
+                'Invalid value for %s: %f',
+                $name,
+                $value
+            )
+        );
+    }
+
     public static function invalidDimensions(string $name, array $invalidDimensions): self
     {
         return new self(

@@ -12,7 +12,7 @@ final readonly class RateExporter extends AbstractMetricExporter
         $definition = Registry::get($this->name);
 
         return [
-            'name' => sprintf('%s_per_%s', $this->name->value, $definition->unit()),
+            'name' => sprintf('%s_per_%s', $this->name, $definition->unit()),
             'type' => MetricType::Gauge->value,
             'help' => $this->help(),
             'value' => $this->value(),

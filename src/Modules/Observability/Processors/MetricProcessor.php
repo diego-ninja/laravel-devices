@@ -3,13 +3,13 @@
 namespace Ninja\DeviceTracker\Modules\Observability\Processors;
 
 use InvalidArgumentException;
-use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricAggregationRepository;
 use Ninja\DeviceTracker\Modules\Observability\Exceptions\MetricHandlerNotFoundException;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\HandlerFactory;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Storage\Contracts\MetricStorage;
 use Ninja\DeviceTracker\Modules\Observability\Processors\Contracts\Processable;
 use Ninja\DeviceTracker\Modules\Observability\Processors\Contracts\Processor;
 use Ninja\DeviceTracker\Modules\Observability\Processors\Items\Metric;
+use Ninja\DeviceTracker\Modules\Observability\Repository\Contracts\MetricAggregationRepository;
 use Ninja\DeviceTracker\Modules\Observability\Repository\Dto\Metric as MetricDto;
 use Throwable;
 

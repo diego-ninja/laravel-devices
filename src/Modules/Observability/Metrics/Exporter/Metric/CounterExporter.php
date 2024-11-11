@@ -7,7 +7,7 @@ final readonly class CounterExporter extends AbstractMetricExporter
     public function export(): array
     {
         return [
-            'name' => sprintf('%s_total', $this->name->value),
+            'name' => sprintf('%s_total', $this->name),
             'type' => $this->type->value,
             'help' => $this->help(),
             'value' => $this->value(),

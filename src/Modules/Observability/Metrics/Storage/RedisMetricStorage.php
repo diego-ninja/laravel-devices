@@ -7,9 +7,19 @@ use Exception;
 use Illuminate\Redis\Connections\Connection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
+use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricValue;
 use Ninja\DeviceTracker\Modules\Observability\Dto\Key;
+use Ninja\DeviceTracker\Modules\Observability\Dto\Value\AverageMetricValue;
+use Ninja\DeviceTracker\Modules\Observability\Dto\Value\CounterMetricValue;
+use Ninja\DeviceTracker\Modules\Observability\Dto\Value\GaugeMetricValue;
+use Ninja\DeviceTracker\Modules\Observability\Dto\Value\HistogramMetricValue;
+use Ninja\DeviceTracker\Modules\Observability\Dto\Value\PercentageMetricValue;
+use Ninja\DeviceTracker\Modules\Observability\Dto\Value\RateMetricValue;
+use Ninja\DeviceTracker\Modules\Observability\Dto\Value\SummaryMetricValue;
 use Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
+use Ninja\DeviceTracker\Modules\Observability\Exceptions\MetricHandlerNotFoundException;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\HandlerFactory;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Storage\Contracts\MetricStorage;
 use Ninja\DeviceTracker\Modules\Observability\ValueObjects\TimeWindow;
 use Throwable;
@@ -23,7 +33,7 @@ final readonly class RedisMetricStorage implements MetricStorage
         $this->redis = Redis::connection($this->connection);
     }
 
-    public function store(Key $key, float $value): void
+    public function store(Key $key, MetricValue $value): void
     {
         $metricKey = $this->prefix($key);
 
@@ -32,16 +42,19 @@ final readonly class RedisMetricStorage implements MetricStorage
                 $timestamp = now();
 
                 match ($key->type) {
-                    MetricType::Counter => $pipe->incrbyfloat($metricKey, $value),
-                    MetricType::Gauge => $pipe->set($metricKey, $value),
-                    MetricType::Histogram,
-                    MetricType::Summary,
-                    MetricType::Rate => $pipe->zadd($metricKey, $timestamp->timestamp, json_encode([
-                        'value' => $value,
+                    MetricType::Counter => $pipe->incrbyfloat($metricKey, $value->value()),
+                    MetricType::Gauge => $pipe->set($metricKey, json_encode([
+                        'value' => $value->value(),
                         'timestamp' => $timestamp
                     ])),
-                    MetricType::Average => $pipe->zadd($metricKey, $timestamp->timestamp, $value),
-                    MetricType::Percentage => throw new Exception('To be implemented')
+                    MetricType::Histogram,
+                    MetricType::Summary,
+                    MetricType::Average,
+                    MetricType::Percentage,
+                    MetricType::Rate => $pipe->zadd($metricKey, $timestamp->timestamp, json_encode([
+                        'value' => $value->value(),
+                        'timestamp' => $timestamp
+                    ]))
                 };
 
                 $pipe->expire($metricKey, now()->add($key->window->retention())->timestamp);
@@ -56,26 +69,91 @@ final readonly class RedisMetricStorage implements MetricStorage
         }
     }
 
-    public function value(Key $key): array
+    /**
+     * @throws MetricHandlerNotFoundException
+     */
+    public function value(Key $key): MetricValue
+    {
+        $stored = $this->fetch($key);
+        if (empty($stored)) {
+            return $this->empty($key->type);
+        }
+
+        return HandlerFactory::compute($key->type, $stored);
+    }
+
+    private function fetch(Key $key): array
     {
         try {
+            $metricKey = $this->prefix($key);
+
             return match ($key->type) {
-                MetricType::Counter,
-                MetricType::Gauge => [['value' => (float) $this->redis->get($key)]],
+                MetricType::Counter => [
+                    ['value' => (float) ($this->redis->get($metricKey) ?: 0)]
+                ],
+                MetricType::Gauge => $this->gauge($metricKey),
                 MetricType::Histogram,
-                MetricType::Average => $this->histogram($key),
                 MetricType::Summary,
-                MetricType::Rate => $this->timestamped($key),
-                MetricType::Percentage => throw new Exception('To be implemented')
+                MetricType::Average,
+                MetricType::Rate,
+                MetricType::Percentage => $this->timeseries($metricKey)
             };
         } catch (Throwable $e) {
-            Log::error('Failed to get metric value', [
-                'key' => (string) $key,
+            Log::error('Failed to fetch metric value', [
+                'key' => (string)$key,
                 'type' => $key->type->value,
                 'error' => $e->getMessage()
             ]);
             return [];
         }
+    }
+
+    private function gauge(string $key): array
+    {
+        $value = $this->redis->get($key);
+        if (!$value) {
+            return [];
+        }
+
+        $decoded = json_decode($value, true);
+        return [
+            [
+                'value' => (float)($decoded['value'] ?? 0),
+                'timestamp' => $decoded['timestamp'] ?? time()
+            ]
+        ];
+    }
+
+    private function timeseries(string $key): array
+    {
+        $values = $this->redis->zrange($key, 0, -1, ['WITHSCORES' => true]);
+        if (empty($values)) {
+            return [];
+        }
+
+        $result = [];
+        foreach ($values as $value => $score) {
+            $decoded = json_decode($value, true);
+            $result[] = [
+                'value' => (float)($decoded['value'] ?? 0),
+                'timestamp' => (int)$score
+            ];
+        }
+
+        return $result;
+    }
+
+    private function empty(MetricType $type): MetricValue
+    {
+        return match ($type) {
+            MetricType::Counter => CounterMetricValue::empty(),
+            MetricType::Gauge => GaugeMetricValue::empty(),
+            MetricType::Histogram => HistogramMetricValue::empty(),
+            MetricType::Summary => SummaryMetricValue::empty(),
+            MetricType::Average => AverageMetricValue::empty(),
+            MetricType::Rate => RateMetricValue::empty(),
+            MetricType::Percentage => PercentageMetricValue::empty(),
+        };
     }
 
     public function keys(?string $pattern = null): array

@@ -2,66 +2,32 @@
 
 namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers;
 
-use Ninja\DeviceTracker\Modules\Observability\ValueObjects\RateWindow;
-use Ninja\DeviceTracker\Modules\Observability\ValueObjects\TimeWindow;
+use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricValue;
+use Ninja\DeviceTracker\Modules\Observability\Dto\Value\RateMetricValue;
 
 final class Rate extends AbstractMetricHandler
 {
-    private readonly int $interval;
-
-    public function __construct(int $interval = 3600)
+    public function __construct(private readonly int $interval)
     {
-        parent::__construct(min: 0.0);
-        $this->interval = $interval;
     }
 
-    public function compute(array $values): array
+    public function compute(array $values): MetricValue
     {
-        if (count($values) < 2) {
-            return [
-                'rate' => 0.0,
-                'count' => count($values),
-                'interval' => $this->interval
-            ];
+        $this->validateOrFail($values);
+
+        if (empty($values)) {
+            return new RateMetricValue(0, $this->interval);
         }
 
-        $window = RateWindow::fromValues($values, $this->interval);
-        if ($window->empty() || $window->duration() <= 0) {
-            return [
-                'rate' => (float)count($values),
-                'count' => count($values),
-                'interval' => $this->interval
-            ];
+        $timestamps = array_column($values, 'timestamp');
+        $timespan = max($timestamps) - min($timestamps);
+
+        if ($timespan <= 0) {
+            return new RateMetricValue(count($values), $this->interval);
         }
 
-        $validValues = $this->filter($values);
-        $rate = (count($validValues) * $this->interval) / $window->duration();
+        $rate = (count($values) * $this->interval) / $timespan;
 
-        return [
-            'rate' => $rate,
-            'count' => count($validValues),
-            'interval' => $this->interval,
-            'window_start' => $window->start,
-            'window_end' => $window->end
-        ];
-    }
-
-    public function merge(array $windows): array
-    {
-        $totalCount = 0;
-        $totalDuration = 0;
-
-        foreach ($windows as $window) {
-            if (isset($window['count'], $window['window_start'], $window['window_end'])) {
-                $totalCount += $window['count'];
-                $totalDuration += ($window['window_end'] - $window['window_start']);
-            }
-        }
-
-        return [
-            'rate' => $totalDuration > 0 ? ($totalCount * $this->interval) / $totalDuration : 0.0,
-            'count' => $totalCount,
-            'interval' => $this->interval
-        ];
+        return new RateMetricValue($rate, $this->interval, count($values));
     }
 }

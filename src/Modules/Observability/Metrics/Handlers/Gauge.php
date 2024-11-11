@@ -2,43 +2,21 @@
 
 namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers;
 
+use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricValue;
+use Ninja\DeviceTracker\Modules\Observability\Dto\Value\GaugeMetricValue;
+
 final class Gauge extends AbstractMetricHandler
 {
-    public function compute(array $values): array
+    public function compute(array $values): MetricValue
     {
-        if (empty($values)) {
-            return ['value' => 0.0, 'timestamp' => time()];
-        }
+        $this->validateOrFail($values);
 
-        $sorted = $this->sortByTimestamp($values);
-        $latest = reset($sorted);
+        usort($values, fn($a, $b) => $b['timestamp'] <=> $a['timestamp']);
+        $latest = reset($values);
 
-        return [
-            'value' => $this->extractValue($latest),
-            'timestamp' => $this->extractTimestamp($latest) ?? time()
-        ];
-    }
-
-    public function merge(array $windows): array
-    {
-        if (empty($windows)) {
-            return ['value' => 0.0, 'timestamp' => time()];
-        }
-
-        $latest = null;
-        $latestTimestamp = 0;
-
-        foreach ($windows as $window) {
-            $timestamp = $this->extractTimestamp($window);
-            if ($timestamp && $timestamp > $latestTimestamp) {
-                $latest = $window;
-                $latestTimestamp = $timestamp;
-            }
-        }
-
-        return [
-            'value' => $latest ? $this->extractValue($latest) : 0.0,
-            'timestamp' => $latestTimestamp ?: time()
-        ];
+        return new GaugeMetricValue(
+            $latest['value'],
+            $latest['timestamp']
+        );
     }
 }

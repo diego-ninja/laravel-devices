@@ -3,6 +3,7 @@
 namespace Ninja\DeviceTracker\Modules\Observability\Metrics;
 
 use Illuminate\Support\Collection;
+use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricValue;
 use Ninja\DeviceTracker\Modules\Observability\Dto\DimensionCollection;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Exceptions\InvalidMetricException;
@@ -19,7 +20,7 @@ class Registry
     public static function validate(
         string $name,
         MetricType $type,
-        float $value,
+        MetricValue $value,
         DimensionCollection $dimensions,
         bool $throwException = true
     ): bool {
@@ -43,7 +44,7 @@ class Registry
         }
 
         self::$metrics = collect();
-        foreach (config('devices.observability.metrics') as $metric) {
+        foreach (config('devices.observability.metrics', []) as $metric) {
             self::register($metric::create());
         }
         self::$initialized = true;

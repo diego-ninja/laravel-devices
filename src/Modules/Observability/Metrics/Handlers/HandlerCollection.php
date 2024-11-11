@@ -6,9 +6,9 @@ use Illuminate\Support\Collection;
 use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricHandler;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 
-final class HandlerCollection
+final readonly class HandlerCollection
 {
-    private readonly Collection $handlers;
+    private Collection $handlers;
 
     public function __construct()
     {
