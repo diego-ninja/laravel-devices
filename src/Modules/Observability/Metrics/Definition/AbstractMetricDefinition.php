@@ -4,10 +4,10 @@ namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Definition;
 
 use Illuminate\Contracts\Support\Arrayable;
 use Ninja\DeviceTracker\Modules\Observability\Dto\DimensionCollection;
-use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Exceptions\InvalidMetricException;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Handlers\Validators\MetricValueValidator;
+use Str;
 
 abstract class AbstractMetricDefinition implements Arrayable
 {
@@ -16,7 +16,7 @@ abstract class AbstractMetricDefinition implements Arrayable
     private array $allowed_dimensions;
 
     public function __construct(
-        private readonly MetricName $name,
+        private ?string $name = null,
         private readonly MetricType $type,
         private readonly string $description,
         private readonly string $unit = '',
@@ -28,6 +28,7 @@ abstract class AbstractMetricDefinition implements Arrayable
         private readonly ?float $min = null,
         private readonly ?float $max = null,
     ) {
+        $this->name = $name ?: $this->guessName();
         $this->allowed_dimensions = array_merge(config('devices.observability.dimensions', []), $allowed_dimensions);
         $this->buckets = match ($type) {
             MetricType::Histogram => $buckets ?: config('devices.observability.buckets', []),
@@ -75,7 +76,7 @@ abstract class AbstractMetricDefinition implements Arrayable
 
     public function name(): string
     {
-        return $this->name->value;
+        return $this->name;
     }
 
     public function type(): MetricType
@@ -116,7 +117,7 @@ abstract class AbstractMetricDefinition implements Arrayable
     public function toArray(): array
     {
         return [
-            'name' => $this->name->value,
+            'name' => $this->name,
             'type' => $this->type->value,
             'description' => $this->description,
             'unit' => $this->unit,
@@ -128,5 +129,10 @@ abstract class AbstractMetricDefinition implements Arrayable
             'min' => $this->min,
             'max' => $this->max,
         ];
+    }
+
+    protected function guessName(): string
+    {
+        return Str::camel(Str::afterLast(get_called_class(), '\\'));
     }
 }

@@ -10,10 +10,11 @@ use Ninja\DeviceTracker\Events\DeviceDeletedEvent;
 use Ninja\DeviceTracker\Events\DeviceHijackedEvent;
 use Ninja\DeviceTracker\Events\DeviceVerifiedEvent;
 use Ninja\DeviceTracker\Models\Device;
+use Ninja\DeviceTracker\Modules\Observability\Collectors\Contracts\MetricCollector;
 use Ninja\DeviceTracker\Modules\Observability\Dto\Dimension;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 
-final readonly class DeviceMetricCollector
+final readonly class DeviceMetricCollector implements MetricCollector
 {
     public function listen(): void
     {
@@ -23,7 +24,7 @@ final readonly class DeviceMetricCollector
         Event::listen(DeviceDeletedEvent::class, fn(DeviceDeletedEvent $event) => $this->handleDeviceDeleted($event));
     }
 
-    public function all(): void
+    public function collect(): void
     {
         $this->base();
         $this->risk();

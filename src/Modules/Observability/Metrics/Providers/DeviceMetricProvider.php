@@ -8,14 +8,14 @@ use Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\DeviceTy
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\HijackedDeviceCount;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\HijackedPercentage;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\Lifespan;
-use Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\PlatformDistribution;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\DevicePlatformDistribution;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\RiskScoreAverage;
-use Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\RiskScoreDistribution;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\DeviceRiskScoreDistribution;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\VerificationLatencyDistribution;
-use Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\VerificationRate;
-use Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\VerificationTimeAverage;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\DeviceVerificationRate;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\DeviceVerificationTimeAverage;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\VerifiedDeviceCount;
-use Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\VerifiedPercentage;
+use Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device\VerifiedDevicePercentage;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Providers\Contracts\MetricProvider;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Registry;
 
@@ -26,15 +26,15 @@ class DeviceMetricProvider implements MetricProvider
         VerifiedDeviceCount::class,
         HijackedDeviceCount::class,
         CreationRate::class,
-        VerificationRate::class,
+        DeviceVerificationRate::class,
         VerificationLatencyDistribution::class,
-        VerificationTimeAverage::class,
-        VerifiedPercentage::class,
+        DeviceVerificationTimeAverage::class,
+        VerifiedDevicePercentage::class,
         HijackedPercentage::class,
         DeviceTypeDistribution::class,
-        PlatformDistribution::class,
+        DevicePlatformDistribution::class,
         RiskScoreAverage::class,
-        RiskScoreDistribution::class,
+        DeviceRiskScoreDistribution::class,
         Lifespan::class
     ];
 

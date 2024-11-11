@@ -7,7 +7,6 @@ use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Factories\SessionIdFactory;
 use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Models\Session;
-use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\MetricAggregator;
 
 if (! function_exists('fingerprint')) {
@@ -79,7 +78,7 @@ if (! function_exists('counter')) {
     function counter(string $name, float $value = 1, ?array $dimensions = null): void
     {
         $aggregator = app(MetricAggregator::class);
-        $aggregator->counter(MetricName::from($name), $value, $dimensions);
+        $aggregator->counter($name, $value, $dimensions);
     }
 }
 
@@ -87,7 +86,7 @@ if (! function_exists('gauge')) {
     function gauge(string $name, float $value, ?array $dimensions = null): void
     {
         $aggregator = app(MetricAggregator::class);
-        $aggregator->gauge(MetricName::from($name), $value, $dimensions);
+        $aggregator->gauge($name, $value, $dimensions);
     }
 }
 
@@ -95,7 +94,7 @@ if (! function_exists('histogram')) {
     function histogram(string $name, float $value, ?array $dimensions = null): void
     {
         $aggregator = app(MetricAggregator::class);
-        $aggregator->histogram(MetricName::from($name), $value, $dimensions);
+        $aggregator->histogram($name, $value, $dimensions);
     }
 }
 
@@ -103,7 +102,7 @@ if (! function_exists('average')) {
     function average(string $name, float $value, ?array $dimensions = null): void
     {
         $aggregator = app(MetricAggregator::class);
-        $aggregator->average(MetricName::from($name), $value, $dimensions);
+        $aggregator->average($name, $value, $dimensions);
     }
 }
 
@@ -111,7 +110,7 @@ if (! function_exists('rate')) {
     function rate(string $name, float $value = 1, array $dimensions = []): void
     {
         $aggregator = app(MetricAggregator::class);
-        $aggregator->rate(MetricName::from($name), $value, $dimensions);
+        $aggregator->rate($name, $value, $dimensions);
     }
 }
 
@@ -119,6 +118,14 @@ if (! function_exists('summary')) {
     function summary(string $name, float $value, array $dimensions = []): void
     {
         $aggregator = app(MetricAggregator::class);
-        $aggregator->summary(MetricName::from($name), $value, $dimensions);
+        $aggregator->summary($name, $value, $dimensions);
+    }
+}
+
+if (! function_exists('percentage')) {
+    function percentage(string $name, float $value, array $dimensions = []): void
+    {
+        $aggregator = app(MetricAggregator::class);
+        $aggregator->percentage($name, $value, $dimensions);
     }
 }

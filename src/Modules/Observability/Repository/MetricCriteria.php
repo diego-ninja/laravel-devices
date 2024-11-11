@@ -3,14 +3,13 @@
 namespace Ninja\DeviceTracker\Modules\Observability\Repository;
 
 use Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation;
-use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\ValueObjects\TimeRange;
 
 class MetricCriteria
 {
     /**
-     * @param MetricName[]|null $names
+     * @param string[]|null $names
      * @param MetricType[]|null $types
      * @param Aggregation[]|null $windows
      */
@@ -23,7 +22,7 @@ class MetricCriteria
     ) {
     }
 
-    public static function forName(MetricName $name): self
+    public static function forName(string $name): self
     {
         return new self(names: [$name]);
     }

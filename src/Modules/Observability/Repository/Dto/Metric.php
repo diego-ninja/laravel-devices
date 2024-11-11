@@ -6,13 +6,12 @@ use Carbon\Carbon;
 use JsonSerializable;
 use Ninja\DeviceTracker\Modules\Observability\Dto\DimensionCollection;
 use Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation;
-use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 
 readonly class Metric implements JsonSerializable
 {
     public function __construct(
-        public MetricName $name,
+        public string $name,
         public MetricType $type,
         public float|array $value,
         public Carbon $timestamp,
@@ -25,7 +24,7 @@ readonly class Metric implements JsonSerializable
     {
         return hash('sha256', sprintf(
             '%s:%s:%s:%s:%s',
-            $this->name->value,
+            $this->name,
             $this->type->value,
             $this->dimensions->implode(':'),
             $this->aggregation->value,
@@ -48,7 +47,7 @@ readonly class Metric implements JsonSerializable
         }
 
         return new self(
-            name: MetricName::tryFrom($data['name']),
+            name: $data['name'],
             type: MetricType::tryFrom($data['type']),
             value: $data['value'],
             timestamp: Carbon::parse($data['timestamp']),
@@ -60,7 +59,7 @@ readonly class Metric implements JsonSerializable
     public function array(): array
     {
         return [
-            'name' => $this->name->value,
+            'name' => $this->name,
             'type' => $this->type->value,
             'value' => $this->value,
             'timestamp' => $this->timestamp->format(DATE_ATOM),

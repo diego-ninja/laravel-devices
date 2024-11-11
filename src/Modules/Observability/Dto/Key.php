@@ -4,7 +4,6 @@ namespace Ninja\DeviceTracker\Modules\Observability\Dto;
 
 use JsonSerializable;
 use Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation;
-use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\ValueObjects\TimeWindow;
 use Stringable;
@@ -12,12 +11,12 @@ use Stringable;
 final class Key implements JsonSerializable, Stringable
 {
     public function __construct(
-        public MetricName          $name,
-        public MetricType          $type,
-        public Aggregation         $window,
+        public string $name,
+        public MetricType $type,
+        public Aggregation $window,
         public DimensionCollection $dimensions,
-        public ?int                $slot = null,
-        public ?string             $prefix = null
+        public ?int $slot = null,
+        public ?string $prefix = null
     ) {
         $this->slot = $this->slot ?? $this->window->timeslot(now());
         $this->prefix = $this->prefix ?? config('devices.observability.prefix');
@@ -28,7 +27,7 @@ final class Key implements JsonSerializable, Stringable
         $parts = explode(":", $key);
         if (self::prefixed($parts)) {
             return new self(
-                name: MetricName::from($parts[1]),
+                name: $parts[1],
                 type: MetricType::from($parts[2]),
                 window: Aggregation::from($parts[3]),
                 dimensions: DimensionCollection::from($parts[5]),
@@ -37,7 +36,7 @@ final class Key implements JsonSerializable, Stringable
         }
 
         return new self(
-            name: MetricName::from($parts[0]),
+            name: $parts[0],
             type: MetricType::from($parts[1]),
             window: Aggregation::from($parts[2]),
             dimensions: DimensionCollection::from($parts[4]),
@@ -48,7 +47,7 @@ final class Key implements JsonSerializable, Stringable
     public function array(): array
     {
         return [
-            'name' => $this->name->value,
+            'name' => $this->name,
             'type' => $this->type->value,
             'window' => $this->window->value,
             'dimensions' => $this->dimensions->array(),
@@ -62,7 +61,7 @@ final class Key implements JsonSerializable, Stringable
             $data = json_decode($data, true);
         }
         return new self(
-            name: MetricName::from($data['name']),
+            name: $data['name'],
             type: MetricType::from($data['type']),
             window: Aggregation::from($data['window']),
             dimensions: DimensionCollection::from($data['dimensions']),
@@ -94,7 +93,7 @@ final class Key implements JsonSerializable, Stringable
             return sprintf(
                 "%s:%s:%s:%s:%d:%s",
                 $this->prefix,
-                $this->name->value,
+                $this->name,
                 $this->type->value,
                 $this->window->value,
                 $this->slot,
@@ -104,7 +103,7 @@ final class Key implements JsonSerializable, Stringable
 
         return sprintf(
             "%s:%s:%s:%d:%s",
-            $this->name->value,
+            $this->name,
             $this->type->value,
             $this->window->value,
             $this->slot,

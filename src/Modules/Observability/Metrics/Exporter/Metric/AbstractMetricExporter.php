@@ -4,7 +4,6 @@ namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Exporter\Metric;
 
 use Ninja\DeviceTracker\Modules\Observability\Dto\Dimension;
 use Ninja\DeviceTracker\Modules\Observability\Dto\DimensionCollection;
-use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Exporter\Contracts\Exportable;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Registry;
@@ -13,7 +12,7 @@ use Ninja\DeviceTracker\Modules\Observability\Repository\Dto\Metric;
 abstract readonly class AbstractMetricExporter implements Exportable
 {
     public function __construct(
-        public MetricName $name,
+        public string $name,
         public MetricType $type,
         public float|array $value,
         public DimensionCollection $dimensions,

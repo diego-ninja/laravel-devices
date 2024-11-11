@@ -2,7 +2,6 @@
 
 namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device;
 
-use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\AbstractMetricDefinition;
 
@@ -11,7 +10,7 @@ class CreationRate extends AbstractMetricDefinition
     public static function create(): self
     {
         return new self(
-            name: MetricName::DeviceCreationRate,
+            name: 'device_creation_rate',
             type: MetricType::Rate,
             description: 'Rate of new device registrations per hour',
             unit: 'hour',

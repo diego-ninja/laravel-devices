@@ -5,21 +5,20 @@ namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\AbstractMetricDefinition;
 
-class HijackedDeviceCount extends AbstractMetricDefinition
+class VerifiedDevicePercentage extends AbstractMetricDefinition
 {
     public static function create(): self
     {
         return new self(
-            type: MetricType::Gauge,
-            description: 'Number of hijacked devices in the system',
-            required_dimensions: [],
+            type: MetricType::Percentage,
+            description: 'Percentage of verified devices vs total devices',
+            unit: '%',
             allowed_dimensions: [
-                'platform_family',
                 'browser_family',
                 'device_type',
             ],
             min: 0,
-            max: PHP_INT_MAX,
+            max: 100,
         );
     }
 }

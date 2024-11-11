@@ -4,11 +4,9 @@ namespace Ninja\DeviceTracker\Modules\Observability\Metrics;
 
 use Illuminate\Support\Collection;
 use Ninja\DeviceTracker\Modules\Observability\Dto\DimensionCollection;
-use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Exceptions\InvalidMetricException;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\AbstractMetricDefinition;
-use Ninja\DeviceTracker\Modules\Observability\Metrics\Providers\Contracts\MetricProvider;
 
 class Registry
 {
@@ -19,7 +17,7 @@ class Registry
      * @throws InvalidMetricException
      */
     public static function validate(
-        MetricName $name,
+        string $name,
         MetricType $type,
         float $value,
         DimensionCollection $dimensions,
@@ -30,7 +28,7 @@ class Registry
         $definition = self::get($name);
         if (!$definition) {
             if ($throwException) {
-                throw new InvalidMetricException(sprintf('Metric %s not found in registry', $name->value));
+                throw new InvalidMetricException(sprintf('Metric %s not found in registry', $name));
             }
             return false;
         }
@@ -51,10 +49,10 @@ class Registry
         self::$initialized = true;
     }
 
-    public static function get(MetricName $name): ?AbstractMetricDefinition
+    public static function get(string $name): ?AbstractMetricDefinition
     {
         self::ensureInitialized();
-        return self::$metrics->first(fn(AbstractMetricDefinition $metric) => $metric->name() === $name->value);
+        return self::$metrics->first(fn(AbstractMetricDefinition $metric) => $metric->name() === $name);
     }
 
     public static function all(): Collection

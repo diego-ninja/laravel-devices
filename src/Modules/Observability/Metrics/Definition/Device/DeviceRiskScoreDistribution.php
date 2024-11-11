@@ -2,23 +2,25 @@
 
 namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device;
 
-use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
+use Ninja\DeviceTracker\Modules\Observability\Enums\Quantile;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\AbstractMetricDefinition;
 
-class VerifiedPercentage extends AbstractMetricDefinition
+class DeviceRiskScoreDistribution extends AbstractMetricDefinition
 {
     public static function create(): self
     {
         return new self(
-            name: MetricName::VerifiedDevicePercentage,
-            type: MetricType::Gauge,
-            description: 'Percentage of verified devices vs total devices',
-            unit: '%',
+            type: MetricType::Summary,
+            description: 'Statistical distribution of device risk scores',
+            unit: 'score',
+            required_dimensions: ['platform_family'],
             allowed_dimensions: [
                 'browser_family',
                 'device_type',
+                'status',
             ],
+            quantiles: Quantile::scale(),
             min: 0,
             max: 100,
         );

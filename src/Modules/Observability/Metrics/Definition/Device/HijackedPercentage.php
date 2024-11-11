@@ -2,7 +2,6 @@
 
 namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\Device;
 
-use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Definition\AbstractMetricDefinition;
 
@@ -11,7 +10,7 @@ class HijackedPercentage extends AbstractMetricDefinition
     public static function create(): self
     {
         return new self(
-            name: MetricName::HijackedDevicePercentage,
+            name: 'hijacked_device_percentage',
             type: MetricType::Gauge,
             description: 'Percentage of hijacked devices vs total devices',
             unit: '%',

@@ -12,7 +12,6 @@ use Ninja\DeviceTracker\Modules\Observability\Contracts\MetricAggregationReposit
 use Ninja\DeviceTracker\Modules\Observability\Dto\Dimension;
 use Ninja\DeviceTracker\Modules\Observability\Dto\DimensionCollection;
 use Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation;
-use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Enums\MetricType;
 use Ninja\DeviceTracker\Modules\Observability\Repository\Dto\Metric;
 use Ninja\DeviceTracker\Modules\Observability\ValueObjects\TimeRange;
@@ -52,7 +51,7 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
     }
 
     public function query(
-        ?MetricName $name = null,
+        ?string $name = null,
         ?DimensionCollection $dimensions = null,
         ?Aggregation $window = null,
         ?Carbon $from = null,
@@ -71,7 +70,7 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
     }
 
     public function latest(
-        MetricName $name,
+        string $name,
         ?DimensionCollection $dimensions = null,
         ?Aggregation $window = null
     ): ?Metric {
@@ -161,7 +160,7 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
     }
 
     public function stats(
-        MetricName $name,
+        string $name,
         ?DimensionCollection $dimensions = null,
         ?Aggregation $window = null,
         ?TimeRange $timeRange = null
@@ -192,12 +191,12 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
     }
 
     public function getDimensionValues(
-        MetricName $name,
+        string $name,
         Dimension $dimension,
         ?TimeRange $timeRange = null
     ): Collection {
         $query = DB::table(self::METRIC_AGGREGATION_TABLE)
-            ->where('name', $name->value)
+            ->where('name', $name)
             ->whereRaw("JSON_EXTRACT(dimensions, ?) IS NOT NULL", ["$.{$dimension->name}"]);
 
         if ($timeRange) {
@@ -213,7 +212,7 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
     }
 
     public function timeseries(
-        MetricName $name,
+        string $name,
         string $interval,
         ?TimeRange $timeRange = null,
         ?DimensionCollection $dimensions = null
@@ -245,7 +244,7 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
     }
 
     public function aggregate(
-        MetricName $name,
+        string $name,
         string $aggregation,
         ?TimeRange $timeRange = null,
         ?DimensionCollection $dimensions = null
@@ -299,7 +298,7 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
     }
 
     private function buildQuery(
-        ?MetricName $name = null,
+        ?string $name = null,
         ?DimensionCollection $dimensions = null,
         ?Aggregation $window = null,
         ?Carbon $from = null,
@@ -308,7 +307,7 @@ class DatabaseMetricAggregationRepository implements MetricAggregationRepository
         $query = DB::table(self::METRIC_AGGREGATION_TABLE);
 
         if ($name) {
-            $query->where('name', $name->value);
+            $query->where('name', $name);
         }
 
         if ($dimensions && !$dimensions->isEmpty()) {

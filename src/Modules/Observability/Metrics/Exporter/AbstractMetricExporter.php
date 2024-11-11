@@ -4,7 +4,6 @@ namespace Ninja\DeviceTracker\Modules\Observability\Metrics\Exporter;
 
 use Ninja\DeviceTracker\Modules\Observability\Dto\Dimension;
 use Ninja\DeviceTracker\Modules\Observability\Dto\DimensionCollection;
-use Ninja\DeviceTracker\Modules\Observability\Enums\MetricName;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Exporter\Contracts\MetricExporter;
 use Ninja\DeviceTracker\Modules\Observability\Metrics\Formatter\PrometheusTextFormatter;
 
@@ -23,9 +22,9 @@ abstract readonly class AbstractMetricExporter implements MetricExporter
         return $this->formatter->format($this->collect());
     }
 
-    protected function name(MetricName $name): string
+    protected function name(string $name): string
     {
-        return $name->forPrometheus();
+        return str_replace(['.', '-', ' '], '_', strtolower($name));
     }
 
     protected function labels(DimensionCollection $dimensions): array
