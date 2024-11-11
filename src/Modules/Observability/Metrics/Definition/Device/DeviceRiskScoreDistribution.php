@@ -11,6 +11,7 @@ class DeviceRiskScoreDistribution extends AbstractMetricDefinition
     public static function create(): self
     {
         return new self(
+            name: 'device_risk_score_distribution',
             type: MetricType::Summary,
             description: 'Statistical distribution of device risk scores',
             unit: 'score',

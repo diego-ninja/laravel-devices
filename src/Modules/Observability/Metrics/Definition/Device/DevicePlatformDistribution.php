@@ -10,6 +10,7 @@ class DevicePlatformDistribution extends AbstractMetricDefinition
     public static function create(): self
     {
         return new self(
+            name: 'device_platform_distribution',
             type: MetricType::Counter,
             description: 'Distribution of devices across different platforms',
             required_dimensions: [

@@ -10,6 +10,7 @@ class VerifiedDevicePercentage extends AbstractMetricDefinition
     public static function create(): self
     {
         return new self(
+            name: 'verified_device_percentage',
             type: MetricType::Percentage,
             description: 'Percentage of verified devices vs total devices',
             unit: '%',

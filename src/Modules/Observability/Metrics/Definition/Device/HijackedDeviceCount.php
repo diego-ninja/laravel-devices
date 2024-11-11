@@ -10,6 +10,7 @@ class HijackedDeviceCount extends AbstractMetricDefinition
     public static function create(): self
     {
         return new self(
+            name: 'hijacked_device_count',
             type: MetricType::Gauge,
             description: 'Number of hijacked devices in the system',
             required_dimensions: [],

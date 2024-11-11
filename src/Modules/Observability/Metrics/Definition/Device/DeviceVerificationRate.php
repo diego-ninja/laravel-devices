@@ -10,6 +10,7 @@ class DeviceVerificationRate extends AbstractMetricDefinition
     public static function create(): self
     {
         return new self(
+            name: 'device_verification_rate',
             type: MetricType::Rate,
             description: 'Rate of device verifications per hour',
             unit: 'hour',

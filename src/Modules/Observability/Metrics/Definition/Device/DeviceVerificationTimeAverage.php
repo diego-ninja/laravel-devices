@@ -10,6 +10,7 @@ class DeviceVerificationTimeAverage extends AbstractMetricDefinition
     public static function create(): self
     {
         return new self(
+            name: 'device_verification_time_average',
             type: MetricType::Average,
             description: 'Average time taken for device verification',
             unit: 'seconds',

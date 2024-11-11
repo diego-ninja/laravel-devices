@@ -10,6 +10,7 @@ class VerifiedDeviceCount extends AbstractMetricDefinition
     public static function create(): self
     {
         return new self(
+            name: 'verified_device_count',
             type: MetricType::Gauge,
             description: 'Number of verified devices in the system',
             required_dimensions: [],
