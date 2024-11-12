@@ -453,42 +453,4 @@ return [
         'Mozilla/5.0 (Linux; Android 13; 2211133G Build/TKQ1.220905.001; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/113.0.5672.76 Mobile Safari/537.36',
         'Mozilla/5.0 (Linux; U; Android 13; pl-pl; Xiaomi 13 Build/TKQ1.220905.001) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/100.0.4896.127 Mobile Safari/537.36 XiaoMi/MiuiBrowser/13.28.0-gn'
     ],
-
-    'observability' => [
-        'enabled' => true,
-        'prefix' => 'device_metrics',
-        'storage' => [
-            'driver' => 'redis', // redis, memory (with Octane)
-            'connection' => 'default',
-            'memory' => [
-                'max_size' => 10000,
-            ]
-        ],
-        'processing' => [
-            'driver' => 'scheduler', // scheduler, task (with Octane)
-        ],
-        'state' => [
-            'driver' => 'redis', // redis, memory (with Octane)
-            'connection' => 'default',
-        ],
-        'metrics' => [
-            'providers' => [
-                \Ninja\DeviceTracker\Modules\Observability\Metrics\Providers\DeviceMetricProvider::class,
-                \Ninja\DeviceTracker\Modules\Observability\Metrics\Providers\SessionMetricProvider::class
-
-            ],
-            "collectors" => [
-                \Ninja\DeviceTracker\Modules\Observability\Collectors\DeviceMetricCollector::class,
-                \Ninja\DeviceTracker\Modules\Observability\Collectors\SessionMetricCollector::class
-            ]
-        ],
-        'dimensions' => ["device_uuid", "session_uuid"],
-        'buckets' => \Ninja\DeviceTracker\Modules\Observability\Enums\Bucket::Default->scale(),
-        'quantiles' => \Ninja\DeviceTracker\Modules\Observability\Enums\Quantile::scale(),
-        'rate_interval' => 3600,
-        'aggregation' => [
-            'windows' => \Ninja\DeviceTracker\Modules\Observability\Enums\Aggregation::cases(), // Realtime, Hourly, Daily, Weekly, Monthly, Yearly
-            'retention' => [] //Override default retention period for each aggregation window
-        ]
-    ]
 ];
