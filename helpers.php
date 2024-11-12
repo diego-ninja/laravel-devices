@@ -2,8 +2,8 @@
 
 use Illuminate\Support\Facades\Session as SessionFacade;
 use Ninja\DeviceTracker\Contracts\StorableId;
+use Ninja\DeviceTracker\Enums\Transport;
 use Ninja\DeviceTracker\Exception\SessionNotFoundException;
-use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Factories\SessionIdFactory;
 use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Models\Session;
@@ -23,17 +23,7 @@ if (! function_exists('fingerprint')) {
 if (! function_exists('device_uuid')) {
     function device_uuid(): ?StorableId
     {
-        $cookieName = Config::get('devices.device_id_cookie_name');
-        if (Cookie::has($cookieName)) {
-            return DeviceIdFactory::from(Cookie::get($cookieName));
-        }
-
-        $requestParam = Config::get('devices.device_id_request_param');
-        if (request()->has($requestParam)) {
-            return DeviceIdFactory::from(request()->$requestParam);
-        }
-
-        return null;
+        return Transport::current()->get();
     }
 }
 

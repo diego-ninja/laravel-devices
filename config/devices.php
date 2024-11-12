@@ -24,6 +24,27 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Header name for device id
+    |--------------------------------------------------------------------------
+    | This option specifies the name of the header that will be used to store
+    | the device uuid during the request.
+    |
+    */
+    'device_id_header_name' => 'X-Device',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Transport for device id
+    |--------------------------------------------------------------------------
+    | This option specifies the transport method for the device id.
+    |
+    | Options: 'cookie', 'header'
+    |
+    */
+    'device_id_transport' => 'cookie',
+
+    /*
+    |--------------------------------------------------------------------------
     | Device ID class
     |--------------------------------------------------------------------------
     | This option specifies the class that will be used to store

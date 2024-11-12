@@ -7,12 +7,17 @@ use Config;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Cookie;
+use Ninja\DeviceTracker\Exception\FingerprintDuplicatedException;
 use Ninja\DeviceTracker\Facades\DeviceManager;
 use Ninja\DeviceTracker\Modules\Fingerprinting\Injector\Enums\Library;
 use Ninja\DeviceTracker\Modules\Fingerprinting\Injector\Factories\InjectorFactory;
 
 final class FingerprintTracker
 {
+    /**
+     * @throws FingerprintDuplicatedException
+     */
     public function handle(Request $request, Closure $next)
     {
         if (!config("devices.fingerprinting_enabled")) {
@@ -36,6 +41,9 @@ final class FingerprintTracker
         return $response;
     }
 
+    /**
+     * @throws FingerprintDuplicatedException
+     */
     private function addFingerprint(Response $response): Response
     {
         $clientCookie = Config::get('devices.client_fingerprint_key');
@@ -43,10 +51,11 @@ final class FingerprintTracker
 
         $library = Config::get('devices.fingerprint_client_library', Library::FingerprintJS);
 
-        if (!isset($_COOKIE[$clientCookie])) {
+        if (!request()->cookie($clientCookie)) {
             return (InjectorFactory::make($library))->inject($response);
         } else {
-            DeviceManager::current()?->fingerprint($_COOKIE[$clientCookie], $serverCookie);
+            device()?->fingerprint(request()->cookie($clientCookie), $serverCookie);
+            Cookie::queue(Cookie::forget($clientCookie));
         }
 
         return $response;
