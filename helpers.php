@@ -4,7 +4,6 @@ use Illuminate\Support\Facades\Session as SessionFacade;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Enums\Transport;
 use Ninja\DeviceTracker\Exception\SessionNotFoundException;
-use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Factories\SessionIdFactory;
 use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Models\Session;

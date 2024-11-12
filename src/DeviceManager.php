@@ -85,12 +85,14 @@ final class DeviceManager
         if (device_uuid()) {
             if (Config::get('devices.regenerate_devices')) {
                 event(new DeviceTrackedEvent(device_uuid()));
+                Transport::propagate(device_uuid());
                 return device_uuid();
             } else {
                 throw new DeviceNotFoundException('Tracked device not found in database');
             }
         } else {
             $deviceUuid = DeviceIdFactory::generate();
+            Transport::propagate($deviceUuid);
             event(new DeviceTrackedEvent($deviceUuid));
 
             return $deviceUuid;
@@ -116,21 +118,10 @@ final class DeviceManager
     {
         $payload = app(DeviceDetector::class)->detect(request());
         if (!$payload->unknown() || config('devices.allow_unknown_devices')) {
-            $device = Device::register(
+            return Device::register(
                 deviceUuid: $deviceId ?? device_uuid(),
                 data: $payload
             );
-
-            Cookie::queue(
-                Cookie::forever(
-                    name: Config::get('devices.device_id_cookie_name'),
-                    value: (string) device_uuid(),
-                    secure: Config::get('session.secure', false),
-                    httpOnly: Config::get('session.http_only', true)
-                )
-            );
-
-            return $device;
         }
 
         throw UnknownDeviceDetectedException::withUA(request()->header('User-Agent'));

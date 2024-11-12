@@ -21,16 +21,16 @@ final readonly class DeviceTracker
             DeviceManager::create();
             DeviceManager::attach();
 
-            return $next(Transport::propagate($request, device_uuid()));
+            return $next(Transport::propagate(device_uuid()));
         }
 
         if (!DeviceManager::tracked()) {
             try {
                 if (config('devices.track_guest_sessions')) {
-                    Transport::propagate($request, DeviceManager::track());
+                    DeviceManager::track();
                     DeviceManager::create();
                 } else {
-                    Transport::propagate($request, DeviceIdFactory::generate());
+                    Transport::propagate(DeviceIdFactory::generate());
                 }
             } catch (DeviceNotFoundException | FingerprintNotFoundException | UnknownDeviceDetectedException $e) {
                 Log::info($e->getMessage());
@@ -38,12 +38,6 @@ final readonly class DeviceTracker
             }
         }
 
-        return Transport::set($next(Transport::propagate($request, device_uuid())), device_uuid());
-    }
-
-    private function propagate(Request $request, StorableId $deviceUuid): Request
-    {
-        $param = config('devices.device_id_request_param');
-        return $request->merge([$param => $deviceUuid->toString()]);
+        return Transport::set($next(Transport::propagate(device_uuid())), device_uuid());
     }
 }

@@ -16,7 +16,7 @@ enum Transport: string
 
     public static function current(): self
     {
-        $config = config('devices.device_id.transport', self::Cookie->value);
+        $config = config('devices.device_id_transport', self::Cookie->value);
         return self::tryFrom($config);
     }
 
@@ -25,7 +25,7 @@ enum Transport: string
         return match ($this) {
             self::Cookie => $this->fromCookie(),
             self::Header => $this->fromHeader(),
-        };
+        } ?? $this->fromRequest();
     }
 
     public function parameter(): string
@@ -36,15 +36,19 @@ enum Transport: string
         };
     }
 
-    public static function set(Response $response, StorableId $deviceId): Response
+    public static function set(mixed $response, StorableId $deviceId): mixed
     {
+        if (!$response instanceof Response) {
+            return $response;
+        }
+
         $current = self::current();
 
         return match ($current) {
             self::Cookie => $response->withCookie(
                 Cookie::forever(
                     name: $current->parameter(),
-                    value: (string) $$deviceId,
+                    value: (string) $deviceId,
                     secure: Config::get('session.secure', false),
                     httpOnly: Config::get('session.http_only', true)
                 )
@@ -65,11 +69,18 @@ enum Transport: string
         return request()->hasHeader($headerName) ? DeviceIdFactory::from(request()->header($headerName)) : null;
     }
 
-    public static function propagate(Request $request, ?StorableId $deviceId = null): Request
+    private function fromRequest(): ?StorableId
+    {
+        $requestParameter = config('devices.device_id_request_param');
+        return request()->has($requestParameter) ? DeviceIdFactory::from(request()->input($requestParameter)) : null;
+    }
+
+    public static function propagate(?StorableId $deviceId = null): Request
     {
         $current = self::current();
         $requestParameter = config('devices.device_id_request_param');
+        $deviceId = $deviceId ?? $current->get();
 
-        return $request->merge([$requestParameter => (string) $deviceId ?? $current->get()->toString()]);
+        return request()->merge([$requestParameter => (string) $deviceId ?? $current->get()->toString()]);
     }
 }
