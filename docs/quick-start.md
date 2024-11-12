@@ -46,11 +46,12 @@ class User extends Model {
 Add the DeviceTrack middleware in your bootstrap/app.php file. This middleware will track the user device, it will check the presence of a cookie with a device uuid and will create a new device if it doesn't exist. 
 
 Optionally, you can add the FingerprintTracker middleware to try to fingerprint the device. This middleware uses javascript injection to work, so, it only works on html responses. Thi middleware needs a current device to work, so it should be placed after the DeviceTracker middleware.
+
 ```php
 protected $middleware = [
 	'Ninja\DeviceTracker\Http\Middleware\DeviceTracker',
 	...
-	'Ninja\DeviceTracker\Http\Middleware\FingerprintTracker',
+	'Ninja\DeviceTracker\Modules\Fingerprinting\Http\Middleware\FingerprintTracker',
 ];
 ```
 

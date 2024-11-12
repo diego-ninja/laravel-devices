@@ -3,10 +3,13 @@
 namespace Ninja\DeviceTracker\Models;
 
 use Carbon\Carbon;
+use DB;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cookie;
@@ -24,9 +27,14 @@ use Ninja\DeviceTracker\Events\DeviceHijackedEvent;
 use Ninja\DeviceTracker\Events\DeviceUpdatedEvent;
 use Ninja\DeviceTracker\Events\DeviceVerifiedEvent;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
+use Ninja\DeviceTracker\Exception\FingerprintDuplicatedException;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Models\Relations\HasManySessions;
+use Ninja\DeviceTracker\Modules\Security\DTO\Risk;
+use Ninja\DeviceTracker\Modules\Tracking\Models\Event;
+use Ninja\DeviceTracker\Modules\Tracking\Models\Relations\HasManyEvents;
 use Ninja\DeviceTracker\Traits\PropertyProxy;
+use PDOException;
 
 /**
  * Class Device
@@ -53,11 +61,13 @@ use Ninja\DeviceTracker\Traits\PropertyProxy;
  * @property string                       $grade                  string
  * @property string                       $source                 string
  * @property string                       $ip                     string
+ * @property Risk                         $risk                   json
  * @property Metadata                     $metadata               json
  * @property Carbon                       $created_at             datetime
  * @property Carbon                       $updated_at             datetime
  * @property Carbon                       $verified_at            datetime
  * @property Carbon                       $hijacked_at            datetime
+ * @property Carbon                       $risk_assessed_at       datetime
  *
  */
 class Device extends Model implements Cacheable
@@ -97,6 +107,18 @@ class Device extends Model implements Cacheable
         );
     }
 
+    public function events(): HasManyEvents
+    {
+        $instance = $this->newRelatedInstance(Event::class);
+
+        return new HasManyEvents(
+            query: $instance->newQuery(),
+            parent: $this,
+            foreignKey: 'device_uuid',
+            localKey: 'uuid'
+        );
+    }
+
     public function users(): BelongsToMany
     {
         $table = sprintf('%s_devices', str(\config('devices.authenticatable_table'))->singular());
@@ -116,7 +138,7 @@ class Device extends Model implements Cacheable
     {
         return Attribute::make(
             get: fn(string $value) => DeviceIdFactory::from($value),
-            set: fn(StorableId $value) => (string) $value
+            set: fn(StorableId $value) => (string)$value
         );
     }
 
@@ -125,6 +147,14 @@ class Device extends Model implements Cacheable
         return Attribute::make(
             get: fn(?string $value) => $value ? DeviceStatus::from($value) : DeviceStatus::Unverified,
             set: fn(DeviceStatus $value) => $value->value
+        );
+    }
+
+    public function risk(): Attribute
+    {
+        return Attribute::make(
+            get: fn(?string $value) => $value ? Risk::from($value) : Risk::default(),
+            set: fn(Risk $value) => $value->json()
         );
     }
 
@@ -141,25 +171,33 @@ class Device extends Model implements Cacheable
         return $this->uuid->toString() === device_uuid()?->toString();
     }
 
+    /**
+     * @throws FingerprintDuplicatedException
+     */
     public function fingerprint(string $fingerprint, ?string $cookie = null): void
     {
-        $this->fingerprint = $fingerprint;
-        if ($this->save()) {
-            if ($cookie) {
-                if (!Cookie::has($cookie)) {
-                    Cookie::queue(
-                        Cookie::forever(
-                            name:$cookie,
-                            value: $fingerprint,
-                            secure: Config::get('session.secure', false),
-                            httpOnly: Config::get('session.http_only', true)
-                        )
-                    );
+        try {
+            $this->fingerprint = $fingerprint;
+            if ($this->save()) {
+                if ($cookie) {
+                    if (!Cookie::has($cookie)) {
+                        Cookie::queue(
+                            Cookie::forever(
+                                name: $cookie,
+                                value: $fingerprint,
+                                secure: Config::get('session.secure', false),
+                                httpOnly: Config::get('session.http_only', true)
+                            )
+                        );
+                    }
                 }
+                event(new DeviceFingerprintedEvent($this));
             }
-            event(new DeviceFingerprintedEvent($this));
+        } catch (PDOException $exception) {
+            throw FingerprintDuplicatedException::forFingerprint($fingerprint, Device::byFingerprint($fingerprint));
         }
     }
+
     public function fingerprinted(): bool
     {
         return $this->fingerprint !== null;
@@ -244,7 +282,7 @@ class Device extends Model implements Cacheable
 
     public function key(): string
     {
-        return sprintf('%s:%s', DeviceCache::KEY_PREFIX, $this->uuid->toString());
+        return DeviceCache::key($this->uuid);
     }
 
     public function ttl(): ?int
@@ -261,27 +299,32 @@ class Device extends Model implements Cacheable
             return $device;
         }
 
-        $device = self::create([
-            'uuid' => $deviceUuid,
-            'fingerprint' => fingerprint(),
-            'browser' => $data->browser->name,
-            'browser_version' => $data->browser->version,
-            'browser_family' => $data->browser->family,
-            'browser_engine' => $data->browser->engine,
-            'platform' => $data->platform->name,
-            'platform_version' => $data->platform->version,
-            'platform_family' => $data->platform->family,
-            'device_type' => $data->device->type,
-            'device_family' => $data->device->family,
-            'device_model' => $data->device->model,
-            'grade' => $data->grade,
-            'ip' => request()->ip(),
-            'metadata' => new Metadata([]),
-            'source' => $data->userAgent,
-        ]);
+        try {
+            $device = self::create([
+                'uuid' => $deviceUuid,
+                'fingerprint' => fingerprint(),
+                'browser' => $data->browser->name,
+                'browser_version' => $data->browser->version,
+                'browser_family' => $data->browser->family,
+                'browser_engine' => $data->browser->engine,
+                'platform' => $data->platform->name,
+                'platform_version' => $data->platform->version,
+                'platform_family' => $data->platform->family,
+                'device_type' => $data->device->type,
+                'device_family' => $data->device->family,
+                'device_model' => $data->device->model,
+                'grade' => $data->grade,
+                'ip' => request()->ip(),
+                'metadata' => new Metadata([]),
+                'source' => $data->userAgent,
+            ]);
 
-        if ($device) {
-            return $device;
+            if ($device) {
+                return $device;
+            }
+        } catch (PDOException $e) {
+            \Log::warning(sprintf('Unable to create device for UUID: %s (%s)', $deviceUuid, $e->getMessage()));
+            return null;
         }
 
         return null;
@@ -339,6 +382,20 @@ class Device extends Model implements Cacheable
         }
 
         return self::byUuid($id, false) !== null;
+    }
+
+    public static function byStatus(): Collection
+    {
+        return self::query()
+            ->select('status', DB::raw('count(*) as total'))
+            ->groupBy('status')
+            ->pluck('total', 'status');
+    }
+
+    public static function orphans(): Builder
+    {
+        return self::doesntHave('users')
+            ->doesntHave('sessions');
     }
 
     public static function boot(): void

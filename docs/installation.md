@@ -63,7 +63,7 @@ Add the required middleware in your `boot/app.php`:
 protected $middleware = [
     // ... other middleware
     \Ninja\DeviceTracker\Http\Middleware\DeviceTracker::class,
-    \Ninja\DeviceTracker\Http\Middleware\FingerprintTracker::class,
+    \Ninja\DeviceTracker\Modules\Fingerprinting\Http\Middleware\FingerprintTracker::class,
 ];
 
 protected $routeMiddleware = [

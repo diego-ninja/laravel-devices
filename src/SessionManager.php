@@ -24,6 +24,11 @@ final readonly class SessionManager
         $this->app = $app;
     }
 
+    public function current(): ?Session
+    {
+        return Session::current();
+    }
+
     /**
      * @throws DeviceNotFoundException
      */
@@ -79,7 +84,7 @@ final readonly class SessionManager
             return $this->start();
         }
 
-        $current->renew();
+        $current->renew($user);
 
         return $current;
     }

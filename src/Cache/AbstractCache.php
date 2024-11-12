@@ -56,12 +56,21 @@ abstract class AbstractCache
     }
     public static function key(string $key): string
     {
-        return static::KEY_PREFIX . ':' . $key;
+        return static::KEY_PREFIX . ':' . hash('xxh128', $key);
     }
 
     public static function forget(Cacheable $item): void
     {
         self::instance()->forgetItem($item);
+    }
+
+    public static function flush(): void
+    {
+        if (!self::instance()->enabled()) {
+            return;
+        }
+
+        self::instance()->cache->flush();
     }
 
     /**

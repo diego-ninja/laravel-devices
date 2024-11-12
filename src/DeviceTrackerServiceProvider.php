@@ -6,14 +6,22 @@ use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
+use Ninja\DeviceTracker\Console\Commands\CacheInvalidateCommand;
+use Ninja\DeviceTracker\Console\Commands\CacheWarmCommand;
+use Ninja\DeviceTracker\Console\Commands\CleanupDevicesCommand;
+use Ninja\DeviceTracker\Console\Commands\CleanupSessionsCommand;
+use Ninja\DeviceTracker\Console\Commands\DeviceInspectCommand;
+use Ninja\DeviceTracker\Console\Commands\DeviceStatusCommand;
 use Ninja\DeviceTracker\Contracts\CodeGenerator;
-use Ninja\DeviceTracker\Contracts\DeviceDetector;
 use Ninja\DeviceTracker\Generators\Google2FACodeGenerator;
 use Ninja\DeviceTracker\Http\Middleware\DeviceTracker;
-use Ninja\DeviceTracker\Http\Middleware\FingerprintTracker;
 use Ninja\DeviceTracker\Http\Middleware\SessionTracker;
+use Ninja\DeviceTracker\Modules\Detection\Contracts\DeviceDetector;
+use Ninja\DeviceTracker\Modules\Detection\Device\UserAgentDeviceDetector;
+use Ninja\DeviceTracker\Modules\Fingerprinting\Http\Middleware\FingerprintTracker;
 use Ninja\DeviceTracker\Modules\Location\Contracts\LocationProvider;
 use Ninja\DeviceTracker\Modules\Location\FallbackLocationProvider;
+use Ninja\DeviceTracker\Modules\Tracking\Http\Middleware\EventTracker;
 use PragmaRX\Google2FA\Google2FA;
 use PragmaRX\Google2FA\Support\Constants;
 
@@ -23,6 +31,7 @@ class DeviceTrackerServiceProvider extends ServiceProvider
     {
         $this->registerPublishing();
         $this->registerMiddlewares();
+        $this->registerCommands();
 
         $this->loadViewsFrom(resource_path("views/vendor/laravel-devices"), 'laravel-devices');
 
@@ -84,14 +93,32 @@ class DeviceTrackerServiceProvider extends ServiceProvider
         });
     }
 
+    private function registerCommands(): void
+    {
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                CacheWarmCommand::class,
+                CacheInvalidateCommand::class,
+                CleanupSessionsCommand::class,
+                CleanupDevicesCommand::class,
+                DeviceStatusCommand::class,
+                DeviceInspectCommand::class,
+            ]);
+        }
+    }
+
     private function registerMiddlewares(): void
     {
         $router = $this->app['router'];
-        $router->middleware('device-tracker', DeviceTracker::class);
-        $router->middleware('session-tracker', SessionTracker::class);
+        $router->aliasMiddleware('device-tracker', DeviceTracker::class);
+        $router->aliasMiddleware('session-tracker', SessionTracker::class);
 
         if (Config::get('devices.fingerprinting_enabled')) {
-            $router->middleware('fingerprint-tracker', FingerprintTracker::class);
+            $router->aliasMiddleware('fingerprint-tracker', FingerprintTracker::class);
+        }
+
+        if (Config::get('devices.event_tracking_enabled')) {
+            $router->aliasMiddleware('event-tracker', EventTracker::class);
         }
     }
 

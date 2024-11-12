@@ -6,16 +6,25 @@ use Config;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Events\Dispatcher;
+use Ninja\DeviceTracker\DTO\Metadata;
 use Ninja\DeviceTracker\Events\DeviceTrackedEvent;
 use Ninja\DeviceTracker\Events\Google2FASuccess;
 use Ninja\DeviceTracker\Facades\DeviceManager;
 use Ninja\DeviceTracker\Facades\SessionManager;
+use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Models\Session;
+use Ninja\DeviceTracker\Modules\Tracking\Enums\EventType;
+use Ninja\DeviceTracker\Modules\Tracking\Models\Event;
 
 final readonly class AuthenticationHandler
 {
     public function onLogin(Login $event): void
     {
+        if (!DeviceManager::tracked()) {
+            DeviceManager::track();
+            DeviceManager::create();
+        }
+
         DeviceManager::attach();
         SessionManager::refresh($event->user);
     }
@@ -37,6 +46,14 @@ final readonly class AuthenticationHandler
 
     public function onDeviceTracked(DeviceTrackedEvent $event): void
     {
+        if (!config('devices.track_guest_sessions')) {
+            return;
+        }
+
+        if (!Device::exists($event->deviceUuid)) {
+            return;
+        }
+
         if (auth(Config::get('devices.auth_guard'))->user()) {
             DeviceManager::attach($event->deviceUuid);
         }

@@ -7,20 +7,21 @@ use Config;
 use Cookie;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Collection;
-use Ninja\DeviceTracker\Contracts\DeviceDetector;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Events\DeviceAttachedEvent;
 use Ninja\DeviceTracker\Events\DeviceTrackedEvent;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
-use Ninja\DeviceTracker\Exception\FingerprintNotFoundException;
+use Ninja\DeviceTracker\Exception\UnknownDeviceDetectedException;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Models\Device;
+use Ninja\DeviceTracker\Modules\Detection\Contracts\DeviceDetector;
+use Throwable;
+
+use function request;
 
 final class DeviceManager
 {
     public Application $app;
-
-    public static ?StorableId $deviceUuid = null;
 
     public function __construct(Application $app)
     {
@@ -35,19 +36,28 @@ final class DeviceManager
     public function attach(?StorableId $deviceUuid = null): bool
     {
         $deviceUuid = $deviceUuid ?? device_uuid();
-        if ($deviceUuid) {
-            if (Auth::user()?->hasDevice($deviceUuid)) {
-                return true;
-            }
 
-            Auth::user()?->devices()->attach($deviceUuid);
+        if (!$deviceUuid) {
+            return false;
+        }
 
-            event(new DeviceAttachedEvent(Device::byUuid($deviceUuid), Auth::user()));
+        if (!Auth::user()) {
+            return false;
+        }
 
+        if (!Device::exists($deviceUuid)) {
+            return false;
+        }
+
+        if (Auth::user()->hasDevice($deviceUuid)) {
             return true;
         }
 
-        return false;
+        Auth::user()->devices()->attach($deviceUuid);
+
+        event(new DeviceAttachedEvent(Device::byUuid($deviceUuid), Auth::user()));
+
+        return true;
     }
 
     public function userDevices(): Collection
@@ -67,36 +77,61 @@ final class DeviceManager
 
     /**
      * @throws DeviceNotFoundException
-     * @throws FingerprintNotFoundException
      */
     public function track(): StorableId
     {
         if (device_uuid()) {
             if (Config::get('devices.regenerate_devices')) {
-                self::$deviceUuid = device_uuid();
+                event(new DeviceTrackedEvent(device_uuid()));
+                return device_uuid();
             } else {
                 throw new DeviceNotFoundException('Tracked device not found in database');
             }
         } else {
-            self::$deviceUuid = DeviceIdFactory::generate();
+            $deviceUuid = DeviceIdFactory::generate();
+            event(new DeviceTrackedEvent($deviceUuid));
+
+            return $deviceUuid;
+        }
+    }
+
+    public function shouldRegenerate(): bool
+    {
+        try {
+            return
+                device_uuid() !== null &&
+                !Device::exists(device_uuid()) &&
+                Config::get('devices.regenerate_devices') && device_uuid();
+        } catch (Throwable) {
+            return false;
+        }
+    }
+
+    /**
+     * @throws UnknownDeviceDetectedException
+     */
+    public function create(): Device
+    {
+        $payload = app(DeviceDetector::class)->detect(request());
+        if (!$payload->unknown() || config('devices.allow_unknown_devices')) {
+            $device = Device::register(
+                deviceUuid: device_uuid(),
+                data: $payload
+            );
+
             Cookie::queue(
                 Cookie::forever(
                     name: Config::get('devices.device_id_cookie_name'),
-                    value: self::$deviceUuid->toString(),
+                    value: (string) device_uuid(),
                     secure: Config::get('session.secure', false),
                     httpOnly: Config::get('session.http_only', true)
                 )
             );
+
+            return $device;
         }
 
-        Device::register(
-            deviceUuid: self::$deviceUuid,
-            data: app(DeviceDetector::class)->detect(\request())
-        );
-
-        event(new DeviceTrackedEvent(self::$deviceUuid));
-
-        return self::$deviceUuid;
+        throw UnknownDeviceDetectedException::withUA(request()->header('User-Agent'));
     }
 
     public function current(): ?Device
@@ -105,6 +140,11 @@ final class DeviceManager
             return Device::byFingerprint(fingerprint());
         }
 
-        return Device::byUuid(device_uuid(), false);
+        $device_uuid = device_uuid();
+        if ($device_uuid) {
+            return Device::byUuid($device_uuid, false);
+        }
+
+        return null;
     }
 }

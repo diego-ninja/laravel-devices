@@ -26,6 +26,9 @@ use Ninja\DeviceTracker\Exception\SessionNotFoundException;
 use Ninja\DeviceTracker\Factories\SessionIdFactory;
 use Ninja\DeviceTracker\Modules\Location\Contracts\LocationProvider;
 use Ninja\DeviceTracker\Modules\Location\DTO\Location;
+use Ninja\DeviceTracker\Modules\Tracking\Enums\EventType;
+use Ninja\DeviceTracker\Modules\Tracking\Models\Event;
+use Ninja\DeviceTracker\Modules\Tracking\Models\Relations\HasManyEvents;
 use Ninja\DeviceTracker\Traits\PropertyProxy;
 
 /**
@@ -84,6 +87,18 @@ class Session extends Model implements Cacheable
     public function user(): HasOne
     {
         return $this->hasOne(Config::get("devices.authenticatable_class"), 'id', 'user_id');
+    }
+
+    public function events(): HasManyEvents
+    {
+        $instance = $this->newRelatedInstance(Event::class);
+
+        return new HasManyEvents(
+            query: $instance->newQuery(),
+            parent: $this,
+            foreignKey: 'session_uuid',
+            localKey: 'uuid'
+        );
     }
 
     public function uuid(): Attribute
@@ -175,6 +190,18 @@ class Session extends Model implements Cacheable
         }
     }
 
+    public function event(EventType $type, Metadata $metadata): Event
+    {
+        return Event::create([
+            'device_uuid' => $this->device_uuid,
+            'session_uuid' => $this->uuid,
+            'type' => $type,
+            'metadata' => $metadata,
+            'ip_address' => request()->ip(),
+            'occurred_at' => now(),
+        ]);
+    }
+
     public function end(bool $forgetSession = false, ?Authenticatable $user = null): bool
     {
         if ($forgetSession) {
@@ -192,13 +219,15 @@ class Session extends Model implements Cacheable
         return false;
     }
 
-    public function renew(?Authenticatable $user): bool
+    public function renew(?Authenticatable $user = null): bool
     {
         $this->last_activity_at = Carbon::now();
         $this->status = SessionStatus::Active;
         $this->finished_at = null;
 
-        $this->device->users()->updateExistingPivot($user->id, ['last_activity_at' => $this->last_activity_at]);
+        if ($user) {
+            $this->device->users()->updateExistingPivot($user->id, ['last_activity_at' => $this->last_activity_at]);
+        }
 
         return $this->save();
     }
@@ -295,7 +324,7 @@ class Session extends Model implements Cacheable
 
     public function key(): string
     {
-        return sprintf('%s:%s', SessionCache::KEY_PREFIX, $this->uuid);
+        return SessionCache::key($this->uuid);
     }
 
     public function ttl(): ?int
@@ -316,9 +345,12 @@ class Session extends Model implements Cacheable
             return self::where('uuid', $uuid->toString())->first();
         }
 
-        return SessionCache::remember($uuid->toString(), function () use ($uuid) {
-            return self::where('uuid', $uuid->toString())->first();
-        });
+        return SessionCache::remember(
+            key: SessionCache::key($uuid),
+            callback: function () use ($uuid) {
+                return self::where('uuid', $uuid->toString())->first();
+            }
+        );
     }
 
     /**

@@ -10,7 +10,17 @@ return [
     | the device id of the current user.
     |
     */
-    'device_id_cookie_name' => 'device_id',
+    'device_id_cookie_name' => 'laravel_device_id',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Request param for device id
+    |--------------------------------------------------------------------------
+    | This option specifies the name of the request parameter that will be used to store
+    | the device uuid during the request.
+    |
+    */
+    'device_id_request_param' => 'laravel_device_id',
 
     /*
     |--------------------------------------------------------------------------
@@ -27,10 +37,20 @@ return [
     | Session ID class
     |--------------------------------------------------------------------------
     | This option specifies the class that will be used to store
-    | and serialize the device id. Must implement the StorableId interface.
+    | and serialize the session id. Must implement the StorableId interface.
     |
     */
     'session_id_storable_class' => \Ninja\DeviceTracker\ValueObject\SessionId::class,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Event ID class
+    |--------------------------------------------------------------------------
+    | This option specifies the class that will be used to store
+    | and serialize the event id. Must implement the StorableId interface.
+    |
+    */
+    'event_id_storable_class' => \Ninja\DeviceTracker\ValueObject\EventId::class,
 
     /*
     |--------------------------------------------------------------------------
@@ -59,6 +79,25 @@ return [
     */
     'regenerate_devices' => false,
 
+    /*
+    |--------------------------------------------------------------------------
+    | Allow unknown devices
+    |--------------------------------------------------------------------------
+    | This option specifies if the system should allow unknown devices to be created.
+    | An unknown device is a device that has no information about the browser, platform, etc.
+    |
+    */
+    'allow_unknown_devices' => false,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Allow bot devices
+    |--------------------------------------------------------------------------
+    | This option specifies if the system should allow bot devices to be created.
+    | A bot device is a device detected as bot, crawler, or spider.
+    |
+    */
+    'allow_bot_devices' => false,
 
     /*
     |--------------------------------------------------------------------------
@@ -67,17 +106,27 @@ return [
     | This option specifies if the user can have multiple active sessions per device
     |
     */
-    'allow_device_multi_session' => true,
+    'allow_device_multi_session' => false,
 
     /*
     |--------------------------------------------------------------------------
     | Start new session on login
     |--------------------------------------------------------------------------
-    | This option specifies if the user should start a new session when they login
-    | or if they should continue refreshing the current session.
+    | This option specifies if the user should start a new session when he logs in from a device
+    | or if he should continue refreshing the current session.
     |
     */
     'start_new_session_on_login' => false,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Track guest sessions
+    |--------------------------------------------------------------------------
+    | This option specifies if the system should track guest sessions
+    | or if it should ignore them.
+    |
+    */
+    'track_guest_sessions' => false,
 
     /*
     |--------------------------------------------------------------------------
@@ -137,7 +186,7 @@ return [
     | the client-side fingerprint of the current device.
     |
     */
-    'fingerprint_id_cookie_name' => 'fingerprint',
+    'fingerprint_id_cookie_name' => 'laravel_device_fingerprint',
 
     /*
     |--------------------------------------------------------------------------
@@ -146,7 +195,7 @@ return [
     | This option specifies the library that will be used to generate
     | the client-side fingerprint of the current device.
     |
-    | Options: 'fingerprintjs', 'clientjs', 'creepjs'
+    | Options: 'fingerprintjs', 'clientjs', 'creepjs', 'none'
     |
     */
     'fingerprint_client_library' => \Ninja\DeviceTracker\Modules\Fingerprinting\Injector\Enums\Library::FingerprintJS,
@@ -176,6 +225,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Enable event tracking
+    |--------------------------------------------------------------------------
+    |
+    | This option allows you to enable or disable event tracking. Events are
+    | stored in the database and can be used to track user behavior and analyze risks.
+    |
+    */
+    'event_tracking_enabled' => true,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Event retention period
+    |--------------------------------------------------------------------------
+    |
+    | This option allows you to easily specify the period of time in days that the events are
+    | stored. After this period, the events are deleted from the database.
+    |
+    */
+    'event_retention_period' => 30,
+
+    /*
+    |--------------------------------------------------------------------------
     | Location provider
     |--------------------------------------------------------------------------
     |
@@ -201,7 +272,7 @@ return [
     | Options: 'device', 'location', 'session', 'ua'
     |
     */
-    'cache_enabled_for' => ['device', 'location', 'session', 'ua'],
+    'cache_enabled_for' => ['device', 'location', 'session', 'ua', 'event_type'],
 
     /*
     |--------------------------------------------------------------------------
@@ -224,10 +295,10 @@ return [
     |
     */
     'cache_ttl' => [
-        \Ninja\DeviceTracker\Cache\SessionCache::KEY_PREFIX => 60 * 60,
-        \Ninja\DeviceTracker\Cache\DeviceCache::KEY_PREFIX => 60 * 60,
-        \Ninja\DeviceTracker\Cache\LocationCache::KEY_PREFIX => 60 * 60 * 24 * 30,
-        \Ninja\DeviceTracker\Cache\UserAgentCache::KEY_PREFIX => 60 * 60 * 24 * 30,
+        \Ninja\DeviceTracker\Cache\SessionCache::KEY_PREFIX => 3600,
+        \Ninja\DeviceTracker\Cache\DeviceCache::KEY_PREFIX => 3600,
+        \Ninja\DeviceTracker\Cache\LocationCache::KEY_PREFIX => 2592000,
+        \Ninja\DeviceTracker\Cache\UserAgentCache::KEY_PREFIX => 2592000,
     ],
 
     /*
@@ -381,5 +452,5 @@ return [
         'Mozilla/7.0 (iPhone; CPU iPhone OS 18_7; iPhone 15 Pro Max) AppleWebKit/533.2 (KHTML, like Gecko) CriOS/432.0.8702.51 Mobile/15E148 Safari/804.17',
         'Mozilla/5.0 (Linux; Android 13; 2211133G Build/TKQ1.220905.001; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/113.0.5672.76 Mobile Safari/537.36',
         'Mozilla/5.0 (Linux; U; Android 13; pl-pl; Xiaomi 13 Build/TKQ1.220905.001) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/100.0.4896.127 Mobile Safari/537.36 XiaoMi/MiuiBrowser/13.28.0-gn'
-    ]
+    ],
 ];

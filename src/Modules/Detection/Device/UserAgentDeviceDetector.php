@@ -1,6 +1,6 @@
 <?php
 
-namespace Ninja\DeviceTracker;
+namespace Ninja\DeviceTracker\Modules\Detection\Device;
 
 use DeviceDetector\ClientHints;
 use DeviceDetector\DeviceDetector;
@@ -13,37 +13,39 @@ use Ninja\DeviceTracker\DTO\Device;
 use Ninja\DeviceTracker\DTO\DeviceType;
 use Ninja\DeviceTracker\DTO\Platform;
 use Ninja\DeviceTracker\DTO\Version;
+use Ninja\DeviceTracker\Modules;
+use Ninja\DeviceTracker\Modules\Detection\Contracts;
 
-final class UserAgentDeviceDetector implements Contracts\DeviceDetector
+final readonly class UserAgentDeviceDetector implements Contracts\DeviceDetector
 {
     private DeviceDetector $dd;
-    private Request $request;
 
     public function __construct()
     {
         AbstractDeviceParser::setVersionTruncation(AbstractParser::VERSION_TRUNCATION_PATCH);
     }
 
-    public function detect(Request $request): Device
+    public function detect(Request $request): ?Device
     {
-        $this->request = $request;
-
         $ua = $request->header('User-Agent', $this->fakeUA());
-        $key = 'ua:' . md5($ua);
+        $key = UserAgentCache::key($ua);
+
+        $this->dd = new DeviceDetector(
+            userAgent: $request->header('User-Agent', $ua),
+            clientHints: ClientHints::factory($_SERVER)
+        );
+
+        $this->dd->parse();
+
+        if ($this->dd->isBot() && !config('devices.allow_bot_devices')) {
+            return null;
+        }
 
         return UserAgentCache::remember($key, function () use ($ua, $request) {
-            $this->dd = new DeviceDetector(
-                userAgent: $request->header('User-Agent', $ua),
-                clientHints: ClientHints::factory($_SERVER)
-            );
-
-            $this->dd->parse();
-
             return new Device(
                 browser: $this->browser(),
                 platform: $this->platform(),
                 device: $this->device(),
-                ip: $request->ip(),
                 grade: null,
                 userAgent: $this->dd->getUserAgent()
             );
