@@ -4,10 +4,11 @@ namespace Ninja\DeviceTracker;
 
 use Auth;
 use Config;
-use Cookie;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cookie;
 use Ninja\DeviceTracker\Contracts\StorableId;
+use Ninja\DeviceTracker\Enums\Transport;
 use Ninja\DeviceTracker\Events\DeviceAttachedEvent;
 use Ninja\DeviceTracker\Events\DeviceTrackedEvent;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
@@ -15,6 +16,7 @@ use Ninja\DeviceTracker\Exception\UnknownDeviceDetectedException;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Modules\Detection\Contracts\DeviceDetector;
+use Ninja\DeviceTracker\ValueObject\DeviceId;
 use Throwable;
 
 use function request;
@@ -110,12 +112,12 @@ final class DeviceManager
     /**
      * @throws UnknownDeviceDetectedException
      */
-    public function create(): Device
+    public function create(?DeviceId $deviceId = null): Device
     {
         $payload = app(DeviceDetector::class)->detect(request());
         if (!$payload->unknown() || config('devices.allow_unknown_devices')) {
             $device = Device::register(
-                deviceUuid: device_uuid(),
+                deviceUuid: $deviceId ?? device_uuid(),
                 data: $payload
             );
 
