@@ -3,9 +3,9 @@
 namespace Ninja\DeviceTracker;
 
 use Auth;
-use Config;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cookie;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Enums\Transport;

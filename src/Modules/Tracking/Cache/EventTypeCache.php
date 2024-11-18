@@ -2,8 +2,8 @@
 
 namespace Ninja\DeviceTracker\Modules\Tracking\Cache;
 
-use Config;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Config;
 use Ninja\DeviceTracker\Cache\AbstractCache;
 use Ninja\DeviceTracker\Contracts\RequestAware;
 
