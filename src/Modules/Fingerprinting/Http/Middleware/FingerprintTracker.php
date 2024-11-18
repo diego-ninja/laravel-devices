@@ -3,10 +3,10 @@
 namespace Ninja\DeviceTracker\Modules\Fingerprinting\Http\Middleware;
 
 use Closure;
-use Config;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cookie;
 use Ninja\DeviceTracker\Exception\FingerprintDuplicatedException;
 use Ninja\DeviceTracker\Facades\DeviceManager;
