@@ -2,7 +2,7 @@
 
 namespace Ninja\DeviceTracker\Modules\Security\Rule;
 
-use Log;
+use Illuminate\Support\Facades\Log;
 use Ninja\DeviceTracker\Exception\SessionNotFoundException;
 use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Models\Session;

@@ -10,8 +10,6 @@ use Ninja\DeviceTracker\Cache\SessionCache;
 use Ninja\DeviceTracker\Factories\SessionIdFactory;
 use Ninja\DeviceTracker\Http\Resources\SessionResource;
 use Ninja\DeviceTracker\Models\Session;
-use PragmaRX\Google2FA\Exceptions\InvalidAlgorithmException;
-use Ramsey\Uuid\Uuid;
 
 /**
  * @authenticated
