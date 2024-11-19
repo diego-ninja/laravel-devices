@@ -7,7 +7,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Ninja\DeviceTracker\Contracts\StorableId;
-use Ninja\DeviceTracker\Enums\Transport;
+use Ninja\DeviceTracker\Enums\DeviceTransport;
 use Ninja\DeviceTracker\Events\DeviceAttachedEvent;
 use Ninja\DeviceTracker\Events\DeviceTrackedEvent;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
@@ -84,14 +84,14 @@ final class DeviceManager
         if (device_uuid()) {
             if (Config::get('devices.regenerate_devices')) {
                 event(new DeviceTrackedEvent(device_uuid()));
-                Transport::propagate(device_uuid());
+                DeviceTransport::propagate(device_uuid());
                 return device_uuid();
             } else {
                 throw new DeviceNotFoundException('Tracked device not found in database');
             }
         } else {
             $deviceUuid = DeviceIdFactory::generate();
-            Transport::propagate($deviceUuid);
+            DeviceTransport::propagate($deviceUuid);
             event(new DeviceTrackedEvent($deviceUuid));
 
             return $deviceUuid;

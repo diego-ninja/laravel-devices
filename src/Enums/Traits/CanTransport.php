@@ -1,6 +1,6 @@
 <?php
 
-namespace Ninja\DeviceTracker\Enums;
+namespace Ninja\DeviceTracker\Enums\Traits;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -9,17 +9,8 @@ use Illuminate\Support\Facades\Cookie;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 
-enum Transport: string
+trait CanTransport
 {
-    case Cookie = 'cookie';
-    case Header = 'header';
-
-    public static function current(): self
-    {
-        $config = config('devices.device_id_transport', self::Cookie->value);
-        return self::tryFrom($config);
-    }
-
     public function get(): ?StorableId
     {
         return match ($this) {
@@ -28,15 +19,7 @@ enum Transport: string
         } ?? $this->fromRequest();
     }
 
-    public function parameter(): string
-    {
-        return match ($this) {
-            self::Cookie => config('devices.device_id_cookie_name'),
-            self::Header => config('devices.device_id_header_name'),
-        };
-    }
-
-    public static function set(mixed $response, StorableId $deviceId): mixed
+    public static function set(mixed $response, StorableId $id): mixed
     {
         if (!$response instanceof Response) {
             return $response;
@@ -48,25 +31,23 @@ enum Transport: string
             self::Cookie => $response->withCookie(
                 Cookie::forever(
                     name: $current->parameter(),
-                    value: (string) $deviceId,
+                    value: (string) $id,
                     secure: Config::get('session.secure', false),
                     httpOnly: Config::get('session.http_only', true)
                 )
             ),
-            self::Header => $response->header($current->parameter(), (string) $deviceId)
+            self::Header => $response->header($current->parameter(), (string) $id)
         };
     }
 
     private function fromCookie(): ?StorableId
     {
-        $cookieName = config('devices.device_id_cookie_name');
-        return Cookie::has($cookieName) ? DeviceIdFactory::from(Cookie::get($cookieName)) : null;
+        return Cookie::has($this->parameter()) ? DeviceIdFactory::from(Cookie::get($this->parameter())) : null;
     }
 
     private function fromHeader(): ?StorableId
     {
-        $headerName = config('devices.device_id_header_name');
-        return request()->hasHeader($headerName) ? DeviceIdFactory::from(request()->header($headerName)) : null;
+        return request()->hasHeader($this->parameter()) ? DeviceIdFactory::from(request()->header($this->parameter())) : null;
     }
 
     private function fromRequest(): ?StorableId
@@ -75,12 +56,12 @@ enum Transport: string
         return request()->has($requestParameter) ? DeviceIdFactory::from(request()->input($requestParameter)) : null;
     }
 
-    public static function propagate(?StorableId $deviceId = null): Request
+    public static function propagate(?StorableId $id = null): Request
     {
         $current = self::current();
         $requestParameter = config('devices.device_id_request_param');
-        $deviceId = $deviceId ?? $current->get();
+        $id = $id ?? $current->get();
 
-        return request()->merge([$requestParameter => (string) $deviceId ?? $current->get()->toString()]);
+        return request()->merge([$requestParameter => (string) $id ?? $current->get()->toString()]);
     }
 }
