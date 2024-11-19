@@ -2,7 +2,7 @@
 
 namespace Ninja\DeviceTracker\Cache;
 
-use Config;
+use Illuminate\Support\Facades\Config;
 
 final class LocationCache extends AbstractCache
 {

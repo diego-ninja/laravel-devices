@@ -2,9 +2,9 @@
 
 namespace Ninja\DeviceTracker\Cache;
 
-use Config;
 use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Config;
 use Ninja\DeviceTracker\Contracts\Cacheable;
 use Ninja\DeviceTracker\Models\Device;
 use Psr\SimpleCache\InvalidArgumentException;

@@ -2,11 +2,11 @@
 
 namespace Ninja\DeviceTracker\Http\Controllers;
 
-use Config;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Config;
 use Ninja\DeviceTracker\Events\Google2FAFailed;
 use Ninja\DeviceTracker\Events\Google2FASuccess;
 use PragmaRX\Google2FA\Exceptions\IncompatibleWithGoogleAuthenticatorException;

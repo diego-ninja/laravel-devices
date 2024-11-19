@@ -7,14 +7,11 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Config;
 use Ninja\DeviceTracker\Cache\SessionCache;
-use Ninja\DeviceTracker\Exception\TwoFactorAuthenticationNotEnabled;
 use Ninja\DeviceTracker\Factories\SessionIdFactory;
 use Ninja\DeviceTracker\Http\Resources\SessionResource;
 use Ninja\DeviceTracker\Models\Session;
-use Ninja\DeviceTracker\ValueObject\SessionId;
 use PragmaRX\Google2FA\Exceptions\InvalidAlgorithmException;
 use Ramsey\Uuid\Uuid;
-use Random\RandomException;
 
 /**
  * @authenticated

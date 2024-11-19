@@ -2,11 +2,11 @@
 
 namespace Ninja\DeviceTracker;
 
-use Config;
 use Exception;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Session as SessionFacade;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;

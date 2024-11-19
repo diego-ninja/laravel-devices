@@ -2,8 +2,8 @@
 
 namespace Ninja\DeviceTracker\Cache;
 
-use Config;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Support\Facades\Config;
 use InvalidArgumentException;
 use Ninja\DeviceTracker\Contracts\Cacheable;
 use Ninja\DeviceTracker\Models\Device;
