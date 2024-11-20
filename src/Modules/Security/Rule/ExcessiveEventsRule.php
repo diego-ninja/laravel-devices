@@ -9,7 +9,7 @@ final class ExcessiveEventsRule extends AbstractSecurityRule
 {
     public function evaluate(SecurityContext $context): Factor
     {
-        if (!$context->device) {
+        if (! $context->device) {
             return new Factor($this->factor, 0.0);
         }
 
@@ -17,7 +17,7 @@ final class ExcessiveEventsRule extends AbstractSecurityRule
             ->where('created_at', '>=', now()->subHour())
             ->count();
 
-        $score =  $eventCount > $this->threshold ? 1.0 : 0.0;
+        $score = $eventCount > $this->threshold ? 1.0 : 0.0;
 
         return new Factor($this->factor, $score);
     }

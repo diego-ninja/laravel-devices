@@ -11,9 +11,7 @@ use Ninja\DeviceTracker\Modules\Location\Exception\LocationLookupFailedException
 
 final class MaxmindLocationProvider extends AbstractLocationProvider
 {
-    public function __construct(private readonly Reader $reader)
-    {
-    }
+    public function __construct(private readonly Reader $reader) {}
 
     public function locate(string $ip): Location
     {
@@ -21,7 +19,7 @@ final class MaxmindLocationProvider extends AbstractLocationProvider
         $this->location = LocationCache::remember($key, function () use ($ip) {
             try {
                 return $this->lookup($ip);
-            } catch (AddressNotFoundException | InvalidDatabaseException $e) {
+            } catch (AddressNotFoundException|InvalidDatabaseException $e) {
                 throw LocationLookupFailedException::forIp($ip, $e);
             }
         });
@@ -45,7 +43,7 @@ final class MaxmindLocationProvider extends AbstractLocationProvider
             'postal' => $record->postal->code,
             'latitude' => (string) $record->location->latitude,
             'longitude' => (string) $record->location->longitude,
-            'timezone' => $record->location->timeZone
+            'timezone' => $record->location->timeZone,
         ]);
     }
 }

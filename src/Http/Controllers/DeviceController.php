@@ -41,6 +41,7 @@ final class DeviceController extends Controller
 
         if ($device) {
             $device->verify();
+
             return response()->json(['message' => 'Device verified successfully']);
         }
 
@@ -53,6 +54,7 @@ final class DeviceController extends Controller
 
         if ($device) {
             $device->hijack();
+
             return response()->json(['message' => sprintf('Device %s flagged as hijacked', $device->uuid)]);
         }
 
@@ -65,6 +67,7 @@ final class DeviceController extends Controller
 
         if ($device) {
             $device->forget();
+
             return response()->json(['message' => 'Device forgotten successfully. All active sessions were ended.']);
         }
 
@@ -77,7 +80,7 @@ final class DeviceController extends Controller
         $device
             ->sessions()
             ->active()
-            ->each(fn(Session $session) => $session->end());
+            ->each(fn (Session $session) => $session->end());
 
         return response()->json(['message' => 'All active sessions for device finished successfully.']);
     }

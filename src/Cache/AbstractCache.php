@@ -17,7 +17,7 @@ abstract class AbstractCache
 
     private function __construct()
     {
-        if (!$this->enabled()) {
+        if (! $this->enabled()) {
             return;
         }
 
@@ -26,8 +26,8 @@ abstract class AbstractCache
 
     public static function instance(): self
     {
-        if (!isset(self::$instances[static::class])) {
-            self::$instances[static::class] = new static();
+        if (! isset(self::$instances[static::class])) {
+            self::$instances[static::class] = new static;
         }
 
         return self::$instances[static::class];
@@ -48,15 +48,16 @@ abstract class AbstractCache
 
     public static function remember(string $key, callable $callback): mixed
     {
-        if (!self::instance()->enabled()) {
+        if (! self::instance()->enabled()) {
             return $callback();
         }
 
         return self::instance()->cache->remember($key, self::instance()->ttl(), $callback);
     }
+
     public static function key(string $key): string
     {
-        return static::KEY_PREFIX . ':' . hash('xxh128', $key);
+        return static::KEY_PREFIX.':'.hash('xxh128', $key);
     }
 
     public static function forget(Cacheable $item): void
@@ -66,7 +67,7 @@ abstract class AbstractCache
 
     public static function flush(): void
     {
-        if (!self::instance()->enabled()) {
+        if (! self::instance()->enabled()) {
             return;
         }
 
@@ -78,7 +79,7 @@ abstract class AbstractCache
      */
     protected function getItem(string $key): ?Device
     {
-        if (!$this->enabled()) {
+        if (! $this->enabled()) {
             return null;
         }
 
@@ -87,7 +88,7 @@ abstract class AbstractCache
 
     protected function putItem(Cacheable $item): void
     {
-        if (!$this->enabled()) {
+        if (! $this->enabled()) {
             return;
         }
 
@@ -96,7 +97,7 @@ abstract class AbstractCache
 
     protected function forgetItem(Cacheable $item): void
     {
-        if (!$this->enabled()) {
+        if (! $this->enabled()) {
             return;
         }
 

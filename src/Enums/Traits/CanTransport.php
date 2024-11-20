@@ -23,7 +23,7 @@ trait CanTransport
 
     public static function set(mixed $response, StorableId $id): mixed
     {
-        if (!self::isValidResponse($response)) {
+        if (! self::isValidResponse($response)) {
             return $response;
         }
 
@@ -39,14 +39,17 @@ trait CanTransport
                         httpOnly: Config::get('session.http_only', true)
                     )
                 );
+
                 return $response;
             },
             self::Header => function () use ($response, $current, $id): mixed {
                 $response->header($current->parameter(), (string) $id);
+
                 return $response;
             },
             self::Session => function () use ($response, $current, $id): mixed {
                 Session::put($current->parameter(), (string) $id);
+
                 return $response;
             },
         };

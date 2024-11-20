@@ -18,12 +18,12 @@ abstract class AbstractInjector implements Injector
             'current' => $device->fingerprint,
             'transport' => [
                 'type' => config('devices.client_fingerprint_transport'),
-                'key' => config('devices.client_fingerprint_key')
+                'key' => config('devices.client_fingerprint_key'),
             ],
             'library' => [
                 'name' => static::LIBRARY_NAME,
-                'url' => static::LIBRARY_URL
-            ]
+                'url' => static::LIBRARY_URL,
+            ],
         ])->render();
     }
 
@@ -34,7 +34,7 @@ abstract class AbstractInjector implements Injector
         $device = DeviceManager::current();
         if ($device) {
             $script = self::script($device);
-            $response->setContent(str_replace('</head>', $script . '</head>', $content));
+            $response->setContent(str_replace('</head>', $script.'</head>', $content));
         }
 
         return $response;

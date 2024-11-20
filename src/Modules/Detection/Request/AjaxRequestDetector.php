@@ -13,7 +13,7 @@ final class AjaxRequestDetector extends AbstractRequestDetector
     {
         return $request->ajax() ||
             $request->hasHeader('X-Requested-With') &&
-            !$request->hasHeader('X-Livewire');
+            ! $request->hasHeader('X-Livewire');
     }
 
     public function detect(Request $request, $response): ?EventType

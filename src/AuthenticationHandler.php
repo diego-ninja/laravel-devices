@@ -17,7 +17,7 @@ final readonly class AuthenticationHandler
 {
     public function onLogin(Login $event): void
     {
-        if (!DeviceManager::tracked()) {
+        if (! DeviceManager::tracked()) {
             DeviceManager::track();
             DeviceManager::create();
         }
@@ -43,11 +43,11 @@ final readonly class AuthenticationHandler
 
     public function onDeviceTracked(DeviceTrackedEvent $event): void
     {
-        if (!config('devices.track_guest_sessions')) {
+        if (! config('devices.track_guest_sessions')) {
             return;
         }
 
-        if (!Device::exists($event->deviceUuid)) {
+        if (! Device::exists($event->deviceUuid)) {
             return;
         }
 

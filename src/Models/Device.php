@@ -39,36 +39,34 @@ use PDOException;
 /**
  * Class Device
  *
- * @package Ninja\DeviceManager\Models
  *
  * @mixin \Illuminate\Database\Query\Builder
  * @mixin \Illuminate\Database\Eloquent\Builder
  *
- * @property int                          $id                     unsigned int
- * @property StorableId                   $uuid                   string
- * @property string                       $fingerprint            string
- * @property DeviceStatus                 $status                 string
- * @property string                       $browser                string
- * @property string                       $browser_version        string
- * @property string                       $browser_family         string
- * @property string                       $browser_engine         string
- * @property string                       $platform               string
- * @property string                       $platform_version       string
- * @property string                       $platform_family        string
- * @property string                       $device_type            string
- * @property string                       $device_family          string
- * @property string                       $device_model           string
- * @property string                       $grade                  string
- * @property string                       $source                 string
- * @property string                       $ip                     string
- * @property Risk                         $risk                   json
- * @property Metadata                     $metadata               json
- * @property Carbon                       $created_at             datetime
- * @property Carbon                       $updated_at             datetime
- * @property Carbon                       $verified_at            datetime
- * @property Carbon                       $hijacked_at            datetime
- * @property Carbon                       $risk_assessed_at       datetime
- *
+ * @property int $id unsigned int
+ * @property StorableId $uuid string
+ * @property string $fingerprint string
+ * @property DeviceStatus $status string
+ * @property string $browser string
+ * @property string $browser_version string
+ * @property string $browser_family string
+ * @property string $browser_engine string
+ * @property string $platform string
+ * @property string $platform_version string
+ * @property string $platform_family string
+ * @property string $device_type string
+ * @property string $device_family string
+ * @property string $device_model string
+ * @property string $grade string
+ * @property string $source string
+ * @property string $ip string
+ * @property Risk $risk json
+ * @property Metadata $metadata json
+ * @property Carbon $created_at datetime
+ * @property Carbon $updated_at datetime
+ * @property Carbon $verified_at datetime
+ * @property Carbon $hijacked_at datetime
+ * @property Carbon $risk_assessed_at datetime
  */
 class Device extends Model implements Cacheable
 {
@@ -125,7 +123,7 @@ class Device extends Model implements Cacheable
         $field = sprintf('%s_id', str(\config('devices.authenticatable_table'))->singular());
 
         return $this->belongsToMany(
-            related: Config::get("devices.authenticatable_class"),
+            related: Config::get('devices.authenticatable_class'),
             table: $table,
             foreignPivotKey: 'device_uuid',
             relatedPivotKey: $field,
@@ -137,32 +135,32 @@ class Device extends Model implements Cacheable
     public function uuid(): Attribute
     {
         return Attribute::make(
-            get: fn(string $value) => DeviceIdFactory::from($value),
-            set: fn(StorableId $value) => (string)$value
+            get: fn (string $value) => DeviceIdFactory::from($value),
+            set: fn (StorableId $value) => (string) $value
         );
     }
 
     public function status(): Attribute
     {
         return Attribute::make(
-            get: fn(?string $value) => $value ? DeviceStatus::from($value) : DeviceStatus::Unverified,
-            set: fn(DeviceStatus $value) => $value->value
+            get: fn (?string $value) => $value ? DeviceStatus::from($value) : DeviceStatus::Unverified,
+            set: fn (DeviceStatus $value) => $value->value
         );
     }
 
     public function risk(): Attribute
     {
         return Attribute::make(
-            get: fn(?string $value) => $value ? Risk::from($value) : Risk::default(),
-            set: fn(Risk $value) => $value->json()
+            get: fn (?string $value) => $value ? Risk::from($value) : Risk::default(),
+            set: fn (Risk $value) => $value->json()
         );
     }
 
     public function metadata(): Attribute
     {
         return Attribute::make(
-            get: fn(?string $value) => $value ? Metadata::from(json_decode($value, true)) : new Metadata([]),
-            set: fn(Metadata $value) => $value->json()
+            get: fn (?string $value) => $value ? Metadata::from(json_decode($value, true)) : new Metadata([]),
+            set: fn (Metadata $value) => $value->json()
         );
     }
 
@@ -180,7 +178,7 @@ class Device extends Model implements Cacheable
             $this->fingerprint = $fingerprint;
             if ($this->save()) {
                 if ($cookie) {
-                    if (!Cookie::has($cookie)) {
+                    if (! Cookie::has($cookie)) {
                         Cookie::queue(
                             Cookie::forever(
                                 name: $cookie,
@@ -218,7 +216,7 @@ class Device extends Model implements Cacheable
             ->where('expires_at', '>', now())
             ->where('user_id', $user->id)
             ->get()
-            ->each(fn(Session $session) => $session->unlock());
+            ->each(fn (Session $session) => $session->unlock());
 
         if ($this->save()) {
             event(new DeviceVerifiedEvent($this, $user));
@@ -259,13 +257,14 @@ class Device extends Model implements Cacheable
 
     public function forget(): bool
     {
-        $this->sessions()->active()->each(fn(Session $session) => $session->end(forgetSession: true));
+        $this->sessions()->active()->each(fn (Session $session) => $session->end(forgetSession: true));
+
         return $this->delete();
     }
 
     public function label(): string
     {
-        return $this->device_family . ' ' . $this->device_model;
+        return $this->device_family.' '.$this->device_model;
     }
 
     public function equals(DeviceDTO $dto): bool
@@ -324,6 +323,7 @@ class Device extends Model implements Cacheable
             }
         } catch (PDOException $e) {
             \Log::warning(sprintf('Unable to create device for UUID: %s (%s)', $deviceUuid, $e->getMessage()));
+
             return null;
         }
 
@@ -336,13 +336,13 @@ class Device extends Model implements Cacheable
             $uuid = DeviceIdFactory::from($uuid);
         }
 
-        if (!$cached) {
+        if (! $cached) {
             return self::where('uuid', $uuid->toString())->first();
         }
 
         return DeviceCache::remember(
             key: DeviceCache::key($uuid),
-            callback: fn() => self::where('uuid', $uuid->toString())->first()
+            callback: fn () => self::where('uuid', $uuid->toString())->first()
         );
     }
 
@@ -356,13 +356,13 @@ class Device extends Model implements Cacheable
 
     public static function byFingerprint(string $fingerprint, bool $cached = true): ?self
     {
-        if (!$cached) {
+        if (! $cached) {
             return self::where('fingerprint', $fingerprint)->first();
         }
 
         return DeviceCache::remember(
             key: DeviceCache::key($fingerprint),
-            callback: fn() => self::where('fingerprint', $fingerprint)->first()
+            callback: fn () => self::where('fingerprint', $fingerprint)->first()
         );
     }
 

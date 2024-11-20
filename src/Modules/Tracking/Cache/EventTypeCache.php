@@ -31,8 +31,8 @@ final class EventTypeCache extends AbstractCache implements RequestAware
     public static function key(string $key): string
     {
         $instance = self::instance();
-        if (!$instance instanceof self) {
-            return self::KEY_PREFIX . ':' . md5($key);
+        if (! $instance instanceof self) {
+            return self::KEY_PREFIX.':'.md5($key);
         }
 
         $hash = md5(sprintf(

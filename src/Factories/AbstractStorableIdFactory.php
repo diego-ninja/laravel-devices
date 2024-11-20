@@ -8,15 +8,13 @@ abstract class AbstractStorableIdFactory
 {
     protected static array $instances = [];
 
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 
     public static function instance(): self
     {
         $class = static::class;
-        if (!isset(self::$instances[$class])) {
-            self::$instances[$class] = new static();
+        if (! isset(self::$instances[$class])) {
+            self::$instances[$class] = new static;
         }
 
         return self::$instances[$class];
@@ -25,12 +23,14 @@ abstract class AbstractStorableIdFactory
     public static function generate(): StorableId
     {
         $idClass = self::instance()->getIdClass();
+
         return $idClass::build();
     }
 
     public static function from(string $id): StorableId
     {
         $idClass = self::instance()->getIdClass();
+
         return $idClass::from($id);
     }
 

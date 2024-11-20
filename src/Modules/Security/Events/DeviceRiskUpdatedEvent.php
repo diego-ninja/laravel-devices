@@ -14,7 +14,5 @@ class DeviceRiskUpdatedEvent
     use InteractsWithSockets;
     use SerializesModels;
 
-    public function __construct(public readonly Device $device, Risk $old, Risk $new)
-    {
-    }
+    public function __construct(public readonly Device $device, Risk $old, Risk $new) {}
 }

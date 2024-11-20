@@ -10,7 +10,7 @@ final class LocationLookupFailedException extends Exception
     public static function forIp(string $ip, ?Throwable $previous): self
     {
         return new self(
-            message: sprintf("Failed to lookup location for IP: %s", $ip),
+            message: sprintf('Failed to lookup location for IP: %s', $ip),
             previous: $previous
         );
     }

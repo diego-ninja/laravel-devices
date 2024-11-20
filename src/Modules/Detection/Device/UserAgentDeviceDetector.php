@@ -13,7 +13,6 @@ use Ninja\DeviceTracker\DTO\Device;
 use Ninja\DeviceTracker\DTO\DeviceType;
 use Ninja\DeviceTracker\DTO\Platform;
 use Ninja\DeviceTracker\DTO\Version;
-use Ninja\DeviceTracker\Modules;
 use Ninja\DeviceTracker\Modules\Detection\Contracts;
 
 final readonly class UserAgentDeviceDetector implements Contracts\DeviceDetector
@@ -37,11 +36,11 @@ final readonly class UserAgentDeviceDetector implements Contracts\DeviceDetector
 
         $this->dd->parse();
 
-        if ($this->dd->isBot() && !config('devices.allow_bot_devices')) {
+        if ($this->dd->isBot() && ! config('devices.allow_bot_devices')) {
             return null;
         }
 
-        return UserAgentCache::remember($key, function () use ($ua, $request) {
+        return UserAgentCache::remember($key, function () {
             return new Device(
                 browser: $this->browser(),
                 platform: $this->platform(),

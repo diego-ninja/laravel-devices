@@ -38,15 +38,15 @@ final class DeviceManager
     {
         $deviceUuid = $deviceUuid ?? device_uuid();
 
-        if (!$deviceUuid) {
+        if (! $deviceUuid) {
             return false;
         }
 
-        if (!Auth::user()) {
+        if (! Auth::user()) {
             return false;
         }
 
-        if (!Device::exists($deviceUuid)) {
+        if (! Device::exists($deviceUuid)) {
             return false;
         }
 
@@ -85,6 +85,7 @@ final class DeviceManager
             if (Config::get('devices.regenerate_devices')) {
                 event(new DeviceTrackedEvent(device_uuid()));
                 DeviceTransport::propagate(device_uuid());
+
                 return device_uuid();
             } else {
                 throw new DeviceNotFoundException('Tracked device not found in database');
@@ -103,7 +104,7 @@ final class DeviceManager
         try {
             return
                 device_uuid() !== null &&
-                !Device::exists(device_uuid()) &&
+                ! Device::exists(device_uuid()) &&
                 Config::get('devices.regenerate_devices') && device_uuid();
         } catch (Throwable) {
             return false;
@@ -116,7 +117,7 @@ final class DeviceManager
     public function create(?DeviceId $deviceId = null): Device
     {
         $payload = app(DeviceDetector::class)->detect(request());
-        if (!$payload->unknown() || config('devices.allow_unknown_devices')) {
+        if (! $payload->unknown() || config('devices.allow_unknown_devices')) {
             return Device::register(
                 deviceUuid: $deviceId ?? device_uuid(),
                 data: $payload

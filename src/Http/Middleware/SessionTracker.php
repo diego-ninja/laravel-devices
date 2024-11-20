@@ -17,14 +17,12 @@ use Symfony\Component\Routing\Exception\RouteNotFoundException;
 
 final readonly class SessionTracker
 {
-    public function __construct(protected Guard $auth)
-    {
-    }
+    public function __construct(protected Guard $auth) {}
 
     public function handle(Request $request, Closure $next)
     {
         $device = device();
-        if (!$device) {
+        if (! $device) {
             return $next($request);
         }
 
@@ -58,7 +56,7 @@ final readonly class SessionTracker
     private function manageLogout(Request $request): JsonResponse|RedirectResponse
     {
         $guard = Config::get('devices.auth_guard');
-        if ($request->ajax() || !Config::get('devices.use_redirects')) {
+        if ($request->ajax() || ! Config::get('devices.use_redirects')) {
             if (Auth::guard($guard)->check()) {
                 Auth::guard($guard)->logout();
 
@@ -81,7 +79,7 @@ final readonly class SessionTracker
 
     private function manageInactivity(Request $request, Closure $next): JsonResponse|RedirectResponse|Response
     {
-        if (Config::get("devices.inactivity_session_behaviour") === "terminate") {
+        if (Config::get('devices.inactivity_session_behaviour') === 'terminate') {
             return $this->manageLogout($request);
         }
 
@@ -90,7 +88,7 @@ final readonly class SessionTracker
 
     private function manageLock(Request $request): JsonResponse|RedirectResponse
     {
-        if ($request->ajax() || !Config::get('devices.use_redirects')) {
+        if ($request->ajax() || ! Config::get('devices.use_redirects')) {
             return response()->json(['message' => 'Session locked'], 423);
         }
 

@@ -12,14 +12,14 @@ final class InjectorFactory
 {
     private static array $injectors = [
         FingerprintJSInjector::class,
-        ClientJSInjector::class
+        ClientJSInjector::class,
     ];
 
     public static function make(Library $library): Injector
     {
         foreach (self::$injectors as $injectorClass) {
             if ($injectorClass::library() === $library) {
-                return new $injectorClass();
+                return new $injectorClass;
             }
         }
 

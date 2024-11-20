@@ -14,7 +14,5 @@ class CalculateDeviceRiskCommand extends Command
 
     protected $description = 'Calculate risk score and level for devices';
 
-    public function handle(): void
-    {
-    }
+    public function handle(): void {}
 }

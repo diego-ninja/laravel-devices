@@ -9,7 +9,7 @@ final class MultipleSignupRule extends AbstractSecurityRule
 {
     public function evaluate(SecurityContext $context): Factor
     {
-        if (!$context->device) {
+        if (! $context->device) {
             return new Factor($this->factor, 0.0);
         }
 
@@ -18,6 +18,7 @@ final class MultipleSignupRule extends AbstractSecurityRule
             ->count();
 
         $score = $signupCount > $this->threshold ? 1.0 : 0.0;
+
         return new Factor($this->factor, $score);
     }
 }

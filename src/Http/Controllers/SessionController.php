@@ -19,12 +19,14 @@ final class SessionController extends Controller
     public function list(Request $request): JsonResponse
     {
         $sessions = $this->getUserSessions($request);
+
         return response()->json(SessionResource::collection($sessions));
     }
 
     public function active(Request $request): JsonResponse
     {
         $sessions = $this->getUserActiveSessions($request);
+
         return response()->json(SessionResource::collection($sessions));
     }
 
@@ -45,6 +47,7 @@ final class SessionController extends Controller
 
         if ($session) {
             $session->end();
+
             return response()->json(['message' => 'Session ended successfully']);
         }
 
@@ -57,6 +60,7 @@ final class SessionController extends Controller
 
         if ($session) {
             $session->block();
+
             return response()->json(['message' => 'Session blocked successfully']);
         }
 
@@ -69,6 +73,7 @@ final class SessionController extends Controller
 
         if ($session) {
             $session->unblock();
+
             return response()->json(['message' => 'Session unblocked successfully']);
         }
 
@@ -82,6 +87,7 @@ final class SessionController extends Controller
 
         if ($session) {
             $session->renew($user);
+
             return response()->json(['message' => 'Session renewed successfully']);
         }
 
@@ -99,12 +105,14 @@ final class SessionController extends Controller
     private function getUserSessions(Request $request)
     {
         $user = $request->user(Config::get('devices.auth_guard'));
+
         return SessionCache::userSessions($user);
     }
 
     private function getUserActiveSessions(Request $request)
     {
         $user = $request->user(Config::get('devices.auth_guard'));
+
         return SessionCache::activeSessions($user);
     }
 
@@ -113,6 +121,7 @@ final class SessionController extends Controller
         $user = $request->user(Config::get('devices.auth_guard'));
 
         $sessions = SessionCache::userSessions($user);
+
         return $sessions->where('uuid', SessionIdFactory::from($id))->first();
     }
 }

@@ -20,18 +20,18 @@ final class FingerprintTracker
      */
     public function handle(Request $request, Closure $next)
     {
-        if (!config("devices.fingerprinting_enabled")) {
+        if (! config('devices.fingerprinting_enabled')) {
             return $next($request);
         }
 
         $response = $next($request);
 
-        if (!DeviceManager::fingerprinted()) {
+        if (! DeviceManager::fingerprinted()) {
             if ($this->redirect($response)) {
                 return $response;
             }
 
-            if (!$this->html($response)) {
+            if (! $this->html($response)) {
                 return $response;
             }
 
@@ -51,8 +51,8 @@ final class FingerprintTracker
 
         $library = Config::get('devices.fingerprint_client_library', Library::FingerprintJS);
 
-        if (!request()->cookie($clientCookie)) {
-            return (InjectorFactory::make($library))->inject($response);
+        if (! request()->cookie($clientCookie)) {
+            return InjectorFactory::make($library)->inject($response);
         } else {
             device()?->fingerprint(request()->cookie($clientCookie), $serverCookie);
             Cookie::queue(Cookie::forget($clientCookie));
@@ -63,12 +63,12 @@ final class FingerprintTracker
 
     private function html(mixed $response): bool
     {
-        if (!$response instanceof Response) {
+        if (! $response instanceof Response) {
             return false;
         }
 
         $contentType = $response->headers->get('Content-Type');
-        if (!$contentType || !str_contains($contentType, 'text/html')) {
+        if (! $contentType || ! str_contains($contentType, 'text/html')) {
             return false;
         }
 

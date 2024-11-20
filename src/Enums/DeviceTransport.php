@@ -2,11 +2,7 @@
 
 namespace Ninja\DeviceTracker\Enums;
 
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cookie;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
@@ -19,12 +15,12 @@ enum DeviceTransport: string
 
     case Cookie = 'cookie';
     case Header = 'header';
-
     case Session = 'session';
 
     public static function current(): self
     {
         $config = config('devices.device_id_transport', self::Cookie->value);
+
         return self::tryFrom($config);
     }
 

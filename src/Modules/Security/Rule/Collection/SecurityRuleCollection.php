@@ -30,7 +30,7 @@ final class SecurityRuleCollection extends Collection
             $risk->factor($factor);
         });
 
-        $risk->score =  $weight > 0 ? ($total / $weight) * 100 : 0;
+        $risk->score = $weight > 0 ? ($total / $weight) * 100 : 0;
 
         return $risk;
     }
@@ -51,6 +51,7 @@ final class SecurityRuleCollection extends Collection
         $data['factor'] = $factor;
 
         $class = $data['class'];
+
         return $class::from($data);
     }
 }

@@ -23,7 +23,7 @@ final readonly class DeviceTracker
             return $next(DeviceTransport::propagate(device_uuid()));
         }
 
-        if (!DeviceManager::tracked()) {
+        if (! DeviceManager::tracked()) {
             try {
                 if (config('devices.track_guest_sessions')) {
                     DeviceManager::track();
@@ -31,8 +31,9 @@ final readonly class DeviceTracker
                 } else {
                     DeviceTransport::propagate(DeviceIdFactory::generate());
                 }
-            } catch (DeviceNotFoundException | FingerprintNotFoundException | UnknownDeviceDetectedException $e) {
+            } catch (DeviceNotFoundException|FingerprintNotFoundException|UnknownDeviceDetectedException $e) {
                 Log::info($e->getMessage());
+
                 return $next($request);
             }
         }

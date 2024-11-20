@@ -11,7 +11,7 @@ final class ProxyDetectionRule extends AbstractSecurityRule
 {
     public function evaluate(SecurityContext $context): Factor
     {
-        if (!$context->session) {
+        if (! $context->session) {
             return new Factor($this->factor, 0.0);
         }
 
@@ -30,6 +30,7 @@ final class ProxyDetectionRule extends AbstractSecurityRule
         }
 
         $score = min($score, 1.0);
+
         return new Factor($this->factor, $score);
     }
 
@@ -48,7 +49,7 @@ final class ProxyDetectionRule extends AbstractSecurityRule
             'HTTP_FORWARDED',
             'HTTP_X_FORWARDED_HOST',
             'HTTP_X_FORWARDED_PORT',
-            'HTTP_PROXY_CONNECTION'
+            'HTTP_PROXY_CONNECTION',
         ];
 
         foreach ($proxyHeaders as $header) {

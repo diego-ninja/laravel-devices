@@ -12,7 +12,7 @@ final class PageViewDetector extends AbstractRequestDetector
     public function supports(Request $request, $response): bool
     {
         return $request->isMethod('GET') &&
-            !$request->ajax() &&
+            ! $request->ajax() &&
             $this->html($response);
     }
 

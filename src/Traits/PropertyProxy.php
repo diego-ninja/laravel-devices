@@ -18,6 +18,7 @@ trait PropertyProxy
 
         if ($this->setter($method)) {
             $this->metadata->set($property, $parameters[0]);
+
             return $this;
         }
 

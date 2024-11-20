@@ -9,7 +9,7 @@ class MultipleLoginRule extends AbstractSecurityRule
 {
     public function evaluate(SecurityContext $context): Factor
     {
-        if (!$context->device) {
+        if (! $context->device) {
             return new Factor($this->factor, 0.0);
         }
 
@@ -19,6 +19,7 @@ class MultipleLoginRule extends AbstractSecurityRule
             ->count();
 
         $score = $uniqueLogins > $this->threshold ? 1.0 : 0.0;
+
         return new Factor($this->factor, $score);
     }
 }

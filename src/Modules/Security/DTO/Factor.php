@@ -9,8 +9,7 @@ final class Factor implements JsonSerializable
     public function __construct(
         public string $name,
         public float $score
-    ) {
-    }
+    ) {}
 
     public static function from(string|array $data): self
     {

@@ -30,7 +30,8 @@
         "squizlabs/php_codesniffer": "^3.7",
         "laravel/octane": "^2.5",
         "swoole/ide-helper": "~5.0.0",
-        "geoip2/geoip2": "^3.0"
+        "geoip2/geoip2": "^3.0",
+        "laravel/pint": "^1.18"
     },
     "minimum-stability": "stable",
     "autoload": {

@@ -10,7 +10,7 @@ final class FingerprintFlippingRule extends AbstractSecurityRule
 {
     public function evaluate(SecurityContext $context): Factor
     {
-        if (!$context->session) {
+        if (! $context->session) {
             return new Factor($this->factor, 0.0);
         }
 
@@ -20,6 +20,7 @@ final class FingerprintFlippingRule extends AbstractSecurityRule
             ->count();
 
         $score = $changes > $this->threshold ? 1.0 : 0.0;
+
         return new Factor($this->factor, $score);
     }
 }

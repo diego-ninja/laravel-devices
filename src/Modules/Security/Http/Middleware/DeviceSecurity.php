@@ -18,13 +18,11 @@ use Ninja\DeviceTracker\Modules\Tracking\Models\Event;
 
 final readonly class DeviceSecurity
 {
-    public function __construct(private DeviceSecurityManager $manager)
-    {
-    }
+    public function __construct(private DeviceSecurityManager $manager) {}
 
     public function handle(Request $request, Closure $next)
     {
-        if (!config('devices.security.enabled')) {
+        if (! config('devices.security.enabled')) {
             return $next($request);
         }
 
@@ -49,14 +47,15 @@ final readonly class DeviceSecurity
     private function recalculate(Device $device): bool
     {
         $threshold = config('devices.security.risk.recalculation_threshold', 60);
+
         return
-            !$device->risk_assessed_at ||
+            ! $device->risk_assessed_at ||
             $device->risk_assessed_at->diffInMinutes(now()) > $threshold;
     }
 
     private function handleHighRisk(Device $device): RedirectResponse|JsonResponse
     {
-        $device->sessions()->active()->each(fn($session) => $session->end(true));
+        $device->sessions()->active()->each(fn ($session) => $session->end(true));
 
         if (config('devices.security.risk.auto_hijack_on_high_risk', true)) {
             $device->hijack();
@@ -75,8 +74,8 @@ final readonly class DeviceSecurity
 
     private function handleMediumRisk(Device $device, Request $request): RedirectResponse|JsonResponse|null
     {
-        if (!$device->verified() && config('devices.security.risk.require_2fa_on_medium_risk', true)) {
-            $device->device->sessions()->active()->each(fn(Session $session) => $session->status = SessionStatus::Locked);
+        if (! $device->verified() && config('devices.security.risk.require_2fa_on_medium_risk', true)) {
+            $device->device->sessions()->active()->each(fn (Session $session) => $session->status = SessionStatus::Locked);
 
             if ($request->expectsJson()) {
                 return response()->json([

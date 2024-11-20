@@ -8,15 +8,16 @@ use Ninja\DeviceTracker\Modules\Security\Enums\RiskLevel;
 final class Risk implements JsonSerializable
 {
     public const CRITICAL = 0.9;
+
     public const HIGH = 0.7;
+
     public const MEDIUM = 0.5;
 
     public function __construct(
         public RiskLevel $level,
         public int $score,
         public array $factors = []
-    ) {
-    }
+    ) {}
 
     public static function default(): self
     {

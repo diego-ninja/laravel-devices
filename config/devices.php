@@ -233,7 +233,6 @@ return [
     */
     'client_fingerprint_transport' => 'cookie',
 
-
     /*
     |--------------------------------------------------------------------------
     | Fingerprint key
@@ -453,7 +452,7 @@ return [
     | used to test the package in development mode.
     |
     */
-    'development_ip_pool' => ['138.100.56.25','2.153.101.169','104.26.14.39','104.26.3.12'],
+    'development_ip_pool' => ['138.100.56.25', '2.153.101.169', '104.26.14.39', '104.26.3.12'],
 
     /*
     |--------------------------------------------------------------------------
@@ -473,6 +472,6 @@ return [
         'Mozilla/7.0 (iPhone; CPU iPhone OS 18_7; iPhone 15 Pro Max) AppleWebKit/533.2 (KHTML, seperti Gecko) CriOS/432.0.8702.51 Seluler/15E148 Safari/804.17',
         'Mozilla/7.0 (iPhone; CPU iPhone OS 18_7; iPhone 15 Pro Max) AppleWebKit/533.2 (KHTML, like Gecko) CriOS/432.0.8702.51 Mobile/15E148 Safari/804.17',
         'Mozilla/5.0 (Linux; Android 13; 2211133G Build/TKQ1.220905.001; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/113.0.5672.76 Mobile Safari/537.36',
-        'Mozilla/5.0 (Linux; U; Android 13; pl-pl; Xiaomi 13 Build/TKQ1.220905.001) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/100.0.4896.127 Mobile Safari/537.36 XiaoMi/MiuiBrowser/13.28.0-gn'
+        'Mozilla/5.0 (Linux; U; Android 13; pl-pl; Xiaomi 13 Build/TKQ1.220905.001) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/100.0.4896.127 Mobile Safari/537.36 XiaoMi/MiuiBrowser/13.28.0-gn',
     ],
 ];

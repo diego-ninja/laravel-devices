@@ -8,6 +8,7 @@ use Ninja\DeviceTracker\Models\Device;
 final class DeviceInspectCommand extends Command
 {
     protected $signature = 'devices:inspect {uuid : Device UUID to inspect}';
+
     protected $description = 'Inspect detailed information about a specific device';
 
     public function handle(): void
@@ -15,12 +16,13 @@ final class DeviceInspectCommand extends Command
         $uuid = $this->argument('uuid');
         $device = Device::byUuid($uuid);
 
-        if (!$device) {
+        if (! $device) {
             $this->error("Device not found with UUID: {$uuid}");
+
             return;
         }
 
-        $this->info("Device Information:");
+        $this->info('Device Information:');
         $this->table(
             ['Property', 'Value'],
             [
@@ -34,7 +36,7 @@ final class DeviceInspectCommand extends Command
                 ['Last Updated', $device->updated_at],
                 ['Active Sessions', $device->sessions()->active()->count()],
                 ['Total Sessions', $device->sessions()->count()],
-                ['Associated Users', $device->users()->count()]
+                ['Associated Users', $device->users()->count()],
             ]
         );
     }

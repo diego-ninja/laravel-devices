@@ -11,8 +11,7 @@ final readonly class DeviceType implements JsonSerializable, Stringable
         public string $family,
         public string $model,
         public string $type
-    ) {
-    }
+    ) {}
 
     public static function fromArray(array $data): self
     {
@@ -26,10 +25,10 @@ final readonly class DeviceType implements JsonSerializable, Stringable
     public function array(): array
     {
         return [
-            "family" => $this->family,
-            "model" => $this->model,
-            "type" => $this->type,
-            "label" => (string) $this
+            'family' => $this->family,
+            'model' => $this->model,
+            'type' => $this->type,
+            'label' => (string) $this,
         ];
     }
 
@@ -48,7 +47,7 @@ final readonly class DeviceType implements JsonSerializable, Stringable
 
     public function __toString(): string
     {
-        return sprintf("%s %s (%s)", $this->family, $this->model, $this->type);
+        return sprintf('%s %s (%s)', $this->family, $this->model, $this->type);
     }
 
     public function json(): string

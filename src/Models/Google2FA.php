@@ -10,18 +10,17 @@ use Illuminate\Support\Facades\Config;
 /**
  * Class Google2FA
  *
- * @package Ninja\DeviceManager\Models
  *
  * @mixin \Illuminate\Database\Query\Builder
  * @mixin \Illuminate\Database\Eloquent\Builder
  *
- * @property int                          $id                unsigned int
- * @property integer                      $user_id           unsigned int
- * @property boolean                      $enabled           boolean
- * @property string                       $secret            string
- * @property Carbon                       $last_success_at   datetime
- * @property Carbon                       $created_at        datetime
- * @property Carbon                       $updated_at        datetime
+ * @property int $id unsigned int
+ * @property int $user_id unsigned int
+ * @property bool $enabled boolean
+ * @property string $secret string
+ * @property Carbon $last_success_at datetime
+ * @property Carbon $created_at datetime
+ * @property Carbon $updated_at datetime
  */
 class Google2FA extends Model
 {
@@ -29,7 +28,7 @@ class Google2FA extends Model
 
     public function user(): HasOne
     {
-        return $this->hasOne(Config::get("devices.authenticatable_class"), 'id', 'user_id');
+        return $this->hasOne(Config::get('devices.authenticatable_class'), 'id', 'user_id');
     }
 
     public function enable(string $secret): bool
@@ -67,7 +66,7 @@ class Google2FA extends Model
 
     public function enabled(): bool
     {
-        if (!Config::get("devices.google_2fa_enabled")) {
+        if (! Config::get('devices.google_2fa_enabled')) {
             return false;
         }
 

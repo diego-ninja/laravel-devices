@@ -7,9 +7,7 @@ use Ninja\DeviceTracker\Modules\Security\Contracts\PatternRepository;
 
 abstract class AbstractAnalyzer implements BehaviorAnalyzer
 {
-    public function __construct(protected readonly PatternRepository $repository)
-    {
-    }
+    public function __construct(protected readonly PatternRepository $repository) {}
 
     protected function deviation(array $values): float
     {

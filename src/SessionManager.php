@@ -47,7 +47,7 @@ final readonly class SessionManager
     public function end(?StorableId $sessionId = null, ?Authenticatable $user = null, bool $forgetSession = false): bool
     {
         $session = Session::byUuid($sessionId);
-        if (!$session) {
+        if (! $session) {
             return false;
         }
 
@@ -74,12 +74,13 @@ final readonly class SessionManager
     public function refresh(?Authenticatable $user = null): Session
     {
         $current = Session::current();
-        if (!$current) {
+        if (! $current) {
             return $this->start();
         }
 
         if (Config::get('devices.start_new_session_on_login')) {
             $current->end(true, $user);
+
             return $this->start();
         }
 
@@ -91,7 +92,7 @@ final readonly class SessionManager
     /**
      * @throws Exception
      */
-    public function inactive(Authenticatable $user = null): bool
+    public function inactive(?Authenticatable $user = null): bool
     {
         $uses = in_array(HasDevices::class, class_uses($user));
         if ($uses) {
@@ -107,6 +108,7 @@ final readonly class SessionManager
     public function block(StorableId $sessionId): bool
     {
         $session = Session::byUuidOrFail($sessionId);
+
         return $session->block();
     }
 
@@ -116,6 +118,7 @@ final readonly class SessionManager
     public function blocked(StorableId $sessionId): bool
     {
         $session = Session::byUuidOrFail($sessionId);
+
         return $session->blocked();
     }
 
@@ -125,6 +128,7 @@ final readonly class SessionManager
     public function locked(StorableId $sessionId): bool
     {
         $session = Session::byUuidOrFail($sessionId);
+
         return $session->locked();
     }
 

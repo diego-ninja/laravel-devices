@@ -17,8 +17,7 @@ abstract class AbstractSecurityRule implements Rule
         public readonly float $weight,
         public readonly int $threshold,
         public readonly bool $enabled = true
-    ) {
-    }
+    ) {}
 
     public static function from(array $data): self
     {
@@ -50,6 +49,7 @@ abstract class AbstractSecurityRule implements Rule
     protected function device(): ?Device
     {
         $session = $this->session();
+
         return $session?->device;
     }
 
@@ -59,6 +59,7 @@ abstract class AbstractSecurityRule implements Rule
             $session = Session::current();
         } catch (SessionNotFoundException $e) {
             Log::warning('Session not found', ['exception' => $e]);
+
             return null;
         }
 

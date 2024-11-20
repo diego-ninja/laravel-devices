@@ -19,25 +19,25 @@ final class DeviceCache extends AbstractCache
 
     protected function forgetItem(Cacheable $item): void
     {
-        if (!$this->enabled()) {
+        if (! $this->enabled()) {
             return;
         }
 
-        if (!$item instanceof Device) {
+        if (! $item instanceof Device) {
             throw new InvalidArgumentException('Item must be an instance of Device');
         }
 
         $this->cache->forget($item->key());
-        $item->users()->each(fn($user) => $this->cache->forget("user:devices:" . $user->id));
+        $item->users()->each(fn ($user) => $this->cache->forget('user:devices:'.$user->id));
     }
 
     public static function userDevices(Authenticatable $user)
     {
-        if (!self::instance()->enabled()) {
+        if (! self::instance()->enabled()) {
             return $user->devices;
         }
 
-        return self::remember('user:devices:' . $user->id, function () use ($user) {
+        return self::remember('user:devices:'.$user->id, function () use ($user) {
             return $user->devices;
         });
     }

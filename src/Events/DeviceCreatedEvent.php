@@ -13,7 +13,5 @@ final class DeviceCreatedEvent
     use InteractsWithSockets;
     use SerializesModels;
 
-    public function __construct(public readonly Device $device)
-    {
-    }
+    public function __construct(public readonly Device $device) {}
 }

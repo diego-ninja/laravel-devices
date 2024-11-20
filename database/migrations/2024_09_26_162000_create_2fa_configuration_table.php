@@ -1,14 +1,14 @@
 <?php
 
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Ninja\DeviceTracker\Enums\SessionStatus;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
-        Schema::create("google_2fa", function (Blueprint $table) {
+        Schema::create('google_2fa', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('user_id');
             $table->boolean('enabled')->nullable();
@@ -20,6 +20,6 @@ return new class extends Migration {
 
     public function down(): void
     {
-        Schema::drop("google_2fa");
+        Schema::drop('google_2fa');
     }
 };

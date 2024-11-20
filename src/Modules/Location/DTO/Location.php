@@ -7,7 +7,7 @@ use Ninja\DeviceTracker\Cache\LocationCache;
 use Ninja\DeviceTracker\Contracts\Cacheable;
 use Stringable;
 
-final readonly class Location implements JsonSerializable, Stringable, Cacheable
+final readonly class Location implements Cacheable, JsonSerializable, Stringable
 {
     public function __construct(
         public ?string $ip,
@@ -19,8 +19,7 @@ final readonly class Location implements JsonSerializable, Stringable, Cacheable
         public ?string $latitude,
         public ?string $longitude,
         public ?string $timezone
-    ) {
-    }
+    ) {}
 
     public static function fromArray(array $location): self
     {
@@ -40,22 +39,22 @@ final readonly class Location implements JsonSerializable, Stringable, Cacheable
     public function array(): array
     {
         return [
-            "ip" => $this->ip,
-            "hostname" => $this->hostname,
-            "country" => $this->country,
-            "region" => $this->region,
-            "city" => $this->city,
-            "postal" => $this->postal,
-            "latitude" => $this->latitude,
-            "longitude" => $this->longitude,
-            "timezone" => $this->timezone,
-            "label" => (string) $this
+            'ip' => $this->ip,
+            'hostname' => $this->hostname,
+            'country' => $this->country,
+            'region' => $this->region,
+            'city' => $this->city,
+            'postal' => $this->postal,
+            'latitude' => $this->latitude,
+            'longitude' => $this->longitude,
+            'timezone' => $this->timezone,
+            'label' => (string) $this,
         ];
     }
 
     public function __toString()
     {
-        return sprintf("%s %s, %s, %s", $this->postal, $this->city, $this->region, $this->country);
+        return sprintf('%s %s, %s, %s', $this->postal, $this->city, $this->region, $this->country);
     }
 
     public function jsonSerialize(): array

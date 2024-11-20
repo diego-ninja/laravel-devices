@@ -8,9 +8,7 @@ use Ninja\DeviceTracker\Models\Session;
 
 final readonly class SecurityContext
 {
-    public function __construct(public ?Device $device = null, public ?Session $session = null, public ?Request $request = null)
-    {
-    }
+    public function __construct(public ?Device $device = null, public ?Session $session = null, public ?Request $request = null) {}
 
     public static function current(): self
     {

@@ -9,7 +9,9 @@ use Ninja\DeviceTracker\Modules\Security\DTO\Risk;
 final class NavigationPatternAnalyzer extends AbstractAnalyzer
 {
     private const MIN_NORMAL_PAGE_TIME = 3;
+
     private const MAX_NORMAL_PAGE_TIME = 3600;
+
     public function analyze(Device $device): Risk
     {
         // TODO: Implement analyze() method.
@@ -29,6 +31,7 @@ final class NavigationPatternAnalyzer extends AbstractAnalyzer
 
         return count($anomalies) / count($timeDiffs);
     }
+
     private function analyzePageSequence(Collection $events): float
     {
         $currentUrls = $events->pluck('metadata.url')->toArray();
@@ -70,6 +73,7 @@ final class NavigationPatternAnalyzer extends AbstractAnalyzer
 
         return max(0, 1 - ($similarity / $similarityThreshold));
     }
+
     private function extractSequences(array $items, int $length): array
     {
         $sequences = [];
@@ -77,6 +81,7 @@ final class NavigationPatternAnalyzer extends AbstractAnalyzer
             $sequence = implode('>', array_slice($items, $i, $length));
             $sequences[$sequence] = ($sequences[$sequence] ?? 0) + 1;
         }
+
         return $sequences;
     }
 }

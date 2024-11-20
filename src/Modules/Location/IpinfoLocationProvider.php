@@ -10,7 +10,7 @@ use Ninja\DeviceTracker\Modules\Location\Exception\LocationLookupFailedException
 
 final class IpinfoLocationProvider extends AbstractLocationProvider implements LocationProvider
 {
-    private const API_URL = "https://ipinfo.io/%s/json";
+    private const API_URL = 'https://ipinfo.io/%s/json';
 
     public function locate(string $ip): Location
     {
@@ -21,7 +21,7 @@ final class IpinfoLocationProvider extends AbstractLocationProvider implements L
                 $url = sprintf(self::API_URL, $ip);
                 $locationData = json_decode(file_get_contents($url), true);
 
-                [$lat, $long] = explode(",", $locationData['loc']);
+                [$lat, $long] = explode(',', $locationData['loc']);
 
                 $locationData['latitude'] = $lat;
                 $locationData['longitude'] = $long;

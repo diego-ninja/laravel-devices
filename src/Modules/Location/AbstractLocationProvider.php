@@ -8,6 +8,7 @@ use Ninja\DeviceTracker\Modules\Location\DTO\Location;
 abstract class AbstractLocationProvider implements LocationProvider
 {
     protected Location $location;
+
     abstract public function locate(string $ip): Location;
 
     public function country(): string

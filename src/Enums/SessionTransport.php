@@ -15,12 +15,12 @@ enum SessionTransport: string
 
     case Cookie = 'cookie';
     case Header = 'header';
-
     case Session = 'session';
 
     public static function current(): self
     {
         $config = config('devices.session_id_transport', self::Cookie->value);
+
         return self::tryFrom($config);
     }
 
@@ -53,7 +53,6 @@ enum SessionTransport: string
 
         return Session::has($this->parameter()) ? SessionIdFactory::from(Session::get($this->parameter())) : null;
     }
-
 
     private function fromRequest(): ?StorableId
     {

@@ -48,7 +48,7 @@ final class HasManySessions extends HasMany
 
     public function active(bool $exceptCurrent = false): Collection
     {
-        $query =  $this
+        $query = $this
             ->with('device')
             ->where('finished_at', null)
             ->where('status', SessionStatus::Active);

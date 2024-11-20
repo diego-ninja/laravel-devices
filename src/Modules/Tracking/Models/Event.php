@@ -17,25 +17,21 @@ use Ninja\DeviceTracker\Traits\PropertyProxy;
 /**
  * Class Event
  *
- * @package Ninja\DeviceManager\Models
  *
  * @mixin \Illuminate\Database\Query\Builder
  * @mixin \Illuminate\Database\Eloquent\Builder
  *
- * @property int                          $id                     unsigned int
- * @property StorableId                   $uuid                   string
- * @property StorableId                   $device_uuid            string
- * @property StorableId                   $session_uuid           string
- * @property EventType                    $type                   string
- * @property string                       $ip_address             string
- * @property Metadata                     $metadata               json
- * @property Carbon                       $occurred_at            datetime
- *
+ * @property int $id unsigned int
+ * @property StorableId $uuid string
+ * @property StorableId $device_uuid string
+ * @property StorableId $session_uuid string
+ * @property EventType $type string
+ * @property string $ip_address string
+ * @property Metadata $metadata json
+ * @property Carbon $occurred_at datetime
  * @property-read Device                  $device
  * @property-read Session                 $session
- *
  */
-
 class Event extends Model
 {
     use PropertyProxy;
@@ -57,16 +53,16 @@ class Event extends Model
     public function metadata(): Attribute
     {
         return Attribute::make(
-            get: fn(?string $value) => $value ? Metadata::from(json_decode($value, true)) : new Metadata([]),
-            set: fn(Metadata $value) => $value->json()
+            get: fn (?string $value) => $value ? Metadata::from(json_decode($value, true)) : new Metadata([]),
+            set: fn (Metadata $value) => $value->json()
         );
     }
 
     public function type(): Attribute
     {
         return Attribute::make(
-            get: fn(?string $value) => $value ? EventType::tryFrom($value) : null,
-            set: fn(EventType $value) => $value->value
+            get: fn (?string $value) => $value ? EventType::tryFrom($value) : null,
+            set: fn (EventType $value) => $value->value
         );
     }
 
