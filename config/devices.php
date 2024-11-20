@@ -4,24 +4,13 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Cookie name for current user device tracking
+    | Parameter name for current user device tracking
     |--------------------------------------------------------------------------
-    | This option specifies the name of the cookie that will be used to store
+    | This option specifies the name of the cookie that will be used to transport
     | the device id of the current user.
     |
     */
-    'device_id_cookie_name' => 'laravel_device_id',
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Header name for device id
-    |--------------------------------------------------------------------------
-    | This option specifies the name of the header that will be used to store
-    | the device uuid during the request.
-    |
-    */
-    'device_id_header_name' => 'X-Device',
+    'device_id_parameter' => 'laravel_device_id',
 
     /*
     |--------------------------------------------------------------------------
@@ -29,41 +18,20 @@ return [
     |--------------------------------------------------------------------------
     | This option specifies the transport method for the device id.
     |
-    | Options: 'cookie', 'header'
+    | Options: 'cookie', 'header', 'session'
     |
     */
     'device_id_transport' => 'cookie',
 
     /*
     |--------------------------------------------------------------------------
-    | Request param for device id
+    | Parameter name for current user session tracking
     |--------------------------------------------------------------------------
-    | This option specifies the name of the request parameter that will be used to store
-    | the device uuid during the request.
-    |
-    */
-    'device_id_request_param' => 'laravel_device_id',
-
-    /*
-    |--------------------------------------------------------------------------
-    | Cookie name for current user session tracking
-    |--------------------------------------------------------------------------
-    | This option specifies the name of the cookie that will be used to store
+    | This option specifies the name of the parameter that will be used to transport
     | the session id for the current user.
     |
     */
-    'session_id_cookie_name' => 'laravel_session_id',
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Header name for session id
-    |--------------------------------------------------------------------------
-    | This option specifies the name of the header that will be used to store
-    | the session id during the request.
-    |
-    */
-    'session_id_header_name' => 'X-Session',
+    'session_id_parameter' => 'laravel_session_id',
 
     /*
     |--------------------------------------------------------------------------
@@ -71,20 +39,10 @@ return [
     |--------------------------------------------------------------------------
     | This option specifies the transport method for the session id.
     |
-    | Options: 'cookie', 'header'
+    | Options: 'cookie', 'header', 'session'
     |
     */
     'session_id_transport' => 'cookie',
-
-    /*
-    |--------------------------------------------------------------------------
-    | Request param for session id
-    |--------------------------------------------------------------------------
-    | This option specifies the name of the request parameter that will be used to store
-    | the session id during the request.
-    |
-    */
-    'session_id_request_param' => 'laravel_session_id',
 
     /*
     |--------------------------------------------------------------------------

@@ -5,7 +5,7 @@ namespace Ninja\DeviceTracker\Traits;
 use Illuminate\Support\Facades\Config;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Models\Device;
-use Ninja\DeviceTracker\Models\HasManySessions;
+use Ninja\DeviceTracker\Models\Relations\HasManySessions;
 use Ninja\DeviceTracker\Models\Relations\BelongsToManyDevices;
 use Ninja\DeviceTracker\Models\Session;
 

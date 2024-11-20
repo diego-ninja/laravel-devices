@@ -15,6 +15,8 @@ enum DeviceTransport: string
 {
     use Traits\CanTransport;
 
+    private const DEFAULT_REQUEST_PARAMETER = 'internal_device_id';
+
     case Cookie = 'cookie';
     case Header = 'header';
 
@@ -26,13 +28,9 @@ enum DeviceTransport: string
         return self::tryFrom($config);
     }
 
-    public function parameter(): string
+    private function parameter(): string
     {
-        return match ($this) {
-            self::Cookie => config('devices.device_id_cookie_name'),
-            self::Header => config('devices.device_id_header_name'),
-            self::Session => config('devices.device_id_session_name'),
-        };
+        return config('devices.device_id_parameter');
     }
 
     private function fromCookie(): ?StorableId
@@ -50,14 +48,8 @@ enum DeviceTransport: string
         return Session::has($this->parameter()) ? DeviceIdFactory::from(Session::get($this->parameter())) : null;
     }
 
-    private function requestParameter(): string
-    {
-        return config('devices.device_id_request_param');
-    }
-
     private function fromRequest(): ?StorableId
     {
-        $requestParameter = $this->requestParameter();
-        return request()->has($requestParameter) ? DeviceIdFactory::from(request()->input($requestParameter)) : null;
+        return request()->has(self::DEFAULT_REQUEST_PARAMETER) ? DeviceIdFactory::from(request()->input(self::DEFAULT_REQUEST_PARAMETER)) : null;
     }
 }

@@ -11,6 +11,8 @@ enum SessionTransport: string
 {
     use Traits\CanTransport;
 
+    private const DEFAULT_REQUEST_PARAMETER = 'internal_session_id';
+
     case Cookie = 'cookie';
     case Header = 'header';
 
@@ -31,18 +33,9 @@ enum SessionTransport: string
         };
     }
 
-    public function parameter(): string
+    private function parameter(): string
     {
-        return match ($this) {
-            self::Cookie => config('devices.session_id_cookie_name'),
-            self::Header => config('devices.session_id_header_name'),
-            self::Session => config('devices.session_id_session_name'),
-        };
-    }
-
-    private function requestParameter(): string
-    {
-        return config('devices.session_id_request_param');
+        return config('devices.session_id_parameter');
     }
 
     private function fromCookie(): ?StorableId
@@ -64,7 +57,6 @@ enum SessionTransport: string
 
     private function fromRequest(): ?StorableId
     {
-        $requestParameter = $this->requestParameter();
-        return request()->has($requestParameter) ? SessionIdFactory::from(request()->input($requestParameter)) : null;
+        return request()->has(self::DEFAULT_REQUEST_PARAMETER) ? SessionIdFactory::from(request()->input(self::DEFAULT_REQUEST_PARAMETER)) : null;
     }
 }
