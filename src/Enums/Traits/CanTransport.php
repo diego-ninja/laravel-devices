@@ -59,7 +59,7 @@ trait CanTransport
         $current = self::current();
         $id = $id ?? $current->get();
 
-        $requestParameter = $current->requestParameter();
+        $requestParameter = self::DEFAULT_REQUEST_PARAMETER;
 
         return request()->merge([$requestParameter => (string) $id ?? $current->get()->toString()]);
     }
