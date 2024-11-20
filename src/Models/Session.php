@@ -11,7 +11,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Session as SessionFacade;
 use Ninja\DeviceTracker\Cache\SessionCache;
 use Ninja\DeviceTracker\Contracts\Cacheable;
 use Ninja\DeviceTracker\Contracts\StorableId;
@@ -60,8 +59,6 @@ use Ninja\DeviceTracker\Traits\PropertyProxy;
 class Session extends Model implements Cacheable
 {
     use PropertyProxy;
-
-    public const  DEVICE_SESSION_ID = 'session.id';
 
     protected $table = 'device_sessions';
 
@@ -164,10 +161,6 @@ class Session extends Model implements Cacheable
             'last_activity_at' => $now,
         ]);
 
-        SessionTransport::propagate($session->uuid);
-        SessionTransport::current()->set(response(), $session->uuid);
-
-        //SessionFacade::put(self::DEVICE_SESSION_ID, $session->uuid);
         event(new SessionStartedEvent($session, Auth::user()));
 
         return $session;
@@ -208,10 +201,6 @@ class Session extends Model implements Cacheable
 
     public function end(bool $forgetSession = false, ?Authenticatable $user = null): bool
     {
-        if ($forgetSession) {
-            SessionFacade::forget(self::DEVICE_SESSION_ID);
-        }
-
         $this->status = SessionStatus::Finished;
         $this->finished_at = Carbon::now();
 
@@ -219,6 +208,8 @@ class Session extends Model implements Cacheable
             event(new SessionFinishedEvent($this, $user ?? Auth::user()));
             return true;
         }
+
+        SessionTransport::forget();
 
         return false;
     }

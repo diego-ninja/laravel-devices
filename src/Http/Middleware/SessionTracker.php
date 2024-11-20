@@ -12,7 +12,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
-use Ninja\DeviceTracker\Models\Session;
+use Ninja\DeviceTracker\Enums\SessionTransport;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 
 final readonly class SessionTracker
@@ -23,7 +23,12 @@ final readonly class SessionTracker
 
     public function handle(Request $request, Closure $next)
     {
-        $session = Session::current();
+        $device = device();
+        if (!$device) {
+            return $next($request);
+        }
+
+        $session = $device->sessions()->current() ?? $device->sessions()->recent();
 
         if ($session) {
             if ($session->locked()) {
@@ -43,6 +48,8 @@ final readonly class SessionTracker
             }
 
             $session->restart($request);
+
+            return SessionTransport::set($next($request), $session->uuid);
         }
 
         return $next($request);
@@ -58,7 +65,7 @@ final readonly class SessionTracker
                 event(new Logout($guard, Auth::user()));
             }
 
-            \Session::flush();
+            SessionTransport::forget();
 
             return response()->json(['message' => 'Unauthorized'], 401);
         }

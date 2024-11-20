@@ -7,7 +7,6 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Session as SessionFacade;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Exception\SessionNotFoundException;
@@ -133,7 +132,6 @@ final readonly class SessionManager
     {
         if (session_uuid() !== null) {
             Session::destroy(session_uuid());
-            SessionFacade::forget(Session::DEVICE_SESSION_ID);
         }
     }
 }

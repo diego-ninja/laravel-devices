@@ -40,8 +40,8 @@ final class HasManySessions extends HasMany
     {
         return $this
             ->with('device')
-            ->where('status', SessionStatus::Active)
-            ->orderBy('last_activity_at', 'desc')
+            ->where('status', SessionStatus::Active->value)
+            ->orderByDesc('last_activity_at')
             ->get()
             ->first();
     }

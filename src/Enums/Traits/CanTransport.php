@@ -2,12 +2,13 @@
 
 namespace Ninja\DeviceTracker\Enums\Traits;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\Session;
 use Ninja\DeviceTracker\Contracts\StorableId;
-use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 
 trait CanTransport
 {
@@ -16,52 +17,60 @@ trait CanTransport
         return match ($this) {
             self::Cookie => $this->fromCookie(),
             self::Header => $this->fromHeader(),
+            self::Session => $this->fromSession(),
         } ?? $this->fromRequest();
     }
 
     public static function set(mixed $response, StorableId $id): mixed
     {
-        if (!$response instanceof Response) {
+        if (!self::isValidResponse($response)) {
             return $response;
         }
 
         $current = self::current();
 
-        return match ($current) {
-            self::Cookie => $response->withCookie(
-                Cookie::forever(
-                    name: $current->parameter(),
-                    value: (string) $id,
-                    secure: Config::get('session.secure', false),
-                    httpOnly: Config::get('session.http_only', true)
-                )
-            ),
-            self::Header => $response->header($current->parameter(), (string) $id)
+        $callable = match ($current) {
+            self::Cookie => function () use ($response, $current, $id): mixed {
+                $response->withCookie(
+                    Cookie::forever(
+                        name: $current->parameter(),
+                        value: (string) $id,
+                        secure: Config::get('session.secure', false),
+                        httpOnly: Config::get('session.http_only', true)
+                    )
+                );
+                return $response;
+            },
+            self::Header => function () use ($response, $current, $id): mixed {
+                $response->header($current->parameter(), (string) $id);
+                return $response;
+            },
+            self::Session => function () use ($response, $current, $id): mixed {
+                Session::put($current->parameter(), (string) $id);
+                return $response;
+            },
         };
-    }
 
-    private function fromCookie(): ?StorableId
-    {
-        return Cookie::has($this->parameter()) ? DeviceIdFactory::from(Cookie::get($this->parameter())) : null;
-    }
-
-    private function fromHeader(): ?StorableId
-    {
-        return request()->hasHeader($this->parameter()) ? DeviceIdFactory::from(request()->header($this->parameter())) : null;
-    }
-
-    private function fromRequest(): ?StorableId
-    {
-        $requestParameter = config('devices.device_id_request_param');
-        return request()->has($requestParameter) ? DeviceIdFactory::from(request()->input($requestParameter)) : null;
+        return $callable();
     }
 
     public static function propagate(?StorableId $id = null): Request
     {
         $current = self::current();
-        $requestParameter = config('devices.device_id_request_param');
         $id = $id ?? $current->get();
 
+        $requestParameter = $current->requestParameter();
+
         return request()->merge([$requestParameter => (string) $id ?? $current->get()->toString()]);
+    }
+
+    private static function isValidResponse(mixed $response): bool
+    {
+        $valid = [
+            Response::class,
+            JsonResponse::class,
+        ];
+
+        return in_array(get_class($response), $valid);
     }
 }

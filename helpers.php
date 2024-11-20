@@ -34,21 +34,6 @@ if (! function_exists('session_uuid')) {
     function session_uuid(): ?StorableId
     {
         return SessionTransport::current()->get();
-
-        //$id = SessionFacade::get(Session::DEVICE_SESSION_ID);
-        //return $id ? SessionIdFactory::from($id) : null;
-    }
-}
-
-if (! function_exists('session')) {
-    function session(): ?Session
-    {
-        try {
-            $id = session_uuid();
-            return $id ? Session::byUuid($id) : null;
-        } catch (SessionNotFoundException) {
-            return null;
-        }
     }
 }
 
