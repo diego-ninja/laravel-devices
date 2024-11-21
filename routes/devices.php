@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 Route::group([
     'as' => 'device::',
     'prefix' => 'api/devices',
-    'middleware' => Config::get('devices.auth_middleware')
+    'middleware' => Config::get('devices.auth_middleware'),
 ], function (): void {
     Route::get('/', 'Ninja\DeviceTracker\Http\Controllers\DeviceController@list')->name('list');
     Route::get('/{id}', 'Ninja\DeviceTracker\Http\Controllers\DeviceController@show')->name('show');
@@ -18,7 +18,7 @@ Route::group([
 Route::group([
     'as' => 'session::',
     'prefix' => 'api/sessions',
-    'middleware' => Config::get('devices.auth_middleware')
+    'middleware' => Config::get('devices.auth_middleware'),
 ], function (): void {
     Route::get('/', 'Ninja\DeviceTracker\Http\Controllers\SessionController@list')->name('list');
     Route::get('/active', 'Ninja\DeviceTracker\Http\Controllers\SessionController@active')->name('active');
@@ -31,20 +31,20 @@ Route::group([
 });
 
 Route::group([
-    "as" => "2fa::",
-    "prefix" => "api/2fa",
-    "middleware" => Config::get("devices.auth_middleware")
+    'as' => '2fa::',
+    'prefix' => 'api/2fa',
+    'middleware' => Config::get('devices.auth_middleware'),
 ], function (): void {
-    Route::get("/code", "Ninja\DeviceTracker\Http\Controllers\TwoFactorController@code")
+    Route::get('/code', "Ninja\DeviceTracker\Http\Controllers\TwoFactorController@code")
         ->withoutMiddleware(['session-tracker'])
-        ->name("code");
-    Route::post("/verify", "Ninja\DeviceTracker\Http\Controllers\TwoFactorController@verify")
+        ->name('code');
+    Route::post('/verify', "Ninja\DeviceTracker\Http\Controllers\TwoFactorController@verify")
         ->withoutMiddleware(['session-tracker'])
-        ->name("verify");
-    Route::patch("/disable", "Ninja\DeviceTracker\Http\Controllers\TwoFactorController@disable")
+        ->name('verify');
+    Route::patch('/disable', "Ninja\DeviceTracker\Http\Controllers\TwoFactorController@disable")
         ->withoutMiddleware(['session-tracker'])
-        ->name("disable");
-    Route::patch("/enable", "Ninja\DeviceTracker\Http\Controllers\TwoFactorController@enable")
+        ->name('disable');
+    Route::patch('/enable', "Ninja\DeviceTracker\Http\Controllers\TwoFactorController@enable")
         ->withoutMiddleware(['session-tracker'])
-        ->name("enable");
+        ->name('enable');
 });

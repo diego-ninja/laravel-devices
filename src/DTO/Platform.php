@@ -11,8 +11,7 @@ final readonly class Platform implements JsonSerializable, Stringable
         public string $name,
         public Version $version,
         public string $family
-    ) {
-    }
+    ) {}
 
     public static function fromArray(array $data): self
     {
@@ -28,10 +27,10 @@ final readonly class Platform implements JsonSerializable, Stringable
     public function array(): array
     {
         return [
-            "name" => $this->name,
-            "version" => $this->version->array(),
-            "family" => $this->family,
-            "label" => (string) $this
+            'name' => $this->name,
+            'version' => $this->version->array(),
+            'family' => $this->family,
+            'label' => (string) $this,
         ];
     }
 
@@ -49,7 +48,7 @@ final readonly class Platform implements JsonSerializable, Stringable
 
     public function __toString(): string
     {
-        return sprintf("%s", $this->name);
+        return sprintf('%s', $this->name);
     }
 
     public function json(): string

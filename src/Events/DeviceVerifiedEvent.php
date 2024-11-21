@@ -14,7 +14,5 @@ final class DeviceVerifiedEvent
     use InteractsWithSockets;
     use SerializesModels;
 
-    public function __construct(public readonly Device $device, public readonly ?Authenticatable $user)
-    {
-    }
+    public function __construct(public readonly Device $device, public readonly ?Authenticatable $user) {}
 }

@@ -11,12 +11,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Session as SessionFacade;
 use Ninja\DeviceTracker\Cache\SessionCache;
 use Ninja\DeviceTracker\Contracts\Cacheable;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\DTO\Metadata;
 use Ninja\DeviceTracker\Enums\SessionStatus;
+use Ninja\DeviceTracker\Enums\SessionTransport;
 use Ninja\DeviceTracker\Events\SessionBlockedEvent;
 use Ninja\DeviceTracker\Events\SessionFinishedEvent;
 use Ninja\DeviceTracker\Events\SessionStartedEvent;
@@ -34,33 +34,29 @@ use Ninja\DeviceTracker\Traits\PropertyProxy;
 /**
  * Class Session
  *
- * @package Ninja\DeviceManager\Models
  *
  * @mixin \Illuminate\Database\Query\Builder
  * @mixin \Illuminate\Database\Eloquent\Builder
  *
- * @property integer                      $id                     unsigned int
- * @property StorableId                   $uuid                   uuid
- * @property integer                      $user_id                unsigned int
- * @property StorableId                   $device_uuid            string
- * @property string                       $ip                     string
- * @property Location                     $location               json
- * @property SessionStatus                $status                 string
- * @property integer                      $blocked_by             unsigned int
- * @property Metadata                     $metadata               json
- * @property Carbon                       $started_at             datetime
- * @property Carbon                       $finished_at            datetime
- * @property Carbon                       $blocked_at             datetime
- * @property Carbon                       $unlocked_at            datetime
- * @property Carbon                       $last_activity_at       datetime
- *
- * @property Session                      $session
+ * @property int $id unsigned int
+ * @property StorableId $uuid uuid
+ * @property int $user_id unsigned int
+ * @property StorableId $device_uuid string
+ * @property string $ip string
+ * @property Location $location json
+ * @property SessionStatus $status string
+ * @property int $blocked_by unsigned int
+ * @property Metadata $metadata json
+ * @property Carbon $started_at datetime
+ * @property Carbon $finished_at datetime
+ * @property Carbon $blocked_at datetime
+ * @property Carbon $unlocked_at datetime
+ * @property Carbon $last_activity_at datetime
+ * @property Session $session
  */
 class Session extends Model implements Cacheable
 {
     use PropertyProxy;
-
-    public const  DEVICE_SESSION_ID = 'session.id';
 
     protected $table = 'device_sessions';
 
@@ -78,7 +74,6 @@ class Session extends Model implements Cacheable
         'last_activity_at',
     ];
 
-
     public function device(): HasOne
     {
         return $this->hasOne(Device::class, 'uuid', 'device_uuid');
@@ -86,7 +81,7 @@ class Session extends Model implements Cacheable
 
     public function user(): HasOne
     {
-        return $this->hasOne(Config::get("devices.authenticatable_class"), 'id', 'user_id');
+        return $this->hasOne(Config::get('devices.authenticatable_class'), 'id', 'user_id');
     }
 
     public function events(): HasManyEvents
@@ -104,41 +99,40 @@ class Session extends Model implements Cacheable
     public function uuid(): Attribute
     {
         return Attribute::make(
-            get: fn(string $value) => SessionIdFactory::from($value),
-            set: fn(StorableId $value) => (string) $value,
+            get: fn (string $value) => SessionIdFactory::from($value),
+            set: fn (StorableId $value) => (string) $value,
         );
     }
 
     public function status(): Attribute
     {
         return Attribute::make(
-            get: fn(string $value) => SessionStatus::from($value),
-            set: fn(SessionStatus $value) => $value->value,
+            get: fn (string $value) => SessionStatus::from($value),
+            set: fn (SessionStatus $value) => $value->value,
         );
     }
 
     public function location(): Attribute
     {
         return Attribute::make(
-            get: fn(string $value) => Location::fromArray(json_decode($value, true)),
-            set: fn(Location $value) => $value->json(),
+            get: fn (string $value) => Location::fromArray(json_decode($value, true)),
+            set: fn (Location $value) => $value->json(),
         );
     }
 
     public function metadata(): Attribute
     {
         return Attribute::make(
-            get: fn(?string $value) => $value ? Metadata::from(json_decode($value, true)) : new Metadata([]),
-            set: fn(Metadata $value) => $value->json()
+            get: fn (?string $value) => $value ? Metadata::from(json_decode($value, true)) : new Metadata([]),
+            set: fn (Metadata $value) => $value->json()
         );
     }
-
 
     public static function start(Device $device, ?Authenticatable $user = null): Session
     {
         $now = Carbon::now();
 
-        if (App::environment("local")) {
+        if (App::environment('local')) {
             $development_ips = Config::get('devices.development_ip_pool', []);
             shuffle($development_ips);
             $ip = $development_ips[0];
@@ -148,7 +142,7 @@ class Session extends Model implements Cacheable
 
         $location = app(LocationProvider::class)->locate($ip);
 
-        if (!Config::get('devices.allow_device_multi_session')) {
+        if (! Config::get('devices.allow_device_multi_session')) {
             self::endPreviousSessions($device, $user ?? Auth::user());
         }
 
@@ -163,7 +157,6 @@ class Session extends Model implements Cacheable
             'last_activity_at' => $now,
         ]);
 
-        SessionFacade::put(self::DEVICE_SESSION_ID, $session->uuid);
         event(new SessionStartedEvent($session, Auth::user()));
 
         return $session;
@@ -171,7 +164,7 @@ class Session extends Model implements Cacheable
 
     private static function initialStatus(Device $device): SessionStatus
     {
-        if (!Auth::user()?->google2faEnabled()) {
+        if (! Auth::user()?->google2faEnabled()) {
             return SessionStatus::Active;
         } else {
             return $device->verified() ? SessionStatus::Active : SessionStatus::Locked;
@@ -204,17 +197,16 @@ class Session extends Model implements Cacheable
 
     public function end(bool $forgetSession = false, ?Authenticatable $user = null): bool
     {
-        if ($forgetSession) {
-            SessionFacade::forget(self::DEVICE_SESSION_ID);
-        }
-
         $this->status = SessionStatus::Finished;
         $this->finished_at = Carbon::now();
 
         if ($this->save()) {
             event(new SessionFinishedEvent($this, $user ?? Auth::user()));
+
             return true;
         }
+
+        SessionTransport::forget();
 
         return false;
     }
@@ -256,9 +248,9 @@ class Session extends Model implements Cacheable
         $this->status = SessionStatus::Blocked;
         $this->blocked_by = $user->id;
 
-
         if ($this->save()) {
             event(new SessionBlockedEvent($this, $user));
+
             return true;
         }
 
@@ -276,9 +268,9 @@ class Session extends Model implements Cacheable
         $this->status = SessionStatus::Active;
         $this->blocked_by = null;
 
-
         if ($this->save()) {
             event(new SessionUnblockedEvent($this, $user));
+
             return true;
         }
 
@@ -341,7 +333,7 @@ class Session extends Model implements Cacheable
             $uuid = SessionIdFactory::from($uuid);
         }
 
-        if (!$cached) {
+        if (! $cached) {
             return self::where('uuid', $uuid->toString())->first();
         }
 
@@ -366,7 +358,7 @@ class Session extends Model implements Cacheable
      */
     public static function current(): ?Session
     {
-        if (!session_uuid()) {
+        if (! session_uuid()) {
             return null;
         }
 

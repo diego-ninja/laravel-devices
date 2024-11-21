@@ -33,20 +33,20 @@ class DeviceTrackerServiceProvider extends ServiceProvider
         $this->registerMiddlewares();
         $this->registerCommands();
 
-        $this->loadViewsFrom(resource_path("views/vendor/laravel-devices"), 'laravel-devices');
+        $this->loadViewsFrom(resource_path('views/vendor/laravel-devices'), 'laravel-devices');
 
         $this->app->resolving(EncryptCookies::class, function (EncryptCookies $encrypter) {
             $encrypter->disableFor(config('devices.client_fingerprint_key'));
         });
 
         if (Config::get('devices.load_routes')) {
-            $this->loadRoutesFrom(__DIR__ . '/../routes/devices.php');
+            $this->loadRoutesFrom(__DIR__.'/../routes/devices.php');
         }
     }
 
     public function register(): void
     {
-        $config = __DIR__ . '/../config/devices.php';
+        $config = __DIR__.'/../config/devices.php';
         $this->mergeConfigFrom(
             path: $config,
             key: 'devices'
@@ -55,7 +55,7 @@ class DeviceTrackerServiceProvider extends ServiceProvider
         $this->registerLocationProviders();
 
         $this->app->singleton(DeviceDetector::class, function () {
-            return new UserAgentDeviceDetector();
+            return new UserAgentDeviceDetector;
         });
 
         $this->app->singleton(CodeGenerator::class, function () {
@@ -63,7 +63,7 @@ class DeviceTrackerServiceProvider extends ServiceProvider
         });
 
         $this->app->singleton(Google2FA::class, function () {
-            $google2fa = new Google2FA();
+            $google2fa = new Google2FA;
             $google2fa->setAlgorithm(Constants::SHA512);
             $google2fa->setWindow(Config::get('devices.google_2fa_window', 1));
 
@@ -84,7 +84,7 @@ class DeviceTrackerServiceProvider extends ServiceProvider
         }
 
         $this->app->singleton(LocationProvider::class, function () use ($providers) {
-            $fallbackProvider = new FallbackLocationProvider();
+            $fallbackProvider = new FallbackLocationProvider;
             foreach ($providers as $provider) {
                 $fallbackProvider->addProvider($this->app->make($provider));
             }
@@ -142,13 +142,13 @@ class DeviceTrackerServiceProvider extends ServiceProvider
     {
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                __DIR__ . '/../resources/views' => resource_path("views/vendor/laravel-devices")], 'views');
+                __DIR__.'/../resources/views' => resource_path('views/vendor/laravel-devices')], 'views');
 
             $this->publishes([
-                __DIR__ . '/../config/devices.php' => config_path('devices.php')], 'config');
+                __DIR__.'/../config/devices.php' => config_path('devices.php')], 'config');
 
             $this->publishesMigrations([
-                __DIR__ . '/../database/migrations' => database_path('migrations')
+                __DIR__.'/../database/migrations' => database_path('migrations'),
             ], 'device-tracker-migrations');
         }
     }

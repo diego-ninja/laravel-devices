@@ -9,6 +9,7 @@ use Ninja\DeviceTracker\Models\Device;
 final class CleanupDevicesCommand extends Command
 {
     protected $signature = 'devices:cleanup {--force : Force cleanup of hijacked devices}';
+
     protected $description = 'Clean up compromised and unused devices';
 
     public function handle(): void

@@ -23,12 +23,12 @@ final class TwoFactorController extends Controller
     {
         $user = auth(Config::get('devices.auth_guard'))->user();
 
-        if (!$user->google2faEnabled()) {
+        if (! $user->google2faEnabled()) {
             return response()->json(['message' => 'Two factor authentication is not enabled for current user'], 400);
         }
 
         return response()->json([
-            'code' => $user->google2faQrCode(Config::get('devices.google_2fa_qr_format'))
+            'code' => $user->google2faQrCode(Config::get('devices.google_2fa_qr_format')),
         ]);
     }
 
@@ -41,12 +41,12 @@ final class TwoFactorController extends Controller
     {
         $user = auth(Config::get('devices.auth_guard'))->user();
 
-        if (!$user->google2faEnabled()) {
+        if (! $user->google2faEnabled()) {
             return response()->json(['message' => 'Two factor authentication is not enabled for current user'], 400);
         }
 
         $code = $request->input('code');
-        if (!$code) {
+        if (! $code) {
             return response()->json(['message' => 'Authenticator code is required'], 400);
         }
 
@@ -64,6 +64,7 @@ final class TwoFactorController extends Controller
             return response()->json(['message' => 'Two factor authentication successful']);
         } else {
             event(new Google2FAFailed($user));
+
             return response()->json(['message' => 'Two factor authentication failed'], 400);
         }
     }
@@ -72,7 +73,7 @@ final class TwoFactorController extends Controller
     {
         $user = auth(Config::get('devices.auth_guard'))->user();
 
-        if (!$user->google2faEnabled()) {
+        if (! $user->google2faEnabled()) {
             return response()->json(['message' => 'Two factor authentication is not enabled for current user'], 400);
         }
 

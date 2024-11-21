@@ -16,14 +16,14 @@ final class SessionResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            "uuid" => $this->resource->uuid->toString(),
-            "ip" => $this->resource->ip,
-            "location" => $this->resource->location->array(),
-            "status" => $this->resource->status->value,
-            "last_activity_at" => $this->resource->last_activity_at,
-            "started_at" => $this->resource->started_at,
-            "finished_at" => $this->resource->finished_at,
-            "device" => new DeviceResource($this->whenLoaded('device')),
+            'uuid' => $this->resource->uuid->toString(),
+            'ip' => $this->resource->ip,
+            'location' => $this->resource->location->array(),
+            'status' => $this->resource->status->value,
+            'last_activity_at' => $this->resource->last_activity_at,
+            'started_at' => $this->resource->started_at,
+            'finished_at' => $this->resource->finished_at,
+            'device' => new DeviceResource($this->whenLoaded('device')),
         ];
     }
 }

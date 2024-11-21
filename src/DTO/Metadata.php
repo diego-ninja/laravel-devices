@@ -2,9 +2,9 @@
 
 namespace Ninja\DeviceTracker\DTO;
 
-use JsonSerializable;
-use InvalidArgumentException;
 use Illuminate\Support\Arr;
+use InvalidArgumentException;
+use JsonSerializable;
 
 final class Metadata implements JsonSerializable
 {
@@ -25,6 +25,7 @@ final class Metadata implements JsonSerializable
 
         if (str_starts_with($name, 'set')) {
             $this->set($property, $arguments[0]);
+
             return $this;
         }
 
@@ -48,29 +49,33 @@ final class Metadata implements JsonSerializable
     public function set(string $key, mixed $value): self
     {
         Arr::set($this->data, $key, $value);
+
         return $this;
     }
 
     public function forget(string $key): self
     {
         Arr::forget($this->data, $key);
+
         return $this;
     }
 
     public function push(string $key, mixed $value): self
     {
         $array = $this->get($key, []);
-        if (!is_array($array)) {
+        if (! is_array($array)) {
             throw new InvalidArgumentException(sprintf('Key %s is not an array', $key));
         }
 
         $array[] = $value;
+
         return $this->set($key, $array);
     }
 
     public function increment(string $key, int $amount = 1): self
     {
-        $value = (int)$this->get($key, 0);
+        $value = (int) $this->get($key, 0);
+
         return $this->set($key, $value + $amount);
     }
 
@@ -86,6 +91,7 @@ final class Metadata implements JsonSerializable
         }
 
         $this->data = array_merge_recursive($this->data, $data);
+
         return $this;
     }
 
@@ -102,12 +108,14 @@ final class Metadata implements JsonSerializable
     public function filter(callable $callback): self
     {
         $this->data = array_filter($this->data, $callback, ARRAY_FILTER_USE_BOTH);
+
         return $this;
     }
 
     public function transform(callable $callback): self
     {
         $this->data = array_map($callback, $this->data);
+
         return $this;
     }
 

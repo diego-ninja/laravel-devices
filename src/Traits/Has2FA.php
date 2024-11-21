@@ -20,17 +20,16 @@ trait Has2FA
         return $this->hasOne(\Ninja\DeviceTracker\Models\Google2FA::class, 'user_id');
     }
 
-
-    public function google2faQrCode(string $format = "SVG"): string
+    public function google2faQrCode(string $format = 'SVG'): string
     {
-        return $format === "SVG"
+        return $format === 'SVG'
             ? $this->createSvgQrCode($this->google2faQrCodeUrl())
             : $this->createPngQrCode($this->google2faQrCodeUrl());
     }
 
     public function google2faEnabled(): bool
     {
-        if (!Config::get("devices.google_2fa_enabled")) {
+        if (! Config::get('devices.google_2fa_enabled')) {
             return false;
         }
 
@@ -41,7 +40,7 @@ trait Has2FA
 
     public function enable2fa(string $secret): void
     {
-        $google2fa = new \Ninja\DeviceTracker\Models\Google2FA();
+        $google2fa = new \Ninja\DeviceTracker\Models\Google2FA;
         $google2fa->user_id = $this->id;
         $google2fa->enable($secret);
 
@@ -61,10 +60,10 @@ trait Has2FA
 
     private function createSvgQrCode(string $url): string
     {
-        $svg =  (new Writer(
+        $svg = (new Writer(
             new ImageRenderer(
                 new RendererStyle(192, 0, null, null, Fill::uniformColor(new Rgb(255, 255, 255), new Rgb(45, 55, 72))),
-                new SvgImageBackEnd()
+                new SvgImageBackEnd
             )
         ))->writeString($url);
 
@@ -76,7 +75,7 @@ trait Has2FA
         $png = (new Writer(
             new ImageRenderer(
                 new RendererStyle(192, 0, null, null, Fill::uniformColor(new Rgb(255, 255, 255), new Rgb(45, 55, 72))),
-                new ImagickImageBackEnd()
+                new ImagickImageBackEnd
             )
         ))->writeString($url);
 

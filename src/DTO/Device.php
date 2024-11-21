@@ -7,7 +7,7 @@ use Stringable;
 
 final readonly class Device implements JsonSerializable, Stringable
 {
-    public const UNKNOWN = "UNK";
+    public const UNKNOWN = 'UNK';
 
     public function __construct(
         public Browser $browser,
@@ -15,26 +15,26 @@ final readonly class Device implements JsonSerializable, Stringable
         public DeviceType $device,
         public ?string $grade,
         public ?string $userAgent
-    ) {
-    }
+    ) {}
+
     public static function fromModel(\Ninja\DeviceTracker\Models\Device $device): self
     {
         return new self(
             browser: Browser::fromArray([
-                "name" => $device->browser,
-                "version" => Version::fromString($device->browser_version),
-                "family" => $device->browser_family,
-                "engine" => $device->browser_engine
+                'name' => $device->browser,
+                'version' => Version::fromString($device->browser_version),
+                'family' => $device->browser_family,
+                'engine' => $device->browser_engine,
             ]),
             platform: Platform::fromArray([
-                "name" => $device->platform,
-                "version" => Version::fromString($device->platform_version),
-                "family" => $device->platform_family
+                'name' => $device->platform,
+                'version' => Version::fromString($device->platform_version),
+                'family' => $device->platform_family,
             ]),
             device: DeviceType::fromArray([
-                "family" => $device->device,
-                "model" => $device->device_model,
-                "type" => $device->device_type
+                'family' => $device->device,
+                'model' => $device->device_model,
+                'type' => $device->device_type,
             ]),
             grade: $device->grade,
             userAgent: $device->source
@@ -60,18 +60,18 @@ final readonly class Device implements JsonSerializable, Stringable
     public function array(): array
     {
         return [
-            "browser" => $this->browser->array(),
-            "platform" => $this->platform->array(),
-            "device" => $this->device->array(),
-            "grade" => $this->grade,
-            "user_agent" => $this->userAgent,
-            "label" => (string) $this
+            'browser' => $this->browser->array(),
+            'platform' => $this->platform->array(),
+            'device' => $this->device->array(),
+            'grade' => $this->grade,
+            'user_agent' => $this->userAgent,
+            'label' => (string) $this,
         ];
     }
 
     public function __toString(): string
     {
-        return sprintf("%s at %s on %s", $this->browser, $this->device, $this->platform);
+        return sprintf('%s at %s on %s', $this->browser, $this->device, $this->platform);
     }
 
     public function jsonSerialize(): array

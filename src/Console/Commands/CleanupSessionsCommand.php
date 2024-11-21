@@ -10,6 +10,7 @@ use Ninja\DeviceTracker\Models\Session;
 final class CleanupSessionsCommand extends Command
 {
     protected $signature = 'devices:sessions:cleanup {--days=30 : Days to keep finished sessions}';
+
     protected $description = 'Clean up old and inactive sessions';
 
     public function handle(): void

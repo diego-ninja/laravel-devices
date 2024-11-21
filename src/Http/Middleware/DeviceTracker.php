@@ -5,7 +5,7 @@ namespace Ninja\DeviceTracker\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Ninja\DeviceTracker\Enums\Transport;
+use Ninja\DeviceTracker\Enums\DeviceTransport;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Exception\FingerprintNotFoundException;
 use Ninja\DeviceTracker\Exception\UnknownDeviceDetectedException;
@@ -20,23 +20,24 @@ final readonly class DeviceTracker
             DeviceManager::create();
             DeviceManager::attach();
 
-            return $next(Transport::propagate(device_uuid()));
+            return $next(DeviceTransport::propagate(device_uuid()));
         }
 
-        if (!DeviceManager::tracked()) {
+        if (! DeviceManager::tracked()) {
             try {
                 if (config('devices.track_guest_sessions')) {
                     DeviceManager::track();
                     DeviceManager::create();
                 } else {
-                    Transport::propagate(DeviceIdFactory::generate());
+                    DeviceTransport::propagate(DeviceIdFactory::generate());
                 }
-            } catch (DeviceNotFoundException | FingerprintNotFoundException | UnknownDeviceDetectedException $e) {
+            } catch (DeviceNotFoundException|FingerprintNotFoundException|UnknownDeviceDetectedException $e) {
                 Log::info($e->getMessage());
+
                 return $next($request);
             }
         }
 
-        return Transport::set($next(Transport::propagate(device_uuid())), device_uuid());
+        return DeviceTransport::set($next(DeviceTransport::propagate(device_uuid())), device_uuid());
     }
 }

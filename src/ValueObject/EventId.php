@@ -2,6 +2,4 @@
 
 namespace Ninja\DeviceTracker\ValueObject;
 
-final readonly class EventId extends AbstractStorableId
-{
-}
+final readonly class EventId extends AbstractStorableId {}

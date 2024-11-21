@@ -10,9 +10,7 @@ use PragmaRX\Google2FA\Google2FA;
 
 final readonly class Google2FACodeGenerator implements CodeGenerator
 {
-    public function __construct(private Google2FA $google2FA)
-    {
-    }
+    public function __construct(private Google2FA $google2FA) {}
 
     /**
      * @throws IncompatibleWithGoogleAuthenticatorException
@@ -21,6 +19,6 @@ final readonly class Google2FACodeGenerator implements CodeGenerator
      */
     public function generate(): string
     {
-        return  $this->google2FA->generateSecretKey();
+        return $this->google2FA->generateSecretKey();
     }
 }

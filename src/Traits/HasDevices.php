@@ -50,9 +50,11 @@ trait HasDevices
     {
         return $this->sessions()->current();
     }
+
     public function hasDevice(Device|string $device): bool
     {
         $deviceId = $device instanceof Device ? $device->uuid : DeviceIdFactory::from($device);
+
         return in_array($deviceId, $this->devices()->uuids());
     }
 
@@ -72,6 +74,7 @@ trait HasDevices
     {
         if ($this->sessions()->count() > 0) {
             $lastActivity = $this->sessions()->recent()->last_activity_at;
+
             return $lastActivity && abs(strtotime($lastActivity) - strtotime(now())) > Config::get('devices.inactivity_seconds', 1200);
         }
 

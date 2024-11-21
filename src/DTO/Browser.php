@@ -13,8 +13,7 @@ final readonly class Browser implements JsonSerializable, Stringable
         public string $family,
         public string $engine,
         public ?string $type
-    ) {
-    }
+    ) {}
 
     public static function fromArray(array $data): self
     {
@@ -32,12 +31,12 @@ final readonly class Browser implements JsonSerializable, Stringable
     public function array(): array
     {
         return [
-            "name" => $this->name,
-            "version" => $this->version->array(),
-            "family" => $this->family,
-            "engine" => $this->engine,
-            "type" => $this->type,
-            "label" => (string) $this
+            'name' => $this->name,
+            'version' => $this->version->array(),
+            'family' => $this->family,
+            'engine' => $this->engine,
+            'type' => $this->type,
+            'label' => (string) $this,
         ];
     }
 
@@ -56,7 +55,7 @@ final readonly class Browser implements JsonSerializable, Stringable
 
     public function __toString(): string
     {
-        return sprintf("%s", $this->name);
+        return sprintf('%s', $this->name);
     }
 
     public function json(): string

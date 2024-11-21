@@ -11,8 +11,7 @@ final readonly class Version implements JsonSerializable, Stringable
         public string $major,
         public string $minor,
         public string $patch,
-    ) {
-    }
+    ) {}
 
     public static function from(string|array|self $data): self
     {
@@ -42,20 +41,22 @@ final readonly class Version implements JsonSerializable, Stringable
 
     public static function fromString(string $version): self
     {
-        $versionParts = explode(".", $version);
+        $versionParts = explode('.', $version);
+
         return new self(
             major: $versionParts[0] ?? '0',
             minor: $versionParts[1] ?? '0',
             patch: $versionParts[2] ?? '0',
         );
     }
+
     public function array(): array
     {
         return [
-            "major" => $this->major,
-            "minor" => $this->minor,
-            "patch" => $this->patch,
-            "label" => (string) $this,
+            'major' => $this->major,
+            'minor' => $this->minor,
+            'patch' => $this->patch,
+            'label' => (string) $this,
         ];
     }
 
@@ -73,7 +74,7 @@ final readonly class Version implements JsonSerializable, Stringable
 
     public function __toString(): string
     {
-        return sprintf("%s.%s.%s", $this->major, $this->minor, $this->patch);
+        return sprintf('%s.%s.%s', $this->major, $this->minor, $this->patch);
     }
 
     public function json(): string

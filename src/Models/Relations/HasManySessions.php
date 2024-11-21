@@ -40,15 +40,15 @@ final class HasManySessions extends HasMany
     {
         return $this
             ->with('device')
-            ->where('status', SessionStatus::Active)
-            ->orderBy('last_activity_at', 'desc')
+            ->where('status', SessionStatus::Active->value)
+            ->orderByDesc('last_activity_at')
             ->get()
             ->first();
     }
 
     public function active(bool $exceptCurrent = false): Collection
     {
-        $query =  $this
+        $query = $this
             ->with('device')
             ->where('finished_at', null)
             ->where('status', SessionStatus::Active);

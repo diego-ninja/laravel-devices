@@ -58,6 +58,6 @@ final class AuthenticationRequestDetector extends AbstractRequestDetector
     private function matches(string $path, string $method, array $signature): bool
     {
         return in_array(strtoupper($method), $signature['methods']) &&
-            collect($signature['paths'])->contains(fn($p) => fnmatch($p, $path));
+            collect($signature['paths'])->contains(fn ($p) => fnmatch($p, $path));
     }
 }

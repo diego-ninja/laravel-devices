@@ -17,8 +17,7 @@ final readonly class EventTracker
 {
     public function __construct(
         private DetectorRegistry $registry
-    ) {
-    }
+    ) {}
 
     public function handle(Request $request, \Closure $next)
     {
@@ -49,8 +48,8 @@ final readonly class EventTracker
             '_ignition',
             'telescope',
             'horizon',
-            'sanctum'
-        ])->contains(fn($path) => str_starts_with($request->path(), $path));
+            'sanctum',
+        ])->contains(fn ($path) => str_starts_with($request->path(), $path));
     }
 
     private function log(EventType $type, Request $request, mixed $response): Event
@@ -86,7 +85,7 @@ final readonly class EventTracker
                 'ip' => $request->ip(),
                 'proxies' => $request->getClientIps(),
                 'secure' => $request->secure(),
-            ]
+            ],
         ]);
 
         return Event::log(

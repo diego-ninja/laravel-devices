@@ -13,16 +13,17 @@ use Ninja\DeviceTracker\Models\Session;
 final class CacheInvalidateCommand extends Command
 {
     protected $signature = 'devices:cache:invalidate';
+
     protected $description = 'Invalidate device tracker caches';
 
     public function handle(): void
     {
         // Invalidate all caches
         $this->info('Invalidating device cache...');
-        Device::all()->each(fn($device) => DeviceCache::forget($device));
+        Device::all()->each(fn ($device) => DeviceCache::forget($device));
 
         $this->info('Invalidating session cache...');
-        Session::all()->each(fn($session) => SessionCache::forget($session));
+        Session::all()->each(fn ($session) => SessionCache::forget($session));
 
         $this->info('Invalidating location cache...');
         LocationCache::flush();

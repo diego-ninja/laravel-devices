@@ -14,7 +14,5 @@ final class SessionBlockedEvent
     use InteractsWithSockets;
     use SerializesModels;
 
-    public function __construct(public readonly Session $session, public readonly Authenticatable $user)
-    {
-    }
+    public function __construct(public readonly Session $session, public readonly Authenticatable $user) {}
 }

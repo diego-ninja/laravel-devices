@@ -13,7 +13,5 @@ final class DeviceTrackedEvent
     use InteractsWithSockets;
     use SerializesModels;
 
-    public function __construct(public readonly StorableId $deviceUuid)
-    {
-    }
+    public function __construct(public readonly StorableId $deviceUuid) {}
 }

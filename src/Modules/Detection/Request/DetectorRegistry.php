@@ -15,13 +15,13 @@ final class DetectorRegistry implements RequestTypeDetector
     public function __construct()
     {
         $this->detectors = collect([
-            new AuthenticationRequestDetector(),
-            new LivewireRequestDetector(),
-            new ApiRequestDetector(),
-            new AjaxRequestDetector(),
-            new RedirectResponseDetector(),
-            new PageViewDetector()
-        ])->sortByDesc(fn($detector) => $detector->priority());
+            new AuthenticationRequestDetector,
+            new LivewireRequestDetector,
+            new ApiRequestDetector,
+            new AjaxRequestDetector,
+            new RedirectResponseDetector,
+            new PageViewDetector,
+        ])->sortByDesc(fn ($detector) => $detector->priority());
     }
 
     public function priority(): int
@@ -42,6 +42,6 @@ final class DetectorRegistry implements RequestTypeDetector
 
     public function supports(Request $request, mixed $response): bool
     {
-        return $this->detectors->contains(fn(RequestTypeDetector $detector) => $detector->supports($request, $response));
+        return $this->detectors->contains(fn (RequestTypeDetector $detector) => $detector->supports($request, $response));
     }
 }

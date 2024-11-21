@@ -11,6 +11,7 @@ use Ninja\DeviceTracker\Models\Session;
 final class DeviceStatusCommand extends Command
 {
     protected $signature = 'devices:status';
+
     protected $description = 'Show device tracker status information';
 
     public function handle(): void
@@ -26,7 +27,7 @@ final class DeviceStatusCommand extends Command
                 ['Active Sessions', Session::where('status', SessionStatus::Active)->count()],
                 ['Locked Sessions', Session::where('status', SessionStatus::Locked)->count()],
                 ['Blocked Sessions', Session::where('status', SessionStatus::Blocked)->count()],
-                ['Finished Sessions', Session::where('status', SessionStatus::Finished)->count()]
+                ['Finished Sessions', Session::where('status', SessionStatus::Finished)->count()],
             ]
         );
     }

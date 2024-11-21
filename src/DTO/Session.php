@@ -18,8 +18,7 @@ final readonly class Session implements JsonSerializable, Stringable
         public string $startedAt,
         public ?string $finishedAt,
         public Device $device
-    ) {
-    }
+    ) {}
 
     public static function fromModel(\Ninja\DeviceTracker\Models\Session $session): self
     {
@@ -38,15 +37,15 @@ final readonly class Session implements JsonSerializable, Stringable
     public function array(): array
     {
         return [
-            "uuid" => $this->uuid,
-            "ip" => $this->ip,
-            "location" => $this->location->array(),
-            "status" => $this->status->value,
-            "lastActivityAt" => $this->lastActivityAt,
-            "startedAt" => $this->startedAt,
-            "finishedAt" => $this->finishedAt,
-            "device" => $this->device->array(),
-            "label" => (string) $this
+            'uuid' => $this->uuid,
+            'ip' => $this->ip,
+            'location' => $this->location->array(),
+            'status' => $this->status->value,
+            'lastActivityAt' => $this->lastActivityAt,
+            'startedAt' => $this->startedAt,
+            'finishedAt' => $this->finishedAt,
+            'device' => $this->device->array(),
+            'label' => (string) $this,
         ];
     }
 
@@ -57,7 +56,7 @@ final readonly class Session implements JsonSerializable, Stringable
 
     public function __toString(): string
     {
-        return sprintf("%s %s %s", $this->ip, $this->location, $this->lastActivityAt);
+        return sprintf('%s %s %s', $this->ip, $this->location, $this->lastActivityAt);
     }
 
     public function jsonSerialize(): array

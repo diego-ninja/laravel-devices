@@ -19,36 +19,36 @@ final class SessionCache extends AbstractCache
 
     protected function forgetItem(Cacheable $item): void
     {
-        if (!$this->enabled()) {
+        if (! $this->enabled()) {
             return;
         }
 
-        if (!$item instanceof Session) {
+        if (! $item instanceof Session) {
             throw new InvalidArgumentException('Item must be an instance of Session');
         }
 
         $this->cache->forget($item->key());
-        $this->cache->forget("user:sessions:" . $item->device->id);
+        $this->cache->forget('user:sessions:'.$item->device->id);
     }
 
     public static function userSessions(Authenticatable $user)
     {
-        if (!self::instance()->enabled()) {
+        if (! self::instance()->enabled()) {
             return $user->sessions()->with('device')->get();
         }
 
-        return self::remember('user:sessions:' . $user->id, function () use ($user) {
+        return self::remember('user:sessions:'.$user->id, function () use ($user) {
             return $user->sessions()->with('device')->get();
         });
     }
 
     public static function activeSessions(Authenticatable $user)
     {
-        if (!self::instance()->enabled()) {
+        if (! self::instance()->enabled()) {
             return $user->sessions()->with('device')->active();
         }
 
-        return self::remember('user:sessions:active:' . $user->id, function () use ($user) {
+        return self::remember('user:sessions:active:'.$user->id, function () use ($user) {
             return $user->sessions()->with('device')->active();
         });
     }

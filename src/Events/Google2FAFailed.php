@@ -13,7 +13,5 @@ final class Google2FAFailed
     use InteractsWithSockets;
     use SerializesModels;
 
-    public function __construct(public readonly Authenticatable $user)
-    {
-    }
+    public function __construct(public readonly Authenticatable $user) {}
 }
