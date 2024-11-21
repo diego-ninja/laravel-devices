@@ -65,7 +65,7 @@ final readonly class SessionTracker
 
             SessionTransport::forget();
 
-            return response()->json(['message' => 'Unauthorized'], 401);
+            return response()->json(['message' => 'Unauthorized'], config('devices.logout_http_code', 403));
         }
 
         try {
@@ -74,7 +74,7 @@ final readonly class SessionTracker
             Log::error('Route not found', ['route' => Config::get('devices.logout_route_name'), 'exception' => $e]);
         }
 
-        return response()->json(['message' => 'Unauthorized'], 401);
+        return response()->json(['message' => 'Unauthorized'], config('devices.logout_http_code', 403));
     }
 
     private function manageInactivity(Request $request, Closure $next): JsonResponse|RedirectResponse|Response
@@ -89,7 +89,7 @@ final readonly class SessionTracker
     private function manageLock(Request $request): JsonResponse|RedirectResponse
     {
         if ($request->ajax() || ! Config::get('devices.use_redirects')) {
-            return response()->json(['message' => 'Session locked'], 423);
+            return response()->json(['message' => 'Session locked'], config('devices.lock_http_code', 403));
         }
 
         try {
@@ -98,6 +98,6 @@ final readonly class SessionTracker
             Log::error('Route not found', ['route' => Config::get('devices.2fa_route_name'), 'exception' => $e]);
         }
 
-        return response()->json(['message' => 'Session locked'], 423);
+        return response()->json(['message' => 'Session locked'], config('devices.lock_http_code', 403));
     }
 }
