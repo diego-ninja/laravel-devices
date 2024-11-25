@@ -6,6 +6,7 @@ enum DeviceStatus: string
 {
     case Unverified = 'unverified';
     case Verified = 'verified';
+    case PartiallyVerified = 'partially_verified';
     case Hijacked = 'hijacked';
     case Inactive = 'inactive';
 
@@ -13,6 +14,7 @@ enum DeviceStatus: string
     {
         return [
             self::Unverified,
+            self::PartiallyVerified,
             self::Verified,
             self::Hijacked,
             self::Inactive,

@@ -30,7 +30,6 @@ use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Exception\FingerprintDuplicatedException;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Models\Relations\HasManySessions;
-use Ninja\DeviceTracker\Modules\Security\DTO\Risk;
 use Ninja\DeviceTracker\Modules\Tracking\Models\Event;
 use Ninja\DeviceTracker\Modules\Tracking\Models\Relations\HasManyEvents;
 use Ninja\DeviceTracker\Traits\PropertyProxy;
@@ -60,7 +59,6 @@ use PDOException;
  * @property string $grade string
  * @property string $source string
  * @property string $ip string
- * @property Risk $risk json
  * @property Metadata $metadata json
  * @property Carbon $created_at datetime
  * @property Carbon $updated_at datetime
@@ -148,14 +146,6 @@ class Device extends Model implements Cacheable
         );
     }
 
-    public function risk(): Attribute
-    {
-        return Attribute::make(
-            get: fn (?string $value) => $value ? Risk::from($value) : Risk::default(),
-            set: fn (Risk $value) => $value->json()
-        );
-    }
-
     public function metadata(): Attribute
     {
         return Attribute::make(
@@ -203,6 +193,10 @@ class Device extends Model implements Cacheable
 
     public function verify(?Authenticatable $user = null): void
     {
+        if ($this->status === DeviceStatus::Verified) {
+            return;
+        }
+
         $user = $user ?? Auth::user();
 
         $this->users()->updateExistingPivot($user->id, [
@@ -213,15 +207,38 @@ class Device extends Model implements Cacheable
 
         $this->sessions()
             ->where('status', SessionStatus::Locked)
-            ->where('expires_at', '>', now())
             ->where('user_id', $user->id)
             ->get()
             ->each(fn (Session $session) => $session->unlock());
+
+        $status = $this->verifiedStatus();
+        $this->status = $status;
+
+        if ($status === DeviceStatus::Verified) {
+            $this->verified_at = now();
+        }
 
         if ($this->save()) {
             event(new DeviceVerifiedEvent($this, $user));
         }
     }
+
+    public function verifiedStatus(): DeviceStatus
+    {
+        $status = DeviceStatus::Unverified;
+        $this->users()->each(function ($user) use (&$status) {
+            if ($user->pivot->status === DeviceStatus::Verified) {
+                $status = DeviceStatus::PartiallyVerified;
+            } elseif ($user->pivot->status === DeviceStatus::Unverified && $status !== DeviceStatus::PartiallyVerified) {
+                $status = DeviceStatus::Unverified;
+            } else {
+                $status = DeviceStatus::Verified;
+            }
+        });
+
+        return $status;
+    }
+
 
     public function verified(?Authenticatable $user = null): bool
     {
