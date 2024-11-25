@@ -23,7 +23,8 @@
         "nesbot/carbon": "^2 || ^3",
         "outhebox/blade-flags": "^1.5",
         "pragmarx/google2fa": "^8.0",
-        "ramsey/uuid": "^4.7"
+        "ramsey/uuid": "^4.7",
+        "wireui/wireui": "^2.2"
     },
     "require-dev": {
         "ext-redis": "*",
