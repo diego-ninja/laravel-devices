@@ -2,10 +2,12 @@
 
 namespace Ninja\DeviceTracker;
 
+use Blade;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 use Ninja\DeviceTracker\Console\Commands\CacheInvalidateCommand;
 use Ninja\DeviceTracker\Console\Commands\CacheWarmCommand;
 use Ninja\DeviceTracker\Console\Commands\CleanupDevicesCommand;
@@ -22,6 +24,10 @@ use Ninja\DeviceTracker\Modules\Fingerprinting\Http\Middleware\FingerprintTracke
 use Ninja\DeviceTracker\Modules\Location\Contracts\LocationProvider;
 use Ninja\DeviceTracker\Modules\Location\FallbackLocationProvider;
 use Ninja\DeviceTracker\Modules\Tracking\Http\Middleware\EventTracker;
+use Ninja\DeviceTracker\UI\Blade\SessionCard;
+use Ninja\DeviceTracker\UI\Blade\SessionTooltip;
+use Ninja\DeviceTracker\UI\Livewire\SessionList;
+use Ninja\DeviceTracker\UI\Livewire\SessionMap;
 use PragmaRX\Google2FA\Google2FA;
 use PragmaRX\Google2FA\Support\Constants;
 
@@ -32,6 +38,9 @@ class DeviceTrackerServiceProvider extends ServiceProvider
         $this->registerPublishing();
         $this->registerMiddlewares();
         $this->registerCommands();
+        $this->registerComponents();
+        $this->registerBladeComponents();
+        $this->registerLivewireComponents();
 
         $this->loadViewsFrom(resource_path('views/vendor/laravel-devices'), 'laravel-devices');
 
@@ -104,6 +113,33 @@ class DeviceTrackerServiceProvider extends ServiceProvider
                 DeviceStatusCommand::class,
                 DeviceInspectCommand::class,
             ]);
+        }
+    }
+
+    private function registerComponents(): void
+    {
+        $this->loadViewComponentsAs('devices', [
+            'session-card' => SessionCard::class,
+            'session-tooltip' => SessionTooltip::class,
+        ]);
+
+        Blade::component('session-card', SessionCard::class);
+        Blade::component('session-tooltip', SessionTooltip::class);
+    }
+
+    private function registerBladeComponents(): void
+    {
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'devices');
+        $this->publishes([
+            __DIR__.'/../resources/views/blade' => resource_path('views/vendor/laravel-devices/blade'),
+        ], 'device-views');
+    }
+
+    private function registerLivewireComponents(): void
+    {
+        if (class_exists(Livewire::class)) {
+            Livewire::component('devices::session-list', SessionList::class);
+            Livewire::component('devices::session-map', SessionMap::class);
         }
     }
 

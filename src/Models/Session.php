@@ -287,6 +287,11 @@ class Session extends Model implements Cacheable
         return abs(strtotime($this->last_activity_at) - strtotime(now())) > $seconds;
     }
 
+    public function isCurrent(): bool
+    {
+        return session_uuid() === $this->uuid;
+    }
+
     public function blocked(): bool
     {
         return $this->status === SessionStatus::Blocked;

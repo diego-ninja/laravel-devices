@@ -1,6 +1,6 @@
 <?php
 
-namespace Ninja\DeviceTracker\Livewire\Components;
+namespace Ninja\DeviceTracker\UI\Livewire;
 
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;

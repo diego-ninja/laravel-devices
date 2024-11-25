@@ -7,8 +7,10 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Config;
+use Illuminate\View\View;
 use Ninja\DeviceTracker\Events\Google2FAFailed;
 use Ninja\DeviceTracker\Events\Google2FASuccess;
+use Ninja\DeviceTracker\Modules\Detection\Layout\LaravelLayoutDetector;
 use PragmaRX\Google2FA\Exceptions\IncompatibleWithGoogleAuthenticatorException;
 use PragmaRX\Google2FA\Exceptions\InvalidCharactersException;
 use PragmaRX\Google2FA\Exceptions\SecretKeyTooShortException;
@@ -19,6 +21,13 @@ use PragmaRX\Google2FA\Google2FA;
  */
 final class TwoFactorController extends Controller
 {
+    public function show(Request $request): View
+    {
+        $detector = new LaravelLayoutDetector;
+
+        return view($detector->wrap('livewire.two-factor-config'));
+    }
+
     public function code(Request $request): RedirectResponse|JsonResponse
     {
         $user = auth(Config::get('devices.auth_guard'))->user();

@@ -15,7 +15,7 @@ use Ninja\DeviceTracker\DTO\Platform;
 use Ninja\DeviceTracker\DTO\Version;
 use Ninja\DeviceTracker\Modules\Detection\Contracts;
 
-final readonly class UserAgentDeviceDetector implements Contracts\DeviceDetector
+final class UserAgentDeviceDetector implements Contracts\DeviceDetector
 {
     private DeviceDetector $dd;
 
