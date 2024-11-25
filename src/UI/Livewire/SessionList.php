@@ -93,7 +93,7 @@ class SessionList extends Component
             ->sortByDesc('started_at');
 
 
-        return view('devices::livewire.session-list', [
+        return view('laravel-devices::livewire.session-list', [
             'sessions' => $sessions,
         ]);
     }

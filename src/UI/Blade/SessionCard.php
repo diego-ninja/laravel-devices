@@ -55,6 +55,6 @@ class SessionCard extends Component
 
     public function render(): mixed
     {
-        return view('devices::blade.session-card');
+        return view('laravel-devices::blade.session-card');
     }
 }

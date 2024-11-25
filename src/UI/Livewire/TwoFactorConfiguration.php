@@ -63,6 +63,6 @@ class TwoFactorConfiguration extends Component
 
     public function render()
     {
-        return view('livewire.two-factor-config');
+        return view('laravel-devices::livewire.two-factor-config');
     }
 }

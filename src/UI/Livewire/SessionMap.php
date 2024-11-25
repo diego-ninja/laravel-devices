@@ -122,7 +122,7 @@ class SessionMap extends Component
 
     public function render(): mixed
     {
-        return view('devices::livewire.session-map', [
+        return view('laravel-devices::livewire.session-map', [
             'sessions' => SessionCache::userSessions(auth()->user()),
         ]);
     }

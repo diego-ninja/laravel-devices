@@ -30,6 +30,6 @@ class SessionTooltip extends Component
 
     public function render(): mixed
     {
-        return view('devices::blade.session-tooltip');
+        return view('laravel-devices::blade.session-tooltip');
     }
 }
