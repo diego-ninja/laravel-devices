@@ -1,6 +1,6 @@
 <?php
 
-namespace Ninja\DeviceTracker\Pulse\Cards;
+namespace Ninja\DeviceTracker\UI\Pulse\Cards;
 
 use Illuminate\Support\Facades\DB;
 use Laravel\Pulse\Livewire\Card;

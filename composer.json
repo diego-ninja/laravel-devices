@@ -42,7 +42,7 @@
         "psr-4": {
             "Ninja\\DeviceTracker\\": "src/",
             "Ninja\\DeviceTracker\\Tests\\": "tests/",
-            "Ninja\\DeviceTracker\\Database\\": "database/"
+            "Ninja\\DeviceTracker\\Database\\Seeders\\": "database/seeders"
         },
         "files": [
             "helpers.php"
