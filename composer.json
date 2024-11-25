@@ -22,7 +22,8 @@
         "bacon/bacon-qr-code": "^3.0",
         "blade-ui-kit/blade-ui-kit": "^0.6.3",
         "blade-ui-kit/blade-icons": "^1.7",
-        "outhebox/blade-flags": "^1.5"
+        "outhebox/blade-flags": "^1.5",
+        "blade-ui-kit/blade-heroicons": "^2.5"
     },
     "require-dev": {
         "ext-redis": "*",
