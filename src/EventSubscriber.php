@@ -13,7 +13,7 @@ use Ninja\DeviceTracker\Facades\SessionManager;
 use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Models\Session;
 
-final readonly class AuthenticationHandler
+final readonly class EventSubscriber
 {
     public function onLogin(Login $event): void
     {

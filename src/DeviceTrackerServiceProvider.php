@@ -38,7 +38,6 @@ class DeviceTrackerServiceProvider extends ServiceProvider
         $this->registerPublishing();
         $this->registerMiddlewares();
         $this->registerCommands();
-        $this->registerComponents();
         $this->registerBladeComponents();
         $this->registerLivewireComponents();
 
@@ -116,9 +115,9 @@ class DeviceTrackerServiceProvider extends ServiceProvider
         }
     }
 
-    private function registerComponents(): void
+    private function registerBladeComponents(): void
     {
-        $this->loadViewComponentsAs('devices', [
+        $this->loadViewComponentsAs('laravel-devices', [
             'session-card' => SessionCard::class,
             'session-tooltip' => SessionTooltip::class,
         ]);
@@ -127,20 +126,15 @@ class DeviceTrackerServiceProvider extends ServiceProvider
         Blade::component('session-tooltip', SessionTooltip::class);
     }
 
-    private function registerBladeComponents(): void
-    {
-        $this->loadViewsFrom(__DIR__.'/../resources/views', 'devices');
-        $this->publishes([
-            __DIR__.'/../resources/views/blade' => resource_path('views/vendor/laravel-devices/blade'),
-        ], 'device-views');
-    }
-
     private function registerLivewireComponents(): void
     {
-        if (class_exists(Livewire::class)) {
-            Livewire::component('devices::session-list', SessionList::class);
-            Livewire::component('devices::session-map', SessionMap::class);
+
+        if (! class_exists(Livewire::class)) {
+            return;
         }
+
+        Livewire::component('laravel-devices::session-list', SessionList::class);
+        Livewire::component('laravel-devices::session-map', SessionMap::class);
     }
 
     private function registerMiddlewares(): void
@@ -171,21 +165,23 @@ class DeviceTrackerServiceProvider extends ServiceProvider
 
     private function registerAuthenticationEventHandler(): void
     {
-        Event::subscribe(AuthenticationHandler::class);
+        Event::subscribe(EventSubscriber::class);
     }
 
     private function registerPublishing(): void
     {
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                __DIR__.'/../resources/views' => resource_path('views/vendor/laravel-devices')], 'views');
+                __DIR__.'/../config/devices.php' => config_path('devices.php'),
+            ], 'laravel-devices-config');
 
             $this->publishes([
-                __DIR__.'/../config/devices.php' => config_path('devices.php')], 'config');
+                __DIR__.'/../resources/views' => $this->app->resourcePath('views/vendor/laravel-devices'),
+            ], 'laravel-devices-views');
 
             $this->publishesMigrations([
                 __DIR__.'/../database/migrations' => database_path('migrations'),
-            ], 'device-tracker-migrations');
+            ], 'laravel-devices-migrations');
         }
     }
 }
