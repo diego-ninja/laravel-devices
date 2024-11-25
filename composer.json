@@ -13,37 +13,37 @@
         "php": "^8.2",
         "ext-json": "*",
         "ext-pdo": "*",
+        "bacon/bacon-qr-code": "^3.0",
+        "blade-ui-kit/blade-heroicons": "^2.5",
+        "blade-ui-kit/blade-icons": "^1.7",
+        "blade-ui-kit/blade-ui-kit": "^0.6.3",
         "laravel/framework": "^10 || ^11",
         "livewire/livewire": "^3.5",
-        "nesbot/carbon": "^2 || ^3",
-        "ramsey/uuid": "^4.7",
         "matomo/device-detector": "^6.4",
-        "pragmarx/google2fa": "^8.0",
-        "bacon/bacon-qr-code": "^3.0",
-        "blade-ui-kit/blade-ui-kit": "^0.6.3",
-        "blade-ui-kit/blade-icons": "^1.7",
+        "nesbot/carbon": "^2 || ^3",
         "outhebox/blade-flags": "^1.5",
-        "blade-ui-kit/blade-heroicons": "^2.5"
+        "pragmarx/google2fa": "^8.0",
+        "ramsey/uuid": "^4.7"
     },
     "require-dev": {
         "ext-redis": "*",
         "barryvdh/laravel-ide-helper": "^3.1",
-        "larastan/larastan": "^2.0",
-        "mockery/mockery": "^1.4.4",
-        "pestphp/pest": "^2 || ^3",
-        "laravel/octane": "^2.5",
-        "swoole/ide-helper": "~5.0.0",
+        "fakerphp/faker": "^1.24",
         "geoip2/geoip2": "^3.0",
+        "larastan/larastan": "^2.0",
+        "laravel/octane": "^2.5",
         "laravel/pint": "^1.18",
         "laravel/pulse": "^1.2",
-        "fakerphp/faker": "^1.24"
+        "mockery/mockery": "^1.4.4",
+        "pestphp/pest": "^2 || ^3",
+        "swoole/ide-helper": "~5.0.0"
     },
     "minimum-stability": "stable",
     "autoload": {
         "psr-4": {
             "Ninja\\DeviceTracker\\": "src/",
-            "Ninja\\DeviceTracker\\Tests\\": "tests/",
-            "Ninja\\DeviceTracker\\Database\\Seeders\\": "database/seeders"
+            "Ninja\\DeviceTracker\\Database\\Seeders\\": "database/seeders",
+            "Ninja\\DeviceTracker\\Tests\\": "tests/"
         },
         "files": [
             "helpers.php"
@@ -69,5 +69,6 @@
                 "Ninja\\DeviceTracker\\DeviceTrackerServiceProvider"
             ]
         }
-    }
+    },
+    "$schema": "https://getcomposer.org/schema.json"
 }
