@@ -38,7 +38,7 @@ class SessionList extends Component
         $session = Session::byUuid($sessionId);
 
         if ($session) {
-            $session->end(forgetSession: true);
+            $session->end();
             $this->dispatch('session-status-changed')->self();
             $this->dispatch('notify', [
                 'message' => __('Session ended successfully'),

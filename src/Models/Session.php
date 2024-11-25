@@ -179,7 +179,7 @@ class Session extends Model implements Cacheable
             ->get();
 
         foreach ($previousSessions as $session) {
-            $session->end(forgetSession: true);
+            $session->end();
         }
     }
 
@@ -195,18 +195,21 @@ class Session extends Model implements Cacheable
         ]);
     }
 
-    public function end(bool $forgetSession = false, ?Authenticatable $user = null): bool
+    public function end(?Authenticatable $user = null): bool
     {
+        if ($this->status === SessionStatus::Finished) {
+            return true;
+        }
+
         $this->status = SessionStatus::Finished;
         $this->finished_at = Carbon::now();
 
         if ($this->save()) {
+            SessionTransport::forget();
             event(new SessionFinishedEvent($this, $user ?? Auth::user()));
 
             return true;
         }
-
-        SessionTransport::forget();
 
         return false;
     }

@@ -274,7 +274,7 @@ class Device extends Model implements Cacheable
 
     public function forget(): bool
     {
-        $this->sessions()->active()->each(fn (Session $session) => $session->end(forgetSession: true));
+        $this->sessions()->active()->each(fn (Session $session) => $session->end());
 
         return $this->delete();
     }

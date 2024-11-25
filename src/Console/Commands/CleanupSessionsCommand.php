@@ -36,7 +36,7 @@ final class CleanupSessionsCommand extends Command
 
             foreach ($inactiveSessions as $session) {
                 if (config('devices.inactivity_session_behaviour') === 'terminate') {
-                    $session->end(true);
+                    $session->end();
                 } else {
                     $session->status = SessionStatus::Inactive;
                     $session->save();

@@ -47,7 +47,7 @@ class SessionMap extends Component
         $session = Session::byUuid($sessionId);
 
         if ($session) {
-            $session->end(forgetSession: true);
+            $session->end();
             $this->dispatch('session-ended', sessionId: $sessionId);
             $this->dispatch('notify', [
                 'message' => __('Session ended successfully'),
