@@ -29,7 +29,6 @@ final readonly class EventSubscriber
     public function onLogout(Logout $event): void
     {
         Session::current()?->end(
-            forgetSession: true,
             user: $event->user,
         );
     }

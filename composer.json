@@ -15,12 +15,10 @@
         "ext-pdo": "*",
         "bacon/bacon-qr-code": "^3.0",
         "laravel/framework": "^10 || ^11",
-        "livewire/livewire": "^3.5",
         "matomo/device-detector": "^6.4",
         "nesbot/carbon": "^2 || ^3",
         "pragmarx/google2fa": "^8.0",
-        "ramsey/uuid": "^4.7",
-        "wireui/wireui": "^2.2"
+        "ramsey/uuid": "^4.7"
     },
     "require-dev": {
         "ext-redis": "*",
@@ -30,7 +28,6 @@
         "larastan/larastan": "^2.0",
         "laravel/octane": "^2.5",
         "laravel/pint": "^1.18",
-        "laravel/pulse": "^1.2",
         "mockery/mockery": "^1.4.4",
         "pestphp/pest": "^2 || ^3",
         "swoole/ide-helper": "~5.0.0"
