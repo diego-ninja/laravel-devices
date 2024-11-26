@@ -107,7 +107,6 @@ class DeviceTrackerServiceProvider extends ServiceProvider
         }
     }
 
-
     private function registerMiddlewares(): void
     {
         $router = $this->app['router'];

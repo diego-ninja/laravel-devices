@@ -239,7 +239,6 @@ class Device extends Model implements Cacheable
         return $status;
     }
 
-
     public function verified(?Authenticatable $user = null): bool
     {
         $user = $user ?? Auth::user();

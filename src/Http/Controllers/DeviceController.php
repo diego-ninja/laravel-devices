@@ -88,6 +88,7 @@ final class DeviceController extends Controller
     private function getUserDevice(Request $request, string $id): ?Device
     {
         $user = $request->user(Config::get('devices.auth_guard'));
+
         return DeviceCache::remember(DeviceCache::key($id), function () use ($user, $id) {
             return $user->devices()->where('uuid', DeviceIdFactory::from($id))->first();
         });
