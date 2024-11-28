@@ -114,12 +114,12 @@ final class DeviceManager
     /**
      * @throws UnknownDeviceDetectedException
      */
-    public function create(?DeviceId $deviceId = null): Device
+    public function create(?StorableId $deviceUuid = null): Device
     {
         $payload = app(DeviceDetector::class)->detect(request());
         if (! $payload->unknown() || config('devices.allow_unknown_devices')) {
             return Device::register(
-                deviceUuid: $deviceId ?? device_uuid(),
+                deviceUuid: $deviceUuid ?? device_uuid(),
                 data: $payload
             );
         }

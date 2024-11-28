@@ -6,6 +6,7 @@ use Ninja\DeviceTracker\Contracts\StorableId;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 
+/** @phpstan-consistent-constructor */
 abstract readonly class AbstractStorableId implements StorableId
 {
     protected UuidInterface $id;

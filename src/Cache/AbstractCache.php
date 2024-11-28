@@ -9,8 +9,11 @@ use Ninja\DeviceTracker\Contracts\Cacheable;
 use Ninja\DeviceTracker\Models\Device;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/** @phpstan-consistent-constructor */
 abstract class AbstractCache
 {
+    public const KEY_PREFIX = '';
+
     protected static array $instances = [];
 
     protected ?Repository $cache = null;

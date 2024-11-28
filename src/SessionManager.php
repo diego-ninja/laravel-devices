@@ -8,6 +8,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Ninja\DeviceTracker\Contracts\StorableId;
+use Ninja\DeviceTracker\Enums\SessionTransport;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Exception\SessionNotFoundException;
 use Ninja\DeviceTracker\Facades\DeviceManager;
@@ -44,7 +45,7 @@ final readonly class SessionManager
     /**
      * @throws SessionNotFoundException
      */
-    public function end(?StorableId $sessionId = null, ?Authenticatable $user = null, bool $forgetSession = false): bool
+    public function end(?StorableId $sessionId = null, ?Authenticatable $user = null): bool
     {
         $session = Session::byUuid($sessionId);
         if (! $session) {
@@ -52,7 +53,6 @@ final readonly class SessionManager
         }
 
         return $session->end(
-            forgetSession: $forgetSession,
             user: $user,
         );
     }
@@ -79,7 +79,7 @@ final readonly class SessionManager
         }
 
         if (Config::get('devices.start_new_session_on_login')) {
-            $current->end(true, $user);
+            $current->end($user);
 
             return $this->start();
         }
@@ -135,6 +135,7 @@ final readonly class SessionManager
     public function delete(): void
     {
         if (session_uuid() !== null) {
+            SessionTransport::forget();
             Session::destroy(session_uuid());
         }
     }
