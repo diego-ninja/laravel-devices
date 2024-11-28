@@ -53,6 +53,8 @@ use Ninja\DeviceTracker\Traits\PropertyProxy;
  * @property Carbon $unlocked_at datetime
  * @property Carbon $last_activity_at datetime
  * @property Session $session
+ *
+ * @property Device $device
  */
 class Session extends Model implements Cacheable
 {

@@ -66,6 +66,8 @@ use PDOException;
  * @property Carbon $verified_at datetime
  * @property Carbon $hijacked_at datetime
  * @property Carbon $risk_assessed_at datetime
+ *
+ * @property Collection $sessions
  */
 class Device extends Model implements Cacheable
 {
