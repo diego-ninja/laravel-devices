@@ -19,7 +19,7 @@ use PragmaRX\Google2FA\Google2FA;
  */
 final class TwoFactorController extends Controller
 {
-    public function code(Request $request): RedirectResponse|JsonResponse
+    public function code(Request $request): JsonResponse
     {
         $user = auth(Config::get('devices.auth_guard'))->user();
 
@@ -37,7 +37,7 @@ final class TwoFactorController extends Controller
      * @throws InvalidCharactersException
      * @throws SecretKeyTooShortException
      */
-    public function verify(Request $request): RedirectResponse|JsonResponse
+    public function verify(Request $request): JsonResponse
     {
         $user = auth(Config::get('devices.auth_guard'))->user();
 

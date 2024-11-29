@@ -108,13 +108,4 @@ final readonly class EventTracker
             default => 'unknown'
         };
     }
-
-    private function size(mixed $response): ?int
-    {
-        try {
-            return strlen($response->getContent());
-        } catch (\Throwable $e) {
-            return null;
-        }
-    }
 }

@@ -1,10 +1,11 @@
 parameters:
     paths:
         - src/
-
+    excludePaths:
+        - src/Traits/
     bootstrapFiles:
         - vendor/autoload.php
-    level: 3
+    level: 4
     scanDirectories:
         - src
     universalObjectCratesClasses:
@@ -13,6 +14,7 @@ parameters:
     ignoreErrors:
         - '#Call to an undefined method Illuminate\\Contracts\\Auth\\Authenticatable::#'
         - '#Access to an undefined property Illuminate\\Contracts\\Auth\\Authenticatable::#'
+    treatPhpDocTypesAsCertain: false
 
 includes:
     - vendor/phpstan/phpstan-deprecation-rules/rules.neon

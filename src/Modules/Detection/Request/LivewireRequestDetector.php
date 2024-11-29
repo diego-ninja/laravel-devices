@@ -15,7 +15,7 @@ final class LivewireRequestDetector extends AbstractRequestDetector
             str_starts_with($request->path(), 'livewire');
     }
 
-    public function detect(Request $request, $response): ?EventType
+    public function detect(Request $request, $response): EventType
     {
         return EventType::LivewireUpdate;
     }

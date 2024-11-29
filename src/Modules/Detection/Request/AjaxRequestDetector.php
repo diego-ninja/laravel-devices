@@ -16,7 +16,7 @@ final class AjaxRequestDetector extends AbstractRequestDetector
             ! $request->hasHeader('X-Livewire');
     }
 
-    public function detect(Request $request, $response): ?EventType
+    public function detect(Request $request, $response): EventType
     {
         return $request->isMethod('POST') ? EventType::Submit : EventType::Click;
     }

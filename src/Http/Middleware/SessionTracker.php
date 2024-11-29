@@ -60,7 +60,7 @@ final readonly class SessionTracker
     {
         /** @var StatefulGuard $guard */
         $guard = Auth::guard(Config::get('devices.auth_guard'));
-        $user = $guard ? $guard->user() : Auth::user();
+        $user = $guard->user();
 
         if (! $user) {
             $session->end();

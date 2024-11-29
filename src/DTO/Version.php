@@ -44,7 +44,7 @@ final readonly class Version implements JsonSerializable, Stringable
         $versionParts = explode('.', $version);
 
         return new self(
-            major: $versionParts[0] ?? '0',
+            major: $versionParts[0],
             minor: $versionParts[1] ?? '0',
             patch: $versionParts[2] ?? '0',
         );

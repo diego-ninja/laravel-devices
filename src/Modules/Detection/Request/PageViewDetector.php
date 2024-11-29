@@ -16,7 +16,7 @@ final class PageViewDetector extends AbstractRequestDetector
             $this->html($response);
     }
 
-    public function detect(Request $request, $response): ?EventType
+    public function detect(Request $request, $response): EventType
     {
         return EventType::PageView;
     }

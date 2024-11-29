@@ -11,7 +11,7 @@ final class HasManySessions extends HasMany
 {
     public function first(): ?Session
     {
-        /** @var Session $session */
+        /** @var Session|null $session */
         $session = $this
             ->with('device')
             ->orderBy('started_at')
@@ -23,7 +23,7 @@ final class HasManySessions extends HasMany
 
     public function last(): ?Session
     {
-        /** @var Session $session */
+        /** @var Session|null $session */
         $session = $this
             ->with('device')
             ->orderByDesc('started_at')
@@ -35,7 +35,7 @@ final class HasManySessions extends HasMany
 
     public function current(): ?Session
     {
-        /** @var Session $session */
+        /** @var Session|null $session */
         $session = $this
             ->with('device')
             ->where('uuid', session_uuid())
@@ -47,7 +47,7 @@ final class HasManySessions extends HasMany
 
     public function recent(): ?Session
     {
-        /** @var Session $session */
+        /** @var Session|null $session */
         $session = $this
             ->with('device')
             ->where('status', SessionStatus::Active->value)

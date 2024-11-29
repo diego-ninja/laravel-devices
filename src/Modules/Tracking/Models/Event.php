@@ -81,7 +81,7 @@ class Event extends Model
         /** @var Event $event */
         $event = static::create([
             'uuid' => EventIdFactory::generate(),
-            'device_uuid' => $session?->device_uuid ?? device_uuid(),
+            'device_uuid' => $session->device_uuid ?? device_uuid(),
             'session_uuid' => $session?->uuid,
             'type' => $type,
             'metadata' => $metadata,

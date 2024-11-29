@@ -16,7 +16,7 @@ final class ApiRequestDetector extends AbstractRequestDetector
             $request->expectsJson();
     }
 
-    public function detect(Request $request, $response): ?EventType
+    public function detect(Request $request, $response): EventType
     {
         return EventType::ApiRequest;
     }

@@ -9,7 +9,7 @@ final class BelongsToManyDevices extends BelongsToMany
 {
     public function current(): ?Device
     {
-        /** @var Device $device */
+        /** @var Device|null $device */
         $device = $this->where('uuid', device_uuid())->first();
         return $device;
     }

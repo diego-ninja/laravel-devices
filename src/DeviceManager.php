@@ -108,7 +108,7 @@ final class DeviceManager
             return
                 device_uuid() !== null &&
                 ! Device::exists(device_uuid()) &&
-                Config::get('devices.regenerate_devices') && device_uuid();
+                Config::get('devices.regenerate_devices');
         } catch (Throwable) {
             return false;
         }

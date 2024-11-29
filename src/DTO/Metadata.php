@@ -159,11 +159,6 @@ final class Metadata implements JsonSerializable
         return array_values($this->data);
     }
 
-    private function camelize(string $str): string
-    {
-        return str($str)->camel()->ucfirst();
-    }
-
     private function underscorize(string $str): string
     {
         return str($str)->lower()->snake();
