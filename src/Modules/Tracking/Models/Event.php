@@ -78,7 +78,8 @@ class Event extends Model
 
     public static function log(EventType $type, ?Session $session, ?Metadata $metadata): Event
     {
-        return static::create([
+        /** @var Event $event */
+        $event = static::create([
             'uuid' => EventIdFactory::generate(),
             'device_uuid' => $session?->device_uuid ?? device_uuid(),
             'session_uuid' => $session?->uuid,
@@ -87,5 +88,7 @@ class Event extends Model
             'ip_address' => request()->ip(),
             'occurred_at' => now(),
         ]);
+
+        return $event;
     }
 }

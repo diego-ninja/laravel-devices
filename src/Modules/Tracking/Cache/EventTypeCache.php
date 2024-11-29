@@ -45,7 +45,7 @@ final class EventTypeCache extends AbstractCache implements RequestAware
         return sprintf('%s:%s', self::KEY_PREFIX, $hash);
     }
 
-    public static function withRequest(Request $request): ?self
+    public static function withRequest(Request $request): ?AbstractCache
     {
         $instance = self::instance();
         if ($instance instanceof self) {

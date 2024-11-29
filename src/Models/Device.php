@@ -159,7 +159,7 @@ class Device extends Model implements Cacheable
 
     public function isCurrent(): bool
     {
-        return $this->uuid->toString() === device_uuid()?->toString();
+        return $this->uuid === device_uuid();
     }
 
     /**
@@ -202,7 +202,7 @@ class Device extends Model implements Cacheable
 
         $user = $user ?? Auth::user();
 
-        $this->users()->updateExistingPivot($user->id, [
+        $this->users()->updateExistingPivot($user->getAuthIdentifier(), [
             'device_uuid' => $this->uuid,
             'status' => DeviceStatus::Verified,
             'verified_at' => now(),
@@ -210,7 +210,7 @@ class Device extends Model implements Cacheable
 
         $this->sessions()
             ->where('status', SessionStatus::Locked)
-            ->where('user_id', $user->id)
+            ->where('user_id', $user->getAuthIdentifier())
             ->get()
             ->each(fn (Session $session) => $session->unlock());
 
@@ -245,7 +245,7 @@ class Device extends Model implements Cacheable
     public function verified(?Authenticatable $user = null): bool
     {
         $user = $user ?? Auth::user();
-        $deviceUser = $this->users()->where('user_id', $user->id)->first();
+        $deviceUser = $this->users()->where('user_id', $user->getAuthIdentifier())->first();
 
         return $deviceUser && $this->status === $deviceUser->pivot->status;
     }
@@ -256,7 +256,7 @@ class Device extends Model implements Cacheable
 
         $this->hijacked_at = now();
 
-        $this->users()->updateExistingPivot($user->id, [
+        $this->users()->updateExistingPivot($user->getAuthIdentifier(), [
             'status' => DeviceStatus::Hijacked,
         ]);
 
@@ -337,6 +337,7 @@ class Device extends Model implements Cacheable
                 'source' => $data->userAgent,
             ]);
 
+            /** @var Device $device */
             if ($device) {
                 return $device;
             }
@@ -356,12 +357,12 @@ class Device extends Model implements Cacheable
         }
 
         if (! $cached) {
-            return self::where('uuid', $uuid->toString())->first();
+            return self::where('uuid', (string) $uuid)->first();
         }
 
         return DeviceCache::remember(
             key: DeviceCache::key($uuid),
-            callback: fn () => self::where('uuid', $uuid->toString())->first()
+            callback: fn () => self::where('uuid', (string) $uuid)->first()
         );
     }
 

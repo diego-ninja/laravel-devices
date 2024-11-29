@@ -10,6 +10,6 @@ final class LocationCache extends AbstractCache
 
     protected function enabled(): bool
     {
-        return in_array(self::KEY_PREFIX, Config::get('devices.cache_enabled_for', []));
+        return in_array(self::KEY_PREFIX, Config::get('devices.cache_enabled_for', []), true);
     }
 }

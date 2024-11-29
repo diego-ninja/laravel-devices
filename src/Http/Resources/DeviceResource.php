@@ -19,7 +19,7 @@ final class DeviceResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'uuid' => $this->resource->uuid->toString(),
+            'uuid' => (string) $this->resource->uuid,
             'fingerprint' => $this->whenNotNull($this->resource->fingerprint),
             'status' => $this->resource->status,
             'verified_at' => $this->when($this->resource->status === DeviceStatus::Verified, $this->resource->verified_at),

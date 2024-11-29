@@ -2,5 +2,17 @@ parameters:
     paths:
         - src/
 
-    # Level 9 is the highest level
-    level: 1
+    bootstrapFiles:
+        - vendor/autoload.php
+    level: 3
+    scanDirectories:
+        - src
+    universalObjectCratesClasses:
+        - Illuminate\Database\Eloquent\Model
+        - Illuminate\Support\Collection
+    ignoreErrors:
+        - '#Call to an undefined method Illuminate\\Contracts\\Auth\\Authenticatable::#'
+        - '#Access to an undefined property Illuminate\\Contracts\\Auth\\Authenticatable::#'
+
+includes:
+    - vendor/phpstan/phpstan-deprecation-rules/rules.neon

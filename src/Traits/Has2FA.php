@@ -9,10 +9,14 @@ use BaconQrCode\Renderer\ImageRenderer;
 use BaconQrCode\Renderer\RendererStyle\Fill;
 use BaconQrCode\Renderer\RendererStyle\RendererStyle;
 use BaconQrCode\Writer;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Config;
 use PragmaRX\Google2FA\Google2FA;
 
+/**
+ * @phpstan-require-implements Authenticatable
+ */
 trait Has2FA
 {
     public function google2fa(): HasOne

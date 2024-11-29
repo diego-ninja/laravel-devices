@@ -74,7 +74,9 @@ abstract class AbstractCache
             return;
         }
 
-        self::instance()->cache->flush();
+        if (method_exists(self::instance()->cache, 'flush')) {
+            self::instance()->cache->flush();
+        }
     }
 
     /**

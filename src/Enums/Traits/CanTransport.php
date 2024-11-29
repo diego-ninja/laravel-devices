@@ -64,7 +64,7 @@ trait CanTransport
 
         $requestParameter = self::DEFAULT_REQUEST_PARAMETER;
 
-        return request()->merge([$requestParameter => (string) $id ?? $current->get()->toString()]);
+        return request()->merge([$requestParameter => (string) $id ?? (string) $current->get()]);
     }
 
     private static function isValidResponse(mixed $response): bool

@@ -25,12 +25,14 @@
         "barryvdh/laravel-ide-helper": "^3.1",
         "fakerphp/faker": "^1.24",
         "geoip2/geoip2": "^3.0",
-        "larastan/larastan": "^2.0",
         "laravel/octane": "^2.5",
         "laravel/pint": "^1.18",
         "mockery/mockery": "^1.4.4",
         "pestphp/pest": "^2 || ^3",
-        "swoole/ide-helper": "~5.0.0"
+        "swoole/ide-helper": "~5.0.0",
+        "phpstan/phpstan": "^2",
+        "phpstan/phpstan-deprecation-rules": "^2",
+        "phpstan/phpstan-strict-rules": "^2"
     },
     "minimum-stability": "stable",
     "autoload": {

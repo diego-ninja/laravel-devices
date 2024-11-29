@@ -2,8 +2,8 @@
 
 namespace Ninja\DeviceTracker\Models\Relations;
 
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
 use Ninja\DeviceTracker\Enums\SessionStatus;
 use Ninja\DeviceTracker\Models\Session;
 
@@ -11,39 +11,51 @@ final class HasManySessions extends HasMany
 {
     public function first(): ?Session
     {
-        return $this
+        /** @var Session $session */
+        $session = $this
             ->with('device')
             ->orderBy('started_at')
             ->get()
             ->first();
+
+        return $session;
     }
 
     public function last(): ?Session
     {
-        return $this
+        /** @var Session $session */
+        $session = $this
             ->with('device')
             ->orderByDesc('started_at')
             ->get()
             ->first();
+
+        return $session;
     }
 
     public function current(): ?Session
     {
-        return $this
+        /** @var Session $session */
+        $session = $this
             ->with('device')
             ->where('uuid', session_uuid())
             ->get()
             ->first();
+
+        return $session;
     }
 
     public function recent(): ?Session
     {
-        return $this
+        /** @var Session $session */
+        $session = $this
             ->with('device')
             ->where('status', SessionStatus::Active->value)
             ->orderByDesc('last_activity_at')
             ->get()
             ->first();
+
+        return $session;
     }
 
     public function active(bool $exceptCurrent = false): Collection

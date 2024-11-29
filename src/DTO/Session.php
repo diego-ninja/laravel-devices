@@ -23,7 +23,7 @@ final readonly class Session implements JsonSerializable, Stringable
     public static function fromModel(\Ninja\DeviceTracker\Models\Session $session): self
     {
         return new self(
-            uuid: $session->uuid->toString(),
+            uuid: (string) $session->uuid,
             ip: $session->ip,
             location: $session->location,
             status: $session->status,

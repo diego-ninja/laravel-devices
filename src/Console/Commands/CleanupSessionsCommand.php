@@ -4,6 +4,7 @@ namespace Ninja\DeviceTracker\Console\Commands;
 
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Collection;
 use Ninja\DeviceTracker\Enums\SessionStatus;
 use Ninja\DeviceTracker\Models\Session;
 
@@ -30,6 +31,7 @@ final class CleanupSessionsCommand extends Command
         if ($inactivitySeconds > 0) {
             $cutoffTime = Carbon::now()->subSeconds($inactivitySeconds);
 
+            /** @var Collection<Session> $inactiveSessions */
             $inactiveSessions = Session::where('status', SessionStatus::Active)
                 ->where('last_activity_at', '<', $cutoffTime)
                 ->get();

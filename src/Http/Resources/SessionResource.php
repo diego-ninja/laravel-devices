@@ -16,7 +16,7 @@ final class SessionResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'uuid' => $this->resource->uuid->toString(),
+            'uuid' => (string) $this->resource->uuid,
             'ip' => $this->resource->ip,
             'location' => $this->resource->location->array(),
             'status' => $this->resource->status->value,

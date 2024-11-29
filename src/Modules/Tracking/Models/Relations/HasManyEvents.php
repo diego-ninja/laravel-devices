@@ -9,7 +9,10 @@ class HasManyEvents extends HasMany
 {
     public function type(EventType $type): HasMany
     {
-        return $this->where('type', $type);
+        /** @var HasMany $relation */
+        $relation = $this->where('type', $type);
+        return $relation;
+
     }
 
     public function login(): HasMany
@@ -34,6 +37,8 @@ class HasManyEvents extends HasMany
 
     public function last(int $count = 1): HasMany
     {
-        return $this->orderByDesc('occurred_at')->limit($count);
+        /** @var HasMany $relation */
+        $relation = $this->orderByDesc('occurred_at')->limit($count);
+        return $relation;
     }
 }

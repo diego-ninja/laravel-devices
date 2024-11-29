@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Config;
  * @property int $user_id unsigned int
  * @property bool $enabled boolean
  * @property string $secret string
- * @property Carbon $last_success_at datetime
+ * @property ?Carbon $last_success_at datetime
  * @property Carbon $created_at datetime
  * @property Carbon $updated_at datetime
  */

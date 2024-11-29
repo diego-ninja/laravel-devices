@@ -32,7 +32,7 @@ final readonly class Device implements JsonSerializable, Stringable
                 'family' => $device->platform_family,
             ]),
             device: DeviceType::fromArray([
-                'family' => $device->device,
+                'family' => $device->device_family,
                 'model' => $device->device_model,
                 'type' => $device->device_type,
             ]),

@@ -2,6 +2,7 @@
 
 namespace Ninja\DeviceTracker;
 
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
@@ -15,11 +16,13 @@ use Ninja\DeviceTracker\Exception\UnknownDeviceDetectedException;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Modules\Detection\Contracts\DeviceDetector;
-use Ninja\DeviceTracker\ValueObject\DeviceId;
 use Throwable;
 
 use function request;
 
+/**
+ * @template TUser of Authenticatable
+ */
 final class DeviceManager
 {
     public Application $app;

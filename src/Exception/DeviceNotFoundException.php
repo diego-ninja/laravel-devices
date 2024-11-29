@@ -9,6 +9,6 @@ final class DeviceNotFoundException extends Exception
 {
     public static function withDevice(StorableId $uuid): self
     {
-        return new self("Device with id {$uuid->toString()} not found");
+        return new self(sprintf('Device with UUID %s not found', $uuid));
     }
 }

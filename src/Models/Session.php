@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
@@ -45,15 +46,14 @@ use Ninja\DeviceTracker\Traits\PropertyProxy;
  * @property string $ip string
  * @property Location $location json
  * @property SessionStatus $status string
- * @property int $blocked_by unsigned int
+ * @property ?int $blocked_by unsigned int
  * @property Metadata $metadata json
  * @property Carbon $started_at datetime
- * @property Carbon $finished_at datetime
- * @property Carbon $blocked_at datetime
- * @property Carbon $unlocked_at datetime
- * @property Carbon $last_activity_at datetime
+ * @property ?Carbon $finished_at datetime
+ * @property ?Carbon $blocked_at datetime
+ * @property ?Carbon $unlocked_at datetime
+ * @property ?Carbon $last_activity_at datetime
  * @property Session $session
- *
  * @property Device $device
  */
 class Session extends Model implements Cacheable
@@ -148,8 +148,9 @@ class Session extends Model implements Cacheable
             self::endPreviousSessions($device, $user ?? Auth::user());
         }
 
+        /** @var Session $session */
         $session = self::create([
-            'user_id' => Auth::user()->id,
+            'user_id' => Auth::user()->getAuthIdentifier(),
             'uuid' => SessionIdFactory::generate(),
             'device_uuid' => $device->uuid,
             'ip' => $ip,
@@ -176,10 +177,11 @@ class Session extends Model implements Cacheable
     private static function endPreviousSessions(Device $device, Authenticatable $user): void
     {
         $previousSessions = self::where('device_uuid', $device->uuid)
-            ->where('user_id', $user->id)
+            ->where('user_id', $user->getAuthIdentifier())
             ->whereNull('finished_at')
             ->get();
 
+        /** @var Session $session */
         foreach ($previousSessions as $session) {
             $session->end();
         }
@@ -187,7 +189,8 @@ class Session extends Model implements Cacheable
 
     public function event(EventType $type, Metadata $metadata): Event
     {
-        return Event::create([
+        /** @var Event $event */
+        $event = Event::create([
             'device_uuid' => $this->device_uuid,
             'session_uuid' => $this->uuid,
             'type' => $type,
@@ -195,6 +198,8 @@ class Session extends Model implements Cacheable
             'ip_address' => request()->ip(),
             'occurred_at' => now(),
         ]);
+
+        return $event;
     }
 
     public function end(?Authenticatable $user = null): bool
@@ -223,7 +228,7 @@ class Session extends Model implements Cacheable
         $this->finished_at = null;
 
         if ($user) {
-            $this->device->users()->updateExistingPivot($user->id, ['last_activity_at' => $this->last_activity_at]);
+            $this->device->users()->updateExistingPivot($user->getAuthIdentifier(), ['last_activity_at' => $this->last_activity_at]);
         }
 
         return $this->save();
@@ -242,8 +247,11 @@ class Session extends Model implements Cacheable
 
     private function shouldIgnoreRestart(Request $request, array $ignore): bool
     {
-        return ($request->route()->getName() === $ignore['route'] || $request->route()->getUri() === $ignore['route'])
-            && $request->route()->methods()[0] == $ignore['method'];
+        /** @var Route $route */
+        $route = $request->route();
+
+        return ($route->getName() === $ignore['route'] || $route->getAction() === $ignore['route'])
+            && $route->methods()[0] == $ignore['method'];
     }
 
     public function block(?Authenticatable $user = null): bool
@@ -251,7 +259,7 @@ class Session extends Model implements Cacheable
         $user = $user ?? Auth::user();
 
         $this->status = SessionStatus::Blocked;
-        $this->blocked_by = $user->id;
+        $this->blocked_by = $user->getAuthIdentifier();
 
         if ($this->save()) {
             event(new SessionBlockedEvent($this, $user));
@@ -334,9 +342,6 @@ class Session extends Model implements Cacheable
         return null;
     }
 
-    /**
-     * @throws SessionNotFoundException
-     */
     public static function byUuid(StorableId|string $uuid, bool $cached = true): ?self
     {
         if (is_string($uuid)) {
@@ -344,13 +349,13 @@ class Session extends Model implements Cacheable
         }
 
         if (! $cached) {
-            return self::where('uuid', $uuid->toString())->first();
+            return self::where('uuid', (string) $uuid)->first();
         }
 
         return SessionCache::remember(
             key: SessionCache::key($uuid),
             callback: function () use ($uuid) {
-                return self::where('uuid', $uuid->toString())->first();
+                return self::where('uuid', (string) $uuid)->first();
             }
         );
     }

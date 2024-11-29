@@ -9,6 +9,6 @@ final class SessionNotFoundException extends Exception
 {
     public static function withSession(StorableId $sessionId): self
     {
-        return new self("Session with id {$sessionId->toString()} not found");
+        return new self(sprintf('Session with UUID %s not found', $sessionId));
     }
 }
