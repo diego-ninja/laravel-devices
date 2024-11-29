@@ -24,6 +24,9 @@ final readonly class SessionManager
         $this->app = $app;
     }
 
+    /**
+     * @throws SessionNotFoundException
+     */
     public function current(): ?Session
     {
         return Session::current();
@@ -42,9 +45,6 @@ final readonly class SessionManager
         return Session::start(device: $device);
     }
 
-    /**
-     * @throws SessionNotFoundException
-     */
     public function end(?StorableId $sessionId = null, ?Authenticatable $user = null): bool
     {
         $session = Session::byUuid($sessionId);
@@ -57,11 +57,17 @@ final readonly class SessionManager
         );
     }
 
+    /**
+     * @throws SessionNotFoundException
+     */
     public function renew(Authenticatable $user): bool
     {
         return Session::current()->renew($user);
     }
 
+    /**
+     * @throws SessionNotFoundException
+     */
     public function restart(Request $request): bool
     {
         return Session::current()->restart($request);
@@ -94,12 +100,7 @@ final readonly class SessionManager
      */
     public function inactive(?Authenticatable $user = null): bool
     {
-        $uses = in_array(HasDevices::class, class_uses($user));
-        if ($uses) {
-            return $user?->inactive() ?? false;
-        }
-
-        throw new Exception('Authenticatable instance must use HasDevices trait');
+        return $user?->inactive() ?? false;
     }
 
     /**

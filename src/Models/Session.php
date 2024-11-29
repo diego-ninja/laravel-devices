@@ -35,7 +35,6 @@ use Ninja\DeviceTracker\Traits\PropertyProxy;
 /**
  * Class Session
  *
- *
  * @mixin \Illuminate\Database\Query\Builder
  * @mixin \Illuminate\Database\Eloquent\Builder
  *

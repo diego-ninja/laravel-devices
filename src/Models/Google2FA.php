@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Config;
 /**
  * Class Google2FA
  *
- *
  * @mixin \Illuminate\Database\Query\Builder
  * @mixin \Illuminate\Database\Eloquent\Builder
  *

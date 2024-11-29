@@ -16,7 +16,7 @@ final class CleanupSessionsCommand extends Command
 
     public function handle(): void
     {
-        $days = $this->option('days');
+        $days = (int) $this->option('days');
         $cutoffDate = Carbon::now()->subDays($days);
 
         // Delete old finished sessions

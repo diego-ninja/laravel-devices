@@ -90,6 +90,9 @@ final class HasManySessions extends HasMany
             $this->current()->end();
         }
 
-        $this->each(fn (Session $session) => $session->end());
+        $this->each(function ($session) {
+            /** @var Session $session */
+            $session->end();
+        });
     }
 }

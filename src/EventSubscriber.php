@@ -57,9 +57,9 @@ final readonly class EventSubscriber
 
     public function subscribe(Dispatcher $events): void
     {
-        $events->listen('Illuminate\Auth\Events\Login', 'Ninja\DeviceTracker\EventSubscriber@onLogin');
-        $events->listen('Illuminate\Auth\Events\Logout', 'Ninja\DeviceTracker\EventSubscriber@onLogout');
-        $events->listen('Ninja\DeviceTracker\Events\Google2FASuccess', 'Ninja\DeviceTracker\EventSubscriber@onGoogle2FASuccess');
-        $events->listen('Ninja\DeviceTracker\Events\DeviceTrackedEvent', 'Ninja\DeviceTracker\EventSubscriber@onDeviceTracked');
+        $events->listen('Illuminate\Auth\Events\Login', [self::class, 'onLogin']);
+        $events->listen('Illuminate\Auth\Events\Logout', [self::class, 'onLogout']);
+        $events->listen('Ninja\DeviceTracker\Events\Google2FASuccess', [self::class, 'onGoogle2FASuccess']);
+        $events->listen('Ninja\DeviceTracker\Events\DeviceTrackedEvent', [self::class, 'onDeviceTracked']);
     }
 }

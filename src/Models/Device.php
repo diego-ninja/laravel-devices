@@ -66,8 +66,7 @@ use PDOException;
  * @property Carbon $verified_at datetime
  * @property Carbon $hijacked_at datetime
  * @property Carbon $risk_assessed_at datetime
- *
- * @property Collection $sessions
+ * @property Collection<Session> $sessions
  */
 class Device extends Model implements Cacheable
 {
@@ -212,7 +211,10 @@ class Device extends Model implements Cacheable
             ->where('status', SessionStatus::Locked)
             ->where('user_id', $user->getAuthIdentifier())
             ->get()
-            ->each(fn (Session $session) => $session->unlock());
+            ->each(function ($session) {
+                /** @var Session $session */
+                $session->unlock();
+            });
 
         $status = $this->verifiedStatus();
         $this->status = $status;
