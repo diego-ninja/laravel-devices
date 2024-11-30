@@ -5,6 +5,7 @@ namespace Ninja\DeviceTracker\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
 use Ninja\DeviceTracker\Cache\SessionCache;
 use Ninja\DeviceTracker\Factories\SessionIdFactory;
@@ -102,14 +103,20 @@ final class SessionController extends Controller
         return response()->json(['message' => 'Signout successful']);
     }
 
-    private function getUserSessions(Request $request)
+    /**
+     * @return Collection<int, Session>|null
+     */
+    private function getUserSessions(Request $request): ?Collection
     {
         $user = $request->user(Config::get('devices.auth_guard'));
 
         return SessionCache::userSessions($user);
     }
 
-    private function getUserActiveSessions(Request $request)
+    /**
+     * @return Collection<int, Session>|null
+     */
+    private function getUserActiveSessions(Request $request): ?Collection
     {
         $user = $request->user(Config::get('devices.auth_guard'));
 
@@ -122,6 +129,6 @@ final class SessionController extends Controller
 
         $sessions = SessionCache::userSessions($user);
 
-        return $sessions->where('uuid', SessionIdFactory::from($id))->first();
+        return $sessions?->where('uuid', SessionIdFactory::from($id))->first();
     }
 }

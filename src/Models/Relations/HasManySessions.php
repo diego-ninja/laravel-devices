@@ -3,10 +3,18 @@
 namespace Ninja\DeviceTracker\Models\Relations;
 
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Collection;
 use Ninja\DeviceTracker\Enums\SessionStatus;
+use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Models\Session;
+use stdClass;
 
+/**
+ * @extends HasMany<Session, Device|User>
+ *
+ * @phpstan-param Device|User $parent
+ */
 final class HasManySessions extends HasMany
 {
     public function first(): ?Session
@@ -58,6 +66,9 @@ final class HasManySessions extends HasMany
         return $session;
     }
 
+    /**
+     * @return Collection<int, Session>
+     */
     public function active(bool $exceptCurrent = false): Collection
     {
         $query = $this
@@ -74,6 +85,9 @@ final class HasManySessions extends HasMany
         return $query->get();
     }
 
+    /**
+     * @return Collection<int, stdClass|Session>
+     */
     public function finished(): Collection
     {
         return $this
@@ -87,7 +101,7 @@ final class HasManySessions extends HasMany
     public function signout(bool $logoutCurrentSession = false): void
     {
         if ($logoutCurrentSession) {
-            $this->current()->end();
+            $this->current()?->end();
         }
 
         $this->each(function ($session) {

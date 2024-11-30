@@ -10,6 +10,9 @@ enum DeviceStatus: string
     case Hijacked = 'hijacked';
     case Inactive = 'inactive';
 
+    /**
+     * @return array<int, DeviceStatus>
+     */
     public static function values(): array
     {
         return [

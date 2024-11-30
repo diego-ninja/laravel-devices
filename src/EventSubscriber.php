@@ -4,6 +4,7 @@ namespace Ninja\DeviceTracker;
 
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
+use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Support\Facades\Config;
 use Ninja\DeviceTracker\Events\DeviceTrackedEvent;
@@ -50,7 +51,10 @@ final readonly class EventSubscriber
             return;
         }
 
-        if (auth(Config::get('devices.auth_guard'))->user()) {
+        /** @var Guard $guard */
+        $guard = auth(Config::get('devices.auth_guard'));
+
+        if ($guard->user()) {
             DeviceManager::attach($event->deviceUuid);
         }
     }

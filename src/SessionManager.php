@@ -13,7 +13,6 @@ use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Exception\SessionNotFoundException;
 use Ninja\DeviceTracker\Facades\DeviceManager;
 use Ninja\DeviceTracker\Models\Session;
-use Ninja\DeviceTracker\Traits\HasDevices;
 
 final readonly class SessionManager
 {
@@ -24,9 +23,6 @@ final readonly class SessionManager
         $this->app = $app;
     }
 
-    /**
-     * @throws SessionNotFoundException
-     */
     public function current(): ?Session
     {
         return Session::current();
@@ -38,6 +34,10 @@ final readonly class SessionManager
     public function start(): Session
     {
         $device = DeviceManager::current();
+        if (! $device) {
+            throw new DeviceNotFoundException('Device not found.');
+        }
+
         if ($device->hijacked()) {
             throw new DeviceNotFoundException('Device is flagged as hijacked.');
         }
@@ -47,6 +47,12 @@ final readonly class SessionManager
 
     public function end(?StorableId $sessionId = null, ?Authenticatable $user = null): bool
     {
+        $sessionId ??= session_uuid();
+
+        if ($sessionId === null) {
+            return false;
+        }
+
         $session = Session::byUuid($sessionId);
         if (! $session) {
             return false;
@@ -57,25 +63,18 @@ final readonly class SessionManager
         );
     }
 
-    /**
-     * @throws SessionNotFoundException
-     */
-    public function renew(Authenticatable $user): bool
+    public function renew(Authenticatable $user): ?bool
     {
-        return Session::current()->renew($user);
+        return Session::current()?->renew($user);
     }
 
-    /**
-     * @throws SessionNotFoundException
-     */
-    public function restart(Request $request): bool
+    public function restart(Request $request): ?bool
     {
-        return Session::current()->restart($request);
+        return Session::current()?->restart($request);
     }
 
     /**
      * @throws DeviceNotFoundException
-     * @throws SessionNotFoundException
      */
     public function refresh(?Authenticatable $user = null): Session
     {

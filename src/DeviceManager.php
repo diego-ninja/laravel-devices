@@ -5,7 +5,6 @@ namespace Ninja\DeviceTracker;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Enums\DeviceTransport;
@@ -34,7 +33,7 @@ final class DeviceManager
 
     public function isUserDevice(StorableId $deviceUuid): bool
     {
-        return Auth::user()?->hasDevice($deviceUuid);
+        return user()?->hasDevice($deviceUuid);
     }
 
     public function attach(?StorableId $deviceUuid = null): bool
@@ -45,7 +44,7 @@ final class DeviceManager
             return false;
         }
 
-        if (! Auth::user()) {
+        if (! user()) {
             return false;
         }
 
@@ -53,20 +52,28 @@ final class DeviceManager
             return false;
         }
 
-        if (Auth::user()->hasDevice($deviceUuid)) {
+        if (user()->hasDevice($deviceUuid)) {
             return true;
         }
 
-        Auth::user()->devices()->attach($deviceUuid);
+        user()->devices()->attach($deviceUuid);
 
-        event(new DeviceAttachedEvent(Device::byUuid($deviceUuid), Auth::user()));
+        $device = Device::byUuid($deviceUuid);
+        if (! $device) {
+            return false;
+        }
+
+        event(new DeviceAttachedEvent($device, user()));
 
         return true;
     }
 
+    /**
+     * @return Collection<int,Device>
+     */
     public function userDevices(): Collection
     {
-        return Auth::user()?->devices;
+        return user()?->devices;
     }
 
     public function tracked(): bool
@@ -117,17 +124,31 @@ final class DeviceManager
     /**
      * @throws UnknownDeviceDetectedException
      */
-    public function create(?StorableId $deviceUuid = null): Device
+    public function create(?StorableId $deviceUuid = null): ?Device
     {
         $payload = app(DeviceDetector::class)->detect(request());
-        if (! $payload->unknown() || config('devices.allow_unknown_devices')) {
-            return Device::register(
-                deviceUuid: $deviceUuid ?? device_uuid(),
-                data: $payload
-            );
+        if (! $payload) {
+            return null;
         }
 
-        throw UnknownDeviceDetectedException::withUA(request()->header('User-Agent'));
+        if (! $payload->unknown() || config('devices.allow_unknown_devices')) {
+            $deviceUuid = $deviceUuid ?? device_uuid();
+            if ($deviceUuid) {
+                return Device::register(
+                    deviceUuid: $deviceUuid,
+                    data: $payload
+                );
+            }
+
+            return null;
+        }
+
+        $ua = request()->header('User-Agent');
+        if (is_string($ua)) {
+            throw UnknownDeviceDetectedException::withUA($ua);
+        }
+
+        throw UnknownDeviceDetectedException::withUA('Unknown');
     }
 
     public function current(): ?Device

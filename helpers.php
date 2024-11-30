@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cookie;
 use Ninja\DeviceTracker\Contracts\StorableId;
@@ -48,5 +50,22 @@ if (! function_exists('device')) {
         $id = device_uuid();
 
         return $id ? Device::byUuid($id, $cached) : null;
+    }
+}
+
+if (! function_exists('guard')) {
+    function guard(): Guard
+    {
+        /** @var Guard $guard */
+        $guard = auth(Config::get('devices.auth_guard'));
+
+        return $guard;
+    }
+}
+
+if (! function_exists('user')) {
+    function user(): ?Authenticatable
+    {
+        return guard()->hasUser() ? guard()->user() : null;
     }
 }

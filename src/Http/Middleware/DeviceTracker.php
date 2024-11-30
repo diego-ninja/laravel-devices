@@ -14,7 +14,7 @@ use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 
 final readonly class DeviceTracker
 {
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, Closure $next): mixed
     {
         if (DeviceManager::shouldRegenerate()) {
             DeviceManager::create();
@@ -38,6 +38,11 @@ final readonly class DeviceTracker
             }
         }
 
-        return DeviceTransport::set($next(DeviceTransport::propagate(device_uuid())), device_uuid());
+        $deviceUuid = device_uuid();
+        if (! $deviceUuid) {
+            return $next($request);
+        }
+
+        return DeviceTransport::set($next(DeviceTransport::propagate($deviceUuid)), $deviceUuid);
     }
 }

@@ -9,6 +9,9 @@ final class AuthenticationRequestDetector extends AbstractRequestDetector
 {
     protected const PRIORITY = 100;
 
+    /**
+     * @var array<string, array{paths: list<string>, methods: list<string>}>
+     */
     private array $signatures = [
         EventType::Login->value => [
             'paths' => ['login', 'auth/login'],
@@ -24,7 +27,7 @@ final class AuthenticationRequestDetector extends AbstractRequestDetector
         ],
     ];
 
-    public function supports(Request $request, $response): bool
+    public function supports(Request $request, mixed $response): bool
     {
         $path = trim($request->path(), '/');
         $method = strtoupper($request->method());
@@ -42,7 +45,7 @@ final class AuthenticationRequestDetector extends AbstractRequestDetector
         return false;
     }
 
-    public function detect(Request $request, $response): ?EventType
+    public function detect(Request $request, mixed $response): ?EventType
     {
         $path = trim($request->path(), '/');
 
@@ -55,6 +58,9 @@ final class AuthenticationRequestDetector extends AbstractRequestDetector
         return null;
     }
 
+    /**
+     * @param  array<string, array<string>>  $signature
+     */
     private function matches(string $path, string $method, array $signature): bool
     {
         return in_array(strtoupper($method), $signature['methods']) &&

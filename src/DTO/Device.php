@@ -3,60 +3,36 @@
 namespace Ninja\DeviceTracker\DTO;
 
 use JsonSerializable;
+use Ninja\DeviceTracker\Modules\Detection\DTO\Browser;
+use Ninja\DeviceTracker\Modules\Detection\DTO\DeviceType;
+use Ninja\DeviceTracker\Modules\Detection\DTO\Platform;
 use Stringable;
+use Zerotoprod\DataModel\DataModel;
 
-final readonly class Device implements JsonSerializable, Stringable
+final class Device implements JsonSerializable, Stringable
 {
+    use DataModel;
+
     public const UNKNOWN = 'UNK';
 
-    public function __construct(
-        public Browser $browser,
-        public Platform $platform,
-        public DeviceType $device,
-        public ?string $grade,
-        public ?string $userAgent
-    ) {}
+    public Browser $browser;
 
-    public static function fromModel(\Ninja\DeviceTracker\Models\Device $device): self
-    {
-        return new self(
-            browser: Browser::fromArray([
-                'name' => $device->browser,
-                'version' => Version::fromString($device->browser_version),
-                'family' => $device->browser_family,
-                'engine' => $device->browser_engine,
-            ]),
-            platform: Platform::fromArray([
-                'name' => $device->platform,
-                'version' => Version::fromString($device->platform_version),
-                'family' => $device->platform_family,
-            ]),
-            device: DeviceType::fromArray([
-                'family' => $device->device_family,
-                'model' => $device->device_model,
-                'type' => $device->device_type,
-            ]),
-            grade: $device->grade,
-            userAgent: $device->source
-        );
-    }
+    public Platform $platform;
 
-    public static function fromArray(array $data): self
-    {
-        return new self(
-            browser: Browser::fromArray($data['browser']),
-            platform: Platform::fromArray($data['platform']),
-            device: DeviceType::fromArray($data['device']),
-            grade: $data['grade'],
-            userAgent: $data['user_agent']
-        );
-    }
+    public DeviceType $device;
+
+    public ?string $grade = self::UNKNOWN;
+
+    public ?string $source;
 
     public function unknown(): bool
     {
         return $this->browser->unknown() || $this->platform->unknown();
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function array(): array
     {
         return [
@@ -64,7 +40,7 @@ final readonly class Device implements JsonSerializable, Stringable
             'platform' => $this->platform->array(),
             'device' => $this->device->array(),
             'grade' => $this->grade,
-            'user_agent' => $this->userAgent,
+            'source' => $this->source,
             'label' => (string) $this,
         ];
     }
@@ -74,12 +50,15 @@ final readonly class Device implements JsonSerializable, Stringable
         return sprintf('%s at %s on %s', $this->browser, $this->device, $this->platform);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function jsonSerialize(): array
     {
         return $this->array();
     }
 
-    public function json(): string
+    public function json(): string|false
     {
         return json_encode($this->array());
     }

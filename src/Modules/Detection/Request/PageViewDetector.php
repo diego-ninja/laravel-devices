@@ -9,14 +9,14 @@ final class PageViewDetector extends AbstractRequestDetector
 {
     protected const PRIORITY = 50;
 
-    public function supports(Request $request, $response): bool
+    public function supports(Request $request, mixed $response): bool
     {
         return $request->isMethod('GET') &&
             ! $request->ajax() &&
             $this->html($response);
     }
 
-    public function detect(Request $request, $response): EventType
+    public function detect(Request $request, mixed $response): EventType
     {
         return EventType::PageView;
     }

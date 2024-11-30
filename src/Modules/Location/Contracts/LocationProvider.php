@@ -6,13 +6,13 @@ use Ninja\DeviceTracker\Modules\Location\DTO\Location;
 
 interface LocationProvider
 {
-    public function country(): string;
+    public function country(): ?string;
 
-    public function region(): string;
+    public function region(): ?string;
 
-    public function city(): string;
+    public function city(): ?string;
 
-    public function postal(): string;
+    public function postal(): ?string;
 
     public function latitude(): ?string;
 

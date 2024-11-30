@@ -4,9 +4,12 @@ namespace Ninja\DeviceTracker\Models;
 
 use Carbon\Carbon;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Foundation\Auth\User;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
 use Illuminate\Support\Facades\App;
@@ -31,12 +34,13 @@ use Ninja\DeviceTracker\Modules\Tracking\Enums\EventType;
 use Ninja\DeviceTracker\Modules\Tracking\Models\Event;
 use Ninja\DeviceTracker\Modules\Tracking\Models\Relations\HasManyEvents;
 use Ninja\DeviceTracker\Traits\PropertyProxy;
+use RuntimeException;
 
 /**
  * Class Session
  *
  * @mixin \Illuminate\Database\Query\Builder
- * @mixin \Illuminate\Database\Eloquent\Builder
+ * @mixin Builder<Session>
  *
  * @property int $id unsigned int
  * @property StorableId $uuid uuid
@@ -52,8 +56,11 @@ use Ninja\DeviceTracker\Traits\PropertyProxy;
  * @property ?Carbon $blocked_at datetime
  * @property ?Carbon $unlocked_at datetime
  * @property ?Carbon $last_activity_at datetime
- * @property Session $session
- * @property Device $device
+ * @property-read User|null $user
+ * @property-read Device $device
+ * @property-read Collection<int, Event> $events
+ *
+ * @method static Builder<Session> query()
  */
 class Session extends Model implements Cacheable
 {
@@ -75,14 +82,20 @@ class Session extends Model implements Cacheable
         'last_activity_at',
     ];
 
+    /**
+     * @return HasOne<Device, $this>
+     */
     public function device(): HasOne
     {
         return $this->hasOne(Device::class, 'uuid', 'device_uuid');
     }
 
+    /**
+     * @return HasOne<User, $this>
+     */
     public function user(): HasOne
     {
-        return $this->hasOne(Config::get('devices.authenticatable_class'), 'id', 'user_id');
+        return $this->hasOne(User::class, 'id', 'user_id');
     }
 
     public function events(): HasManyEvents
@@ -132,6 +145,11 @@ class Session extends Model implements Cacheable
     public static function start(Device $device, ?Authenticatable $user = null): Session
     {
         $now = Carbon::now();
+        $user = $user ?? user();
+
+        if (! $user) {
+            throw new RuntimeException('No user provided');
+        }
 
         if (App::environment('local')) {
             $development_ips = Config::get('devices.development_ip_pool', []);
@@ -144,12 +162,12 @@ class Session extends Model implements Cacheable
         $location = app(LocationProvider::class)->locate($ip);
 
         if (! Config::get('devices.allow_device_multi_session')) {
-            self::endPreviousSessions($device, $user ?? Auth::user());
+            self::endPreviousSessions($device, $user);
         }
 
         /** @var Session $session */
         $session = self::create([
-            'user_id' => Auth::user()->getAuthIdentifier(),
+            'user_id' => $user->getAuthIdentifier(),
             'uuid' => SessionIdFactory::generate(),
             'device_uuid' => $device->uuid,
             'ip' => $ip,
@@ -159,7 +177,7 @@ class Session extends Model implements Cacheable
             'last_activity_at' => $now,
         ]);
 
-        event(new SessionStartedEvent($session, Auth::user()));
+        event(new SessionStartedEvent($session, $user));
 
         return $session;
     }
@@ -244,6 +262,9 @@ class Session extends Model implements Cacheable
         return $this->renew($request->user(Config::get('devices.auth_guard')));
     }
 
+    /**
+     * @param  array<string, mixed>  $ignore
+     */
     private function shouldIgnoreRestart(Request $request, array $ignore): bool
     {
         /** @var Route $route */
@@ -255,10 +276,10 @@ class Session extends Model implements Cacheable
 
     public function block(?Authenticatable $user = null): bool
     {
-        $user = $user ?? Auth::user();
+        $user = $user ?? user();
 
         $this->status = SessionStatus::Blocked;
-        $this->blocked_by = $user->getAuthIdentifier();
+        $this->blocked_by = $user?->getAuthIdentifier();
 
         if ($this->save()) {
             event(new SessionBlockedEvent($this, $user));
@@ -296,7 +317,7 @@ class Session extends Model implements Cacheable
             return false;
         }
 
-        return abs(strtotime($this->last_activity_at) - strtotime(now())) > $seconds;
+        return abs(strtotime((string) $this->last_activity_at) - strtotime(now())) > $seconds;
     }
 
     public function isCurrent(): bool
@@ -326,7 +347,7 @@ class Session extends Model implements Cacheable
             $this->unlocked_at = Carbon::now();
 
             if ($this->save()) {
-                event(new SessionUnlockedEvent($this, Auth::user()));
+                event(new SessionUnlockedEvent($this, user()));
             }
         }
     }
@@ -348,7 +369,10 @@ class Session extends Model implements Cacheable
         }
 
         if (! $cached) {
-            return self::where('uuid', (string) $uuid)->first();
+            /** @var Session|null $session */
+            $session = self::where('uuid', (string) $uuid)->first();
+
+            return $session;
         }
 
         return SessionCache::remember(
@@ -367,9 +391,6 @@ class Session extends Model implements Cacheable
         return self::byUuid($uuid) ?? throw SessionNotFoundException::withSession($uuid);
     }
 
-    /**
-     * @throws SessionNotFoundException
-     */
     public static function current(): ?Session
     {
         if (! session_uuid()) {

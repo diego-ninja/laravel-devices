@@ -18,7 +18,7 @@ use Ninja\DeviceTracker\Traits\PropertyProxy;
  * Class Event
  *
  * @mixin \Illuminate\Database\Query\Builder
- * @mixin \Illuminate\Database\Eloquent\Builder
+ * @mixin \Illuminate\Database\Eloquent\Builder<Event>
  *
  * @property int $id unsigned int
  * @property StorableId $uuid string
@@ -28,8 +28,8 @@ use Ninja\DeviceTracker\Traits\PropertyProxy;
  * @property string $ip_address string
  * @property Metadata $metadata json
  * @property Carbon $occurred_at datetime
- * @property-read Device                  $device
- * @property-read Session                 $session
+ * @property-read Device|null $device
+ * @property-read Session|null $session
  */
 class Event extends Model
 {
@@ -65,11 +65,17 @@ class Event extends Model
         );
     }
 
+    /**
+     * @return BelongsTo<Device, $this>
+     */
     public function device(): BelongsTo
     {
         return $this->belongsTo(Device::class, 'device_uuid', 'uuid');
     }
 
+    /**
+     * @return BelongsTo<Session, $this>
+     */
     public function session(): BelongsTo
     {
         return $this->belongsTo(Session::class, 'session_uuid', 'uuid');

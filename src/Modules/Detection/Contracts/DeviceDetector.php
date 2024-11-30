@@ -7,5 +7,5 @@ use Ninja\DeviceTracker\DTO\Device;
 
 interface DeviceDetector
 {
-    public function detect(Request $request): ?Device;
+    public function detect(Request|string $request): ?Device;
 }

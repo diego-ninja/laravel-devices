@@ -2,8 +2,8 @@
 
 namespace Ninja\DeviceTracker\Http\Controllers;
 
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Config;
@@ -19,16 +19,21 @@ use PragmaRX\Google2FA\Google2FA;
  */
 final class TwoFactorController extends Controller
 {
-    public function code(Request $request): JsonResponse
-    {
-        $user = auth(Config::get('devices.auth_guard'))->user();
+    private ?Authenticatable $user;
 
-        if (! $user->google2faEnabled()) {
+    public function __construct()
+    {
+        $this->user = user();
+    }
+
+    public function code(): JsonResponse
+    {
+        if (! $this->user?->google2faEnabled()) {
             return response()->json(['message' => 'Two factor authentication is not enabled for current user'], 400);
         }
 
         return response()->json([
-            'code' => $user->google2faQrCode(Config::get('devices.google_2fa_qr_format')),
+            'code' => $this->user->google2faQrCode(Config::get('devices.google_2fa_qr_format')),
         ]);
     }
 
@@ -39,9 +44,7 @@ final class TwoFactorController extends Controller
      */
     public function verify(Request $request): JsonResponse
     {
-        $user = auth(Config::get('devices.auth_guard'))->user();
-
-        if (! $user->google2faEnabled()) {
+        if (! $this->user?->google2faEnabled()) {
             return response()->json(['message' => 'Two factor authentication is not enabled for current user'], 400);
         }
 
@@ -52,45 +55,46 @@ final class TwoFactorController extends Controller
 
         $valid = app(Google2FA::class)
             ->verifyKeyNewer(
-                secret: $user->google2fa->secret(),
+                secret: $this->user->google2fa->secret(),
                 key: $code,
-                oldTimestamp: $user->google2fa->last_sucess_at->timestamp ?? 0
+                oldTimestamp: $this->user->google2fa->last_sucess_at->timestamp ?? 0
             );
 
         if ($valid !== false) {
-            $user->google2fa->success();
-            event(new Google2FASuccess($user));
+            $this->user->google2fa->success();
+            event(new Google2FASuccess($this->user));
 
             return response()->json(['message' => 'Two factor authentication successful']);
         } else {
-            event(new Google2FAFailed($user));
+            event(new Google2FAFailed($this->user));
 
             return response()->json(['message' => 'Two factor authentication failed'], 400);
         }
     }
 
-    public function disable(Request $request): JsonResponse
+    public function disable(): JsonResponse
     {
-        $user = auth(Config::get('devices.auth_guard'))->user();
-
-        if (! $user->google2faEnabled()) {
+        if (! $this->user?->google2faEnabled()) {
             return response()->json(['message' => 'Two factor authentication is not enabled for current user'], 400);
         }
 
-        $user->google2fa->disable();
+        $this->user->google2fa->disable();
 
         return response()->json(['message' => 'Two factor authentication disabled for current user']);
     }
 
-    public function enable(Request $request): JsonResponse
+    /**
+     * @throws IncompatibleWithGoogleAuthenticatorException
+     * @throws SecretKeyTooShortException
+     * @throws InvalidCharactersException
+     */
+    public function enable(): JsonResponse
     {
-        $user = auth(Config::get('devices.auth_guard'))->user();
-
-        if ($user->google2faEnabled()) {
+        if ($this->user?->google2faEnabled()) {
             return response()->json(['message' => 'Two factor authentication already for current user']);
         }
 
-        $user->enable2fa(
+        $this->user?->enable2fa(
             secret: app(Google2FA::class)->generateSecretKey()
         );
 

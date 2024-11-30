@@ -14,6 +14,12 @@ final class DeviceInspectCommand extends Command
     public function handle(): void
     {
         $uuid = $this->argument('uuid');
+        if (! is_string($uuid)) {
+            $this->error('Invalid UUID provided');
+
+            return;
+        }
+
         $device = Device::byUuid($uuid);
 
         if (! $device) {

@@ -11,7 +11,9 @@ use Ninja\DeviceTracker\Modules\Fingerprinting\Injector\Enums\Library;
 abstract class AbstractInjector implements Injector
 {
     public const LIBRARY_NAME = '';
+
     public const LIBRARY_URL = '';
+
     protected static function script(Device $device): string
     {
         $view = sprintf('laravel-devices::%s-tracking-script', static::LIBRARY_NAME);
@@ -32,6 +34,9 @@ abstract class AbstractInjector implements Injector
     public function inject(Response $response): Response
     {
         $content = $response->getContent();
+        if (! $content) {
+            return $response;
+        }
 
         $device = DeviceManager::current();
         if ($device) {
@@ -42,7 +47,7 @@ abstract class AbstractInjector implements Injector
         return $response;
     }
 
-    public static function library(): Library
+    public function library(): Library
     {
         return Library::from(static::LIBRARY_NAME);
     }

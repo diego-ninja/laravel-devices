@@ -29,6 +29,10 @@ trait CanTransport
 
         $current = self::current();
 
+        if ($current === null) {
+            return $response;
+        }
+
         $callable = match ($current) {
             self::Cookie => function () use ($response, $current, $id): mixed {
                 $response->withCookie(
@@ -60,6 +64,11 @@ trait CanTransport
     public static function propagate(?StorableId $id = null): Request
     {
         $current = self::current();
+
+        if ($current === null) {
+            return request();
+        }
+
         $id = $id ?? $current->get();
 
         $requestParameter = self::DEFAULT_REQUEST_PARAMETER;

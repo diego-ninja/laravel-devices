@@ -2,6 +2,7 @@
 
 namespace Ninja\DeviceTracker\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Config;
@@ -16,7 +17,7 @@ use Ninja\DeviceTracker\Models\Session;
  */
 final class DeviceController extends Controller
 {
-    public function list(Request $request)
+    public function list(Request $request): JsonResponse
     {
         $user = $request->user(Config::get('devices.auth_guard'));
         $devices = DeviceCache::userDevices($user);
@@ -24,7 +25,7 @@ final class DeviceController extends Controller
         return response()->json(DeviceResource::collection($devices));
     }
 
-    public function show(Request $request, string $id)
+    public function show(Request $request, string $id): JsonResponse
     {
         $device = $this->getUserDevice($request, $id);
 
@@ -35,7 +36,7 @@ final class DeviceController extends Controller
         return response()->json(['message' => 'Device not found'], 404);
     }
 
-    public function verify(Request $request, string $id)
+    public function verify(Request $request, string $id): JsonResponse
     {
         $device = $this->getUserDevice($request, $id);
 
@@ -48,7 +49,7 @@ final class DeviceController extends Controller
         return response()->json(['message' => 'Device not found'], 404);
     }
 
-    public function hijack(Request $request, string $id)
+    public function hijack(Request $request, string $id): JsonResponse
     {
         $device = $this->getUserDevice($request, $id);
 
@@ -61,7 +62,7 @@ final class DeviceController extends Controller
         return response()->json(['message' => 'Device not found'], 404);
     }
 
-    public function forget(Request $request, string $id)
+    public function forget(Request $request, string $id): JsonResponse
     {
         $device = $this->getUserDevice($request, $id);
 
@@ -74,9 +75,13 @@ final class DeviceController extends Controller
         return response()->json(['message' => 'Device not found'], 404);
     }
 
-    public function signout(Request $request, string $id)
+    public function signout(Request $request, string $id): JsonResponse
     {
         $device = $this->getUserDevice($request, $id);
+        if (! $device) {
+            return response()->json(['message' => 'Device not found'], 404);
+        }
+
         $device
             ->sessions()
             ->active()

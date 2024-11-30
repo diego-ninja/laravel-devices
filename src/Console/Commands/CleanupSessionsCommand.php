@@ -31,7 +31,7 @@ final class CleanupSessionsCommand extends Command
         if ($inactivitySeconds > 0) {
             $cutoffTime = Carbon::now()->subSeconds($inactivitySeconds);
 
-            /** @var Collection<Session> $inactiveSessions */
+            /** @var Collection<int,Session> $inactiveSessions */
             $inactiveSessions = Session::where('status', SessionStatus::Active)
                 ->where('last_activity_at', '<', $cutoffTime)
                 ->get();

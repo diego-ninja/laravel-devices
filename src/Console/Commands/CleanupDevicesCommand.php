@@ -14,12 +14,14 @@ final class CleanupDevicesCommand extends Command
 
     public function handle(): void
     {
-        // Delete hijacked devices if forced
         if ($this->option('force')) {
             $deletedHijacked = Device::where('status', DeviceStatus::Hijacked)->delete();
             $this->info(sprintf('Deleted %d hijacked devices.', $deletedHijacked));
         }
 
-        $this->info(sprintf('Deleted %d orphaned devices.', Device::orphans()->delete()));
+        $count = Device::orphans()->count();
+        Device::orphans()->each(fn ($device) => $device->delete());
+
+        $this->info(sprintf('Deleted %d orphaned devices.', $count));
     }
 }

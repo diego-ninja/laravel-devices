@@ -3,6 +3,7 @@
 namespace Ninja\DeviceTracker\Cache;
 
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
 use InvalidArgumentException;
 use Ninja\DeviceTracker\Contracts\Cacheable;
@@ -27,28 +28,34 @@ final class SessionCache extends AbstractCache
             throw new InvalidArgumentException('Item must be an instance of Session');
         }
 
-        $this->cache->forget($item->key());
-        $this->cache->forget('user:sessions:'.$item->device->id);
+        $this->cache?->forget($item->key());
+        $this->cache?->forget(sprintf('user:sessions:%s', $item->device->id));
     }
 
-    public static function userSessions(Authenticatable $user)
+    /**
+     * @return Collection<int, Session>|null
+     */
+    public static function userSessions(Authenticatable $user): ?Collection
     {
         if (! self::instance()->enabled()) {
             return $user->sessions()->with('device')->get();
         }
 
-        return self::remember('user:sessions:'.$user->id, function () use ($user) {
+        return self::remember('user:sessions:'.$user->getAuthIdentifier(), function () use ($user) {
             return $user->sessions()->with('device')->get();
         });
     }
 
-    public static function activeSessions(Authenticatable $user)
+    /**
+     * @return Collection<int, Session>|null
+     */
+    public static function activeSessions(Authenticatable $user): ?Collection
     {
         if (! self::instance()->enabled()) {
             return $user->sessions()->with('device')->active();
         }
 
-        return self::remember('user:sessions:active:'.$user->id, function () use ($user) {
+        return self::remember('user:sessions:active:'.$user->getAuthIdentifier(), function () use ($user) {
             return $user->sessions()->with('device')->active();
         });
     }

@@ -109,16 +109,19 @@ class DeviceTrackerServiceProvider extends ServiceProvider
 
     private function registerMiddlewares(): void
     {
-        $router = $this->app['router'];
-        $router->aliasMiddleware('device-tracker', DeviceTracker::class);
-        $router->aliasMiddleware('session-tracker', SessionTracker::class);
+        try {
+            $router = $this->app->get('router');
+            $router->aliasMiddleware('device-tracker', DeviceTracker::class);
+            $router->aliasMiddleware('session-tracker', SessionTracker::class);
 
-        if (Config::get('devices.fingerprinting_enabled')) {
-            $router->aliasMiddleware('fingerprint-tracker', FingerprintTracker::class);
-        }
+            if (Config::get('devices.fingerprinting_enabled')) {
+                $router->aliasMiddleware('fingerprint-tracker', FingerprintTracker::class);
+            }
 
-        if (Config::get('devices.event_tracking_enabled')) {
-            $router->aliasMiddleware('event-tracker', EventTracker::class);
+            if (Config::get('devices.event_tracking_enabled')) {
+                $router->aliasMiddleware('event-tracker', EventTracker::class);
+            }
+        } catch (\Throwable $e) {
         }
     }
 

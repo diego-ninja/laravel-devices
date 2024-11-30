@@ -10,12 +10,12 @@ final class RedirectResponseDetector extends AbstractRequestDetector
 {
     protected const PRIORITY = 60;
 
-    public function supports(Request $request, $response): bool
+    public function supports(Request $request, mixed $response): bool
     {
         return $response instanceof RedirectResponse;
     }
 
-    public function detect(Request $request, $response): EventType
+    public function detect(Request $request, mixed $response): EventType
     {
         return EventType::Redirect;
     }

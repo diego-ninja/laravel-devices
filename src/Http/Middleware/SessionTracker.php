@@ -22,7 +22,7 @@ final readonly class SessionTracker
 {
     public function __construct(protected Guard $auth) {}
 
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, Closure $next): mixed
     {
         $device = device();
         if (! $device) {

@@ -16,7 +16,12 @@ final class DeviceCache extends AbstractCache
 
     protected function enabled(): bool
     {
-        return in_array(self::KEY_PREFIX, Config::get('devices.cache_enabled_for', []), true);
+        $enabled = Config::get('devices.cache_enabled_for', []);
+        if (! is_array($enabled)) {
+            return false;
+        }
+
+        return in_array(self::KEY_PREFIX, $enabled, true);
     }
 
     protected function forgetItem(Cacheable $item): void
@@ -29,10 +34,13 @@ final class DeviceCache extends AbstractCache
             throw new InvalidArgumentException('Item must be an instance of Device');
         }
 
-        $this->cache->forget($item->key());
-        $item->users()->each(fn (Authenticatable $user) => $this->cache->forget('user:devices:'.$user->getAuthIdentifier()));
+        $this->cache?->forget($item->key());
+        $item->users()->each(fn (Authenticatable $user) => $this->cache?->forget(sprintf('user:devices:%s', $user->getAuthIdentifier())));
     }
 
+    /**
+     * @return Collection<int, Device>|null
+     */
     public static function userDevices(Authenticatable $user): ?Collection
     {
         $uses = in_array(HasDevices::class, class_uses($user), true);
@@ -44,8 +52,11 @@ final class DeviceCache extends AbstractCache
             return $user->devices;
         }
 
-        return self::remember('user:devices:'.$user->getAuthIdentifier(), function () use ($user) {
+        /** @var Collection<int, Device> $devices */
+        $devices = self::remember(sprintf('user:devices:%s', $user->getAuthIdentifier()), function () use ($user) {
             return $user->devices;
         });
+
+        return $devices;
     }
 }

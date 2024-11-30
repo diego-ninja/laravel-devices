@@ -17,15 +17,27 @@ abstract class AbstractRequestDetector implements RequestTypeDetector
 
     protected function json(Request $request): bool
     {
+        $accept = $request->header('Accept');
+        $contentType = $request->header('Content-Type');
+
+        if (! $accept || ! $contentType) {
+            return false;
+        }
+
         return
-            ($request->hasHeader('Accept') && str_contains($request->header('Accept'), 'application/json')) ||
-            ($request->hasHeader('Content-Type') && str_contains($request->header('Content-Type'), 'application/json'));
+            is_string($accept) && str_contains($accept, 'application/json') ||
+            is_string($contentType) && str_contains($contentType, 'application/json');
     }
 
     protected function html(mixed $response): bool
     {
+        $contentType = $response->headers->get('Content-Type');
+        if (! $contentType) {
+            return false;
+        }
+
         return
             $response instanceof Response &&
-            str_contains($response->headers->get('Content-Type', ''), 'text/html');
+            is_string($contentType) && str_contains($contentType, 'text/html');
     }
 }

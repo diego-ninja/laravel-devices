@@ -10,6 +10,9 @@ enum SessionStatus: string
     case Blocked = 'blocked';
     case Locked = 'locked';
 
+    /**
+     * @return array<int, SessionStatus>
+     */
     public static function values(): array
     {
         return [

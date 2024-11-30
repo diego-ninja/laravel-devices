@@ -18,7 +18,8 @@
         "matomo/device-detector": "^6.4",
         "nesbot/carbon": "^2 || ^3",
         "pragmarx/google2fa": "^8.0",
-        "ramsey/uuid": "^4.7"
+        "ramsey/uuid": "^4.7",
+        "zero-to-prod/data-model": "^81.7"
     },
     "require-dev": {
         "ext-redis": "*",

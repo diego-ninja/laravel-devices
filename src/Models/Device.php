@@ -8,8 +8,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\DB;
@@ -41,7 +41,7 @@ use PDOException;
  *
  *
  * @mixin \Illuminate\Database\Query\Builder
- * @mixin \Illuminate\Database\Eloquent\Builder
+ * @mixin Builder<Device>
  *
  * @property int $id unsigned int
  * @property StorableId $uuid string
@@ -66,7 +66,9 @@ use PDOException;
  * @property Carbon $verified_at datetime
  * @property Carbon $hijacked_at datetime
  * @property Carbon $risk_assessed_at datetime
- * @property Collection<Session> $sessions
+ * @property-read Collection<int, Session> $sessions
+ * @property-read Collection<int, Event> $events
+ * @property-read Collection<int, User> $users
  */
 class Device extends Model implements Cacheable
 {
@@ -117,13 +119,16 @@ class Device extends Model implements Cacheable
         );
     }
 
+    /**
+     * @return BelongsToMany<User, $this>
+     */
     public function users(): BelongsToMany
     {
-        $table = sprintf('%s_devices', str(\config('devices.authenticatable_table'))->singular());
-        $field = sprintf('%s_id', str(\config('devices.authenticatable_table'))->singular());
+        $table = sprintf('%s_devices', str(config('devices.authenticatable_table'))->singular());
+        $field = sprintf('%s_id', str(config('devices.authenticatable_table'))->singular());
 
         return $this->belongsToMany(
-            related: Config::get('devices.authenticatable_class'),
+            related: User::class,
             table: $table,
             foreignPivotKey: 'device_uuid',
             relatedPivotKey: $field,
@@ -199,9 +204,9 @@ class Device extends Model implements Cacheable
             return;
         }
 
-        $user = $user ?? Auth::user();
+        $user = $user ?? user();
 
-        $this->users()->updateExistingPivot($user->getAuthIdentifier(), [
+        $this->users()->updateExistingPivot($user?->getAuthIdentifier(), [
             'device_uuid' => $this->uuid,
             'status' => DeviceStatus::Verified,
             'verified_at' => now(),
@@ -209,10 +214,9 @@ class Device extends Model implements Cacheable
 
         $this->sessions()
             ->where('status', SessionStatus::Locked)
-            ->where('user_id', $user->getAuthIdentifier())
+            ->where('user_id', $user?->getAuthIdentifier())
             ->get()
-            ->each(function ($session) {
-                /** @var Session $session */
+            ->each(function (Session $session) {
                 $session->unlock();
             });
 
@@ -246,19 +250,19 @@ class Device extends Model implements Cacheable
 
     public function verified(?Authenticatable $user = null): bool
     {
-        $user = $user ?? Auth::user();
-        $deviceUser = $this->users()->where('user_id', $user->getAuthIdentifier())->first();
+        $user = $user ?? user();
+        $deviceUser = $this->users()->where('user_id', $user?->getAuthIdentifier())->first();
 
         return $deviceUser && $this->status === $deviceUser->pivot->status;
     }
 
     public function hijack(?Authenticatable $user = null): void
     {
-        $user = $user ?? Auth::user();
+        $user = $user ?? user();
 
         $this->hijacked_at = now();
 
-        $this->users()->updateExistingPivot($user->getAuthIdentifier(), [
+        $this->users()->updateExistingPivot($user?->getAuthIdentifier(), [
             'status' => DeviceStatus::Hijacked,
         ]);
 
@@ -276,7 +280,7 @@ class Device extends Model implements Cacheable
         return $this->hijacked_at !== null;
     }
 
-    public function forget(): bool
+    public function forget(): ?bool
     {
         $this->sessions()->active()->each(fn (Session $session) => $session->end());
 
@@ -336,7 +340,7 @@ class Device extends Model implements Cacheable
                 'grade' => $data->grade,
                 'ip' => request()->ip(),
                 'metadata' => new Metadata([]),
-                'source' => $data->userAgent,
+                'source' => $data->source,
             ]);
 
             /** @var Device $device */
@@ -359,12 +363,15 @@ class Device extends Model implements Cacheable
         }
 
         if (! $cached) {
-            return self::where('uuid', (string) $uuid)->first();
+            /** @var Device|null $device */
+            $device = self::where('uuid', (string) $uuid)->first();
+
+            return $device;
         }
 
         return DeviceCache::remember(
             key: DeviceCache::key($uuid),
-            callback: fn () => self::where('uuid', (string) $uuid)->first()
+            callback: fn () => self::byUuid($uuid, false)
         );
     }
 
@@ -379,7 +386,10 @@ class Device extends Model implements Cacheable
     public static function byFingerprint(string $fingerprint, bool $cached = true): ?self
     {
         if (! $cached) {
-            return self::where('fingerprint', $fingerprint)->first();
+            /** @var Device|null $device */
+            $device = self::where('fingerprint', $fingerprint)->first();
+
+            return $device;
         }
 
         return DeviceCache::remember(
@@ -391,10 +401,16 @@ class Device extends Model implements Cacheable
     public static function current(): ?self
     {
         if (Config::get('devices.fingerprinting_enabled')) {
-            return self::byFingerprint(fingerprint());
+            if (fingerprint()) {
+                return self::byFingerprint(fingerprint());
+            }
         }
 
-        return self::byUuid(device_uuid());
+        if (device_uuid()) {
+            return self::byUuid(device_uuid());
+        }
+
+        return null;
     }
 
     public static function exists(StorableId|string $id): bool
@@ -406,6 +422,9 @@ class Device extends Model implements Cacheable
         return self::byUuid($id, false) !== null;
     }
 
+    /**
+     * @return Collection<int, string>
+     */
     public static function byStatus(): Collection
     {
         return self::query()
@@ -414,10 +433,14 @@ class Device extends Model implements Cacheable
             ->pluck('total', 'status');
     }
 
-    public static function orphans(): Builder
+    /**
+     * @return Collection<int, Device|Model>
+     */
+    public static function orphans(): Collection
     {
         return self::doesntHave('users')
-            ->doesntHave('sessions');
+            ->doesntHave('sessions')
+            ->get();
     }
 
     public static function boot(): void

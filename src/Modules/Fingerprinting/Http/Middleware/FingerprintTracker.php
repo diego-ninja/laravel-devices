@@ -18,7 +18,7 @@ final class FingerprintTracker
     /**
      * @throws FingerprintDuplicatedException
      */
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, Closure $next): mixed
     {
         if (! config('devices.fingerprinting_enabled')) {
             return $next($request);
@@ -54,7 +54,12 @@ final class FingerprintTracker
         if (! request()->cookie($clientCookie)) {
             return InjectorFactory::make($library)->inject($response);
         } else {
-            device()?->fingerprint(request()->cookie($clientCookie), $serverCookie);
+            $fingerprint = request()->cookie($clientCookie);
+            if (! is_string($fingerprint)) {
+                return $response;
+            }
+
+            device()?->fingerprint($fingerprint, $serverCookie);
             Cookie::queue(Cookie::forget($clientCookie));
         }
 

@@ -11,22 +11,22 @@ abstract class AbstractLocationProvider implements LocationProvider
 
     abstract public function locate(string $ip): Location;
 
-    public function country(): string
+    public function country(): ?string
     {
         return $this->location->country;
     }
 
-    public function region(): string
+    public function region(): ?string
     {
         return $this->location->region;
     }
 
-    public function city(): string
+    public function city(): ?string
     {
         return $this->location->city;
     }
 
-    public function postal(): string
+    public function postal(): ?string
     {
         return $this->location->postal;
     }

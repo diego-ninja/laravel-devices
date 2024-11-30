@@ -10,6 +10,9 @@ use Ninja\DeviceTracker\Modules\Tracking\Enums\EventType;
 
 final class DetectorRegistry implements RequestTypeDetector
 {
+    /**
+     * @var Collection<int, RequestTypeDetector>
+     */
     private Collection $detectors;
 
     public function __construct()
@@ -34,9 +37,11 @@ final class DetectorRegistry implements RequestTypeDetector
         $cache = EventTypeCache::withRequest($request);
 
         return $cache->remember($cache->key(''), function () use ($request, $response) {
-            return $this->detectors->first(function ($detector) use ($request, $response) {
-                return $detector->supports($request, $response) ? $detector : null;
-            })?->detect($request, $response);
+            return $this->detectors->first(
+                function (RequestTypeDetector $detector) use ($request, $response): bool {
+                    return $detector->supports($request, $response);
+                }
+            )?->detect($request, $response);
         });
     }
 

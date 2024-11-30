@@ -2,6 +2,7 @@
 
 namespace Ninja\DeviceTracker\Modules\Tracking\Http\Middleware;
 
+use Closure;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,7 +21,7 @@ final readonly class EventTracker
         private DetectorRegistry $registry
     ) {}
 
-    public function handle(Request $request, \Closure $next)
+    public function handle(Request $request, Closure $next): mixed
     {
         if (config('devices.event_tracking_enabled') === false) {
             return $next($request);

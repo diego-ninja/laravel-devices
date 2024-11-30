@@ -5,7 +5,7 @@ parameters:
         - src/Traits/
     bootstrapFiles:
         - vendor/autoload.php
-    level: 5
+    level: 8
     scanDirectories:
         - src
     universalObjectCratesClasses:

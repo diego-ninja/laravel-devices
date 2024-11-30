@@ -10,7 +10,7 @@ use Ninja\DeviceTracker\Models\Device;
 /**
  * @method static Device|null current()
  * @method static bool isUserDevice(StorableId $deviceUuid)
- * @method static Collection userDevices()
+ * @method static Collection<int,Device> userDevices()
  * @method static bool attach(?StorableId $deviceUuid = null)
  * @method static Device create(?StorableId $deviceId = null)
  * @method static StorableId track()

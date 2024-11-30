@@ -2,6 +2,7 @@
 
 namespace Ninja\DeviceTracker\Cache;
 
+use Closure;
 use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
@@ -14,6 +15,7 @@ abstract class AbstractCache
 {
     public const KEY_PREFIX = '';
 
+    /** @var static[] */
     protected static array $instances = [];
 
     protected ?Repository $cache = null;
@@ -49,13 +51,13 @@ abstract class AbstractCache
         self::instance()->putItem($item);
     }
 
-    public static function remember(string $key, callable $callback): mixed
+    public static function remember(string $key, Closure $callback): mixed
     {
         if (! self::instance()->enabled()) {
             return $callback();
         }
 
-        return self::instance()->cache->remember($key, self::instance()->ttl(), $callback);
+        return self::instance()->cache?->remember($key, self::instance()->ttl(), $callback);
     }
 
     public static function key(string $key): string
@@ -74,7 +76,7 @@ abstract class AbstractCache
             return;
         }
 
-        if (method_exists(self::instance()->cache, 'flush')) {
+        if (self::instance()->cache && method_exists(self::instance()->cache, 'flush')) {
             self::instance()->cache->flush();
         }
     }
@@ -88,7 +90,7 @@ abstract class AbstractCache
             return null;
         }
 
-        return $this->cache->get($key);
+        return $this->cache?->get($key);
     }
 
     protected function putItem(Cacheable $item): void
@@ -97,7 +99,7 @@ abstract class AbstractCache
             return;
         }
 
-        $this->cache->put($item->key(), $item, $item->ttl() ?? $this->ttl());
+        $this->cache?->put($item->key(), $item, $item->ttl() ?? $this->ttl());
     }
 
     protected function forgetItem(Cacheable $item): void
@@ -106,7 +108,7 @@ abstract class AbstractCache
             return;
         }
 
-        $this->cache->forget($item->key());
+        $this->cache?->forget($item->key());
     }
 
     protected function ttl(): int
