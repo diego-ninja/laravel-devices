@@ -1,6 +1,7 @@
 parameters:
     paths:
         - src/
+        - helpers.php
     excludePaths:
         - src/Traits/
     bootstrapFiles:

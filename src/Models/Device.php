@@ -127,8 +127,11 @@ class Device extends Model implements Cacheable
         $table = sprintf('%s_devices', str(config('devices.authenticatable_table'))->singular());
         $field = sprintf('%s_id', str(config('devices.authenticatable_table'))->singular());
 
+        /** @var class-string<User> $authenticatable */
+        $authenticatable = Config::get('devices.authenticatable_class', User::class);
+
         return $this->belongsToMany(
-            related: User::class,
+            related: $authenticatable,
             table: $table,
             foreignPivotKey: 'device_uuid',
             relatedPivotKey: $field,

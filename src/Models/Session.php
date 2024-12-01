@@ -95,7 +95,10 @@ class Session extends Model implements Cacheable
      */
     public function user(): HasOne
     {
-        return $this->hasOne(User::class, 'id', 'user_id');
+        /** @var class-string<User> $authenticatable */
+        $authenticatable = Config::get('devices.authenticatable_class', User::class);
+
+        return $this->hasOne($authenticatable, 'id', 'user_id');
     }
 
     public function events(): HasManyEvents

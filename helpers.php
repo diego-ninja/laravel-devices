@@ -15,7 +15,10 @@ if (! function_exists('fingerprint')) {
         if (Config::get('devices.fingerprinting_enabled')) {
             $cookie = Config::get('devices.fingerprint_id_cookie_name');
 
-            return Cookie::has($cookie) ? Cookie::get($cookie) : null;
+            $fingerprint = Cookie::get($cookie);
+            if (is_string($fingerprint)) {
+                return $fingerprint;
+            }
         }
 
         return null;
@@ -25,14 +28,14 @@ if (! function_exists('fingerprint')) {
 if (! function_exists('device_uuid')) {
     function device_uuid(): ?StorableId
     {
-        return DeviceTransport::current()->get();
+        return DeviceTransport::current()?->get();
     }
 }
 
 if (! function_exists('session_uuid')) {
     function session_uuid(): ?StorableId
     {
-        return SessionTransport::current()->get();
+        return SessionTransport::current()?->get();
     }
 }
 
