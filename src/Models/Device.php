@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Ninja\DeviceTracker\Cache\DeviceCache;
 use Ninja\DeviceTracker\Contracts\Cacheable;
 use Ninja\DeviceTracker\Contracts\StorableId;
@@ -124,8 +125,8 @@ class Device extends Model implements Cacheable
      */
     public function users(): BelongsToMany
     {
-        $table = sprintf('%s_devices', str(config('devices.authenticatable_table'))->singular());
-        $field = sprintf('%s_id', str(config('devices.authenticatable_table'))->singular());
+        $table = sprintf('%s_devices', Str::singular(config('devices.authenticatable_table')));
+        $field = sprintf('%s_id', Str::singular(config('devices.authenticatable_table')));
 
         /** @var class-string<User> $authenticatable */
         $authenticatable = Config::get('devices.authenticatable_class', User::class);
