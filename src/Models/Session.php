@@ -71,6 +71,14 @@ class Session extends Model implements Cacheable
 
     public $timestamps = false;
 
+    protected $casts = [
+        'started_at' => 'datetime',
+        'finished_at' => 'datetime',
+        'blocked_at' => 'datetime',
+        'unlocked_at' => 'datetime',
+        'last_activity_at' => 'datetime',
+    ];
+
     protected $fillable = [
         'uuid',
         'user_id',
@@ -211,7 +219,8 @@ class Session extends Model implements Cacheable
     private static function endPreviousSessions(Device $device, Authenticatable $user): void
     {
         self::where('device_uuid', $device->uuid)
-            ->where('user_id', $user->getAuthIdentifier())::whereNull('finished_at')
+            ->where('user_id', $user->getAuthIdentifier())
+            ->whereNull('finished_at')
             ->each(fn (Session $session) => $session->end());
 
     }

@@ -19,7 +19,7 @@ final class Browser implements JsonSerializable, Stringable
 
     public string $engine;
 
-    public ?string $type;
+    public ?string $type = null;
 
     /**
      * @return array<string, mixed>

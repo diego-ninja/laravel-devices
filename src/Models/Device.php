@@ -78,6 +78,14 @@ class Device extends Model implements Cacheable
 
     protected $table = 'devices';
 
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'verified_at' => 'datetime',
+        'hijacked_at' => 'datetime',
+        'risk_assessed_at' => 'datetime',
+    ];
+
     protected $fillable = [
         'uuid',
         'fingerprint',
@@ -177,7 +185,7 @@ class Device extends Model implements Cacheable
 
     public function isCurrent(): bool
     {
-        return $this->uuid === device_uuid();
+        return (string) $this->uuid === (string) device_uuid();
     }
 
     /**
