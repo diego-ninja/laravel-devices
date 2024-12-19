@@ -303,7 +303,7 @@ return [
     | Options: 'device', 'location', 'session', 'ua'
     |
     */
-    'cache_enabled_for' => ['device, location, session, ua, event_type'],
+    'cache_enabled_for' => ['device', 'location', 'session', 'ua', 'event_type'],
 
     /*
     |--------------------------------------------------------------------------
