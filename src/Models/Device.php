@@ -210,7 +210,7 @@ class Device extends Model implements Cacheable
                 }
                 event(new DeviceFingerprintedEvent($this));
             }
-        } catch (PDOException $exception) {
+        } catch (PDOException) {
             throw FingerprintDuplicatedException::forFingerprint($fingerprint, Device::byFingerprint($fingerprint));
         }
     }
