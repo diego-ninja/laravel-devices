@@ -21,6 +21,9 @@ final readonly class Location implements Cacheable, JsonSerializable, Stringable
         public ?string $timezone
     ) {}
 
+    /**
+     * @param  array<string, string|null>  $location
+     */
     public static function fromArray(array $location): self
     {
         return new self(
@@ -36,6 +39,9 @@ final readonly class Location implements Cacheable, JsonSerializable, Stringable
         );
     }
 
+    /**
+     * @return array<string, string|null>
+     */
     public function array(): array
     {
         return [
@@ -57,12 +63,15 @@ final readonly class Location implements Cacheable, JsonSerializable, Stringable
         return sprintf('%s %s, %s, %s', $this->postal, $this->city, $this->region, $this->country);
     }
 
+    /**
+     * @return array<string, string|null>
+     */
     public function jsonSerialize(): array
     {
         return $this->array();
     }
 
-    public function json(): string
+    public function json(): string|false
     {
         return json_encode($this->array());
     }

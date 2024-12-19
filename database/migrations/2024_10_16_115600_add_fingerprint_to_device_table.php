@@ -11,7 +11,7 @@ return new class extends Migration
             $table->string('fingerprint')
                 ->unique()
                 ->nullable()
-                ->after('user_id');
+                ->after('uuid');
         });
     }
 

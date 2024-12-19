@@ -13,29 +13,35 @@
         "php": "^8.2",
         "ext-json": "*",
         "ext-pdo": "*",
+        "bacon/bacon-qr-code": "^3.0",
         "laravel/framework": "^10 || ^11",
-        "nesbot/carbon": "^2 || ^3",
-        "ramsey/uuid": "^4.7",
         "matomo/device-detector": "^6.4",
+        "nesbot/carbon": "^2 || ^3",
         "pragmarx/google2fa": "^8.0",
-        "bacon/bacon-qr-code": "^3.0"
+        "ramsey/uuid": "^4.7",
+        "zero-to-prod/data-model": "^81.7"
     },
     "require-dev": {
         "ext-redis": "*",
         "barryvdh/laravel-ide-helper": "^3.1",
-        "friendsofphp/php-cs-fixer": "^3.21",
-        "larastan/larastan": "^2.0",
-        "mockery/mockery": "^1.4.4",
-        "pestphp/pest": "^2 || ^3",
-        "laravel/octane": "^2.5",
-        "swoole/ide-helper": "~5.0.0",
+        "fakerphp/faker": "^1.24",
         "geoip2/geoip2": "^3.0",
-        "laravel/pint": "^1.18"
+        "larastan/larastan": "^3.0",
+        "laravel/octane": "^2.5",
+        "laravel/pint": "^1.18",
+        "mockery/mockery": "^1.4.4",
+        "orchestra/testbench": "^9.6",
+        "pestphp/pest": "^2 || ^3",
+        "phpstan/phpstan": "^2",
+        "phpstan/phpstan-deprecation-rules": "^2",
+        "swoole/ide-helper": "~5.0.0"
     },
     "minimum-stability": "stable",
     "autoload": {
         "psr-4": {
-            "Ninja\\DeviceTracker\\": "src/"
+            "Ninja\\DeviceTracker\\": "src/",
+            "Ninja\\DeviceTracker\\Database\\Seeders\\": "database/seeders",
+            "Ninja\\DeviceTracker\\Tests\\": "tests/"
         },
         "files": [
             "helpers.php"
@@ -61,5 +67,6 @@
                 "Ninja\\DeviceTracker\\DeviceTrackerServiceProvider"
             ]
         }
-    }
+    },
+    "$schema": "https://getcomposer.org/schema.json"
 }

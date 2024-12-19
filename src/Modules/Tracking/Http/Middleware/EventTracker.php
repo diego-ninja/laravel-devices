@@ -2,10 +2,12 @@
 
 namespace Ninja\DeviceTracker\Modules\Tracking\Http\Middleware;
 
+use Closure;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Routing\Route;
 use Ninja\DeviceTracker\DTO\Metadata;
 use Ninja\DeviceTracker\Facades\SessionManager;
 use Ninja\DeviceTracker\Modules\Detection\Request\DetectorRegistry;
@@ -19,7 +21,7 @@ final readonly class EventTracker
         private DetectorRegistry $registry
     ) {}
 
-    public function handle(Request $request, \Closure $next)
+    public function handle(Request $request, Closure $next): mixed
     {
         if (config('devices.event_tracking_enabled') === false) {
             return $next($request);
@@ -54,6 +56,8 @@ final readonly class EventTracker
 
     private function log(EventType $type, Request $request, mixed $response): Event
     {
+        /** @var Route|null $route */
+        $route = $request->route();
         $metadata = new Metadata([
             'request' => [
                 'method' => $request->method(),
@@ -69,8 +73,8 @@ final readonly class EventTracker
                 'type' => $this->type($response),
             ],
             'route' => [
-                'name' => $request->route()?->getName(),
-                'action' => $request->route()?->getActionName(),
+                'name' => $route?->getName(),
+                'action' => $route?->getActionName(),
             ],
             'performance' => [
                 'duration' => defined('LARAVEL_START') ?
@@ -104,14 +108,5 @@ final readonly class EventTracker
             $response instanceof Response => 'html',
             default => 'unknown'
         };
-    }
-
-    private function size(mixed $response): ?int
-    {
-        try {
-            return strlen($response->getContent());
-        } catch (\Throwable $e) {
-            return null;
-        }
     }
 }

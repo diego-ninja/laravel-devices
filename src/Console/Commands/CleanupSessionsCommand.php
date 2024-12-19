@@ -4,6 +4,7 @@ namespace Ninja\DeviceTracker\Console\Commands;
 
 use Carbon\Carbon;
 use Illuminate\Console\Command;
+use Illuminate\Database\Eloquent\Collection;
 use Ninja\DeviceTracker\Enums\SessionStatus;
 use Ninja\DeviceTracker\Models\Session;
 
@@ -15,7 +16,7 @@ final class CleanupSessionsCommand extends Command
 
     public function handle(): void
     {
-        $days = $this->option('days');
+        $days = (int) $this->option('days');
         $cutoffDate = Carbon::now()->subDays($days);
 
         // Delete old finished sessions
@@ -30,13 +31,14 @@ final class CleanupSessionsCommand extends Command
         if ($inactivitySeconds > 0) {
             $cutoffTime = Carbon::now()->subSeconds($inactivitySeconds);
 
+            /** @var Collection<int,Session> $inactiveSessions */
             $inactiveSessions = Session::where('status', SessionStatus::Active)
                 ->where('last_activity_at', '<', $cutoffTime)
                 ->get();
 
             foreach ($inactiveSessions as $session) {
                 if (config('devices.inactivity_session_behaviour') === 'terminate') {
-                    $session->end(true);
+                    $session->end();
                 } else {
                     $session->status = SessionStatus::Inactive;
                     $session->save();

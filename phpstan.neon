@@ -1,24 +1,23 @@
-includes:
-    - vendor/larastan/larastan/extension.neon
-
 parameters:
-    noModelMake: false
-    noUnnecessaryCollectionCall: false
-    checkModelProperties: true
-    checkOctaneCompatibility: true
-    noEnvCallsOutsideOfConfig: true
-    checkModelAppends: true
-
     paths:
         - src/
+        - helpers.php
+    excludePaths:
+        - src/Traits/
+    bootstrapFiles:
+        - vendor/autoload.php
+    level: 8
+    scanDirectories:
+        - src
+    universalObjectCratesClasses:
+        - Illuminate\Database\Eloquent\Model
+        - Illuminate\Support\Collection
+    ignoreErrors:
+        - '#Call to an undefined method Illuminate\\Contracts\\Auth\\Authenticatable::#'
+        - '#Access to an undefined property Illuminate\\Contracts\\Auth\\Authenticatable::#'
+    treatPhpDocTypesAsCertain: false
 
-    # Level 9 is the highest level
-    level: 5
-
-#    ignoreErrors:
-#        - '#PHPDoc tag @var#'
-#
-#    excludePaths:
-#        - ./*/*/FileToBeExcluded.php
-#
-#    checkMissingIterableValueType: false
+includes:
+    - vendor/phpstan/phpstan-deprecation-rules/rules.neon
+    - vendor/larastan/larastan/extension.neon
+    - vendor/nesbot/carbon/extension.neon

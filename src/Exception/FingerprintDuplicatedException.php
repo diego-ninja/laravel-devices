@@ -2,12 +2,13 @@
 
 namespace Ninja\DeviceTracker\Exception;
 
+use Exception;
 use Ninja\DeviceTracker\Models\Device;
 
-final class FingerprintDuplicatedException extends \Exception
+final class FingerprintDuplicatedException extends Exception
 {
-    public static function forFingerprint(string $fingerprint, Device $device): self
+    public static function forFingerprint(string $fingerprint, ?Device $device): self
     {
-        return new self(sprintf('Fingerprint %s is already associated with device %s', $fingerprint, $device->uuid));
+        return new self(sprintf('Fingerprint %s is already associated with device %s', $fingerprint, $device?->uuid));
     }
 }

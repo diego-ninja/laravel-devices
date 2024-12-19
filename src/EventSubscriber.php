@@ -4,6 +4,7 @@ namespace Ninja\DeviceTracker;
 
 use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
+use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Support\Facades\Config;
 use Ninja\DeviceTracker\Events\DeviceTrackedEvent;
@@ -13,7 +14,7 @@ use Ninja\DeviceTracker\Facades\SessionManager;
 use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Models\Session;
 
-final readonly class AuthenticationHandler
+final readonly class EventSubscriber
 {
     public function onLogin(Login $event): void
     {
@@ -29,7 +30,6 @@ final readonly class AuthenticationHandler
     public function onLogout(Logout $event): void
     {
         Session::current()?->end(
-            forgetSession: true,
             user: $event->user,
         );
     }
@@ -43,7 +43,7 @@ final readonly class AuthenticationHandler
 
     public function onDeviceTracked(DeviceTrackedEvent $event): void
     {
-        if (! config('devices.track_guest_sessions')) {
+        if (config('devices.track_guest_sessions') === false) {
             return;
         }
 
@@ -51,16 +51,16 @@ final readonly class AuthenticationHandler
             return;
         }
 
-        if (auth(Config::get('devices.auth_guard'))->user()) {
+        if (user() !== null) {
             DeviceManager::attach($event->deviceUuid);
         }
     }
 
     public function subscribe(Dispatcher $events): void
     {
-        $events->listen('Illuminate\Auth\Events\Login', 'Ninja\DeviceTracker\AuthenticationHandler@onLogin');
-        $events->listen('Illuminate\Auth\Events\Logout', 'Ninja\DeviceTracker\AuthenticationHandler@onLogout');
-        $events->listen('Ninja\DeviceTracker\Events\Google2FASuccess', 'Ninja\DeviceTracker\AuthenticationHandler@onGoogle2FASuccess');
-        $events->listen('Ninja\DeviceTracker\Events\DeviceTrackedEvent', 'Ninja\DeviceTracker\AuthenticationHandler@onDeviceTracked');
+        $events->listen('Illuminate\Auth\Events\Login', [self::class, 'onLogin']);
+        $events->listen('Illuminate\Auth\Events\Logout', [self::class, 'onLogout']);
+        $events->listen('Ninja\DeviceTracker\Events\Google2FASuccess', [self::class, 'onGoogle2FASuccess']);
+        $events->listen('Ninja\DeviceTracker\Events\DeviceTrackedEvent', [self::class, 'onDeviceTracked']);
     }
 }

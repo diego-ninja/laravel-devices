@@ -9,6 +9,6 @@ final class TwoFactorAuthenticationNotEnabled extends Exception
 {
     public static function forUser(Authenticatable $user): self
     {
-        return new self("Two factor authentication is not enabled for user `{$user->getAuthIdentifierName()}`.");
+        return new self(sprintf('Two factor authentication is not enabled for user %s', $user->getAuthIdentifier()));
     }
 }

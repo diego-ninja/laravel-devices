@@ -2,50 +2,72 @@
 
 namespace Ninja\DeviceTracker\Models\Relations;
 
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Foundation\Auth\User;
+use Illuminate\Support\Collection;
 use Ninja\DeviceTracker\Enums\SessionStatus;
+use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Models\Session;
 
+/**
+ * @extends HasMany<Session, Device|User>
+ *
+ * @phpstan-param Device|User $parent
+ */
 final class HasManySessions extends HasMany
 {
     public function first(): ?Session
     {
-        return $this
+        /** @var Session|null $session */
+        $session = $this
             ->with('device')
             ->orderBy('started_at')
             ->get()
             ->first();
+
+        return $session;
     }
 
     public function last(): ?Session
     {
-        return $this
+        /** @var Session|null $session */
+        $session = $this
             ->with('device')
             ->orderByDesc('started_at')
             ->get()
             ->first();
+
+        return $session;
     }
 
     public function current(): ?Session
     {
-        return $this
+        /** @var Session|null $session */
+        $session = $this
             ->with('device')
             ->where('uuid', session_uuid())
             ->get()
             ->first();
+
+        return $session;
     }
 
     public function recent(): ?Session
     {
-        return $this
+        /** @var Session|null $session */
+        $session = $this
             ->with('device')
             ->where('status', SessionStatus::Active->value)
             ->orderByDesc('last_activity_at')
             ->get()
             ->first();
+
+        return $session;
     }
 
+    /**
+     * @return Collection<int, Session>
+     */
     public function active(bool $exceptCurrent = false): Collection
     {
         $query = $this
@@ -54,7 +76,7 @@ final class HasManySessions extends HasMany
             ->where('status', SessionStatus::Active);
 
         if ($exceptCurrent) {
-            if (session_uuid()) {
+            if (session_uuid() !== null) {
                 $query->where('id', '!=', session_uuid());
             }
         }
@@ -62,6 +84,9 @@ final class HasManySessions extends HasMany
         return $query->get();
     }
 
+    /**
+     * @return Collection<int, Session>
+     */
     public function finished(): Collection
     {
         return $this
@@ -75,9 +100,11 @@ final class HasManySessions extends HasMany
     public function signout(bool $logoutCurrentSession = false): void
     {
         if ($logoutCurrentSession) {
-            $this->current()->end();
+            $this->current()?->end();
         }
 
-        $this->each(fn (Session $session) => $session->end());
+        $this->get()->each(function (Session $session) {
+            $session->end();
+        });
     }
 }

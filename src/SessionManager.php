@@ -8,11 +8,11 @@ use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Ninja\DeviceTracker\Contracts\StorableId;
+use Ninja\DeviceTracker\Enums\SessionTransport;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Exception\SessionNotFoundException;
 use Ninja\DeviceTracker\Facades\DeviceManager;
 use Ninja\DeviceTracker\Models\Session;
-use Ninja\DeviceTracker\Traits\HasDevices;
 
 final readonly class SessionManager
 {
@@ -34,6 +34,10 @@ final readonly class SessionManager
     public function start(): Session
     {
         $device = DeviceManager::current();
+        if (! $device) {
+            throw new DeviceNotFoundException('Device not found.');
+        }
+
         if ($device->hijacked()) {
             throw new DeviceNotFoundException('Device is flagged as hijacked.');
         }
@@ -41,35 +45,36 @@ final readonly class SessionManager
         return Session::start(device: $device);
     }
 
-    /**
-     * @throws SessionNotFoundException
-     */
-    public function end(?StorableId $sessionId = null, ?Authenticatable $user = null, bool $forgetSession = false): bool
+    public function end(?StorableId $sessionId = null, ?Authenticatable $user = null): bool
     {
+        $sessionId ??= session_uuid();
+
+        if ($sessionId === null) {
+            return false;
+        }
+
         $session = Session::byUuid($sessionId);
         if (! $session) {
             return false;
         }
 
         return $session->end(
-            forgetSession: $forgetSession,
             user: $user,
         );
     }
 
-    public function renew(Authenticatable $user): bool
+    public function renew(Authenticatable $user): ?bool
     {
-        return Session::current()->renew($user);
+        return Session::current()?->renew($user);
     }
 
-    public function restart(Request $request): bool
+    public function restart(Request $request): ?bool
     {
-        return Session::current()->restart($request);
+        return Session::current()?->restart($request);
     }
 
     /**
      * @throws DeviceNotFoundException
-     * @throws SessionNotFoundException
      */
     public function refresh(?Authenticatable $user = null): Session
     {
@@ -79,7 +84,7 @@ final readonly class SessionManager
         }
 
         if (Config::get('devices.start_new_session_on_login')) {
-            $current->end(true, $user);
+            $current->end($user);
 
             return $this->start();
         }
@@ -94,12 +99,7 @@ final readonly class SessionManager
      */
     public function inactive(?Authenticatable $user = null): bool
     {
-        $uses = in_array(HasDevices::class, class_uses($user));
-        if ($uses) {
-            return $user?->inactive() ?? false;
-        }
-
-        throw new Exception('Authenticatable instance must use HasDevices trait');
+        return $user?->inactive() ?? false;
     }
 
     /**
@@ -135,6 +135,7 @@ final readonly class SessionManager
     public function delete(): void
     {
         if (session_uuid() !== null) {
+            SessionTransport::forget();
             Session::destroy(session_uuid());
         }
     }

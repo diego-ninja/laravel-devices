@@ -6,6 +6,7 @@ use Ninja\DeviceTracker\Contracts\StorableId;
 use Ramsey\Uuid\Uuid;
 use Ramsey\Uuid\UuidInterface;
 
+/** @phpstan-consistent-constructor */
 abstract readonly class AbstractStorableId implements StorableId
 {
     protected UuidInterface $id;
@@ -30,7 +31,7 @@ abstract readonly class AbstractStorableId implements StorableId
         return $this->id->toString();
     }
 
-    public function equals(StorableId $other): bool
+    public function equals(AbstractStorableId $other): bool
     {
         return $this->id->equals($other->id);
     }

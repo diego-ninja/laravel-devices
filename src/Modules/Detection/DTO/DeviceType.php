@@ -1,27 +1,25 @@
 <?php
 
-namespace Ninja\DeviceTracker\DTO;
+namespace Ninja\DeviceTracker\Modules\Detection\DTO;
 
 use JsonSerializable;
+use Ninja\DeviceTracker\DTO\Device;
 use Stringable;
+use Zerotoprod\DataModel\DataModel;
 
-final readonly class DeviceType implements JsonSerializable, Stringable
+final class DeviceType implements JsonSerializable, Stringable
 {
-    public function __construct(
-        public string $family,
-        public string $model,
-        public string $type
-    ) {}
+    use DataModel;
 
-    public static function fromArray(array $data): self
-    {
-        return new self(
-            family: $data['family'],
-            model: $data['model'],
-            type: $data['type']
-        );
-    }
+    public string $family;
 
+    public string $model;
+
+    public string $type;
+
+    /**
+     * @return array<string, mixed>
+     */
     public function array(): array
     {
         return [
@@ -40,6 +38,9 @@ final readonly class DeviceType implements JsonSerializable, Stringable
             in_array($this->type, [Device::UNKNOWN, '', null], true);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function jsonSerialize(): array
     {
         return $this->array();
@@ -50,7 +51,7 @@ final readonly class DeviceType implements JsonSerializable, Stringable
         return sprintf('%s %s (%s)', $this->family, $this->model, $this->type);
     }
 
-    public function json(): string
+    public function json(): string|false
     {
         return json_encode($this->array());
     }

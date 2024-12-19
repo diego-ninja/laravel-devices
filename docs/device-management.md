@@ -162,10 +162,7 @@ if ($device->metadata->has('trusted')) {
 ### Custom Device Registration
 
 ```php
-use Ninja\DeviceTracker\DTO\Browser;
-use Ninja\DeviceTracker\DTO\Platform;
-use Ninja\DeviceTracker\DTO\DeviceType;
-use Ninja\DeviceTracker\DTO\Device as DeviceDTO;
+use Ninja\DeviceTracker\DTO\Device as DeviceDTO;use Ninja\DeviceTracker\Modules\Detection\DTO\Browser;use Ninja\DeviceTracker\Modules\Detection\DTO\DeviceType;use Ninja\DeviceTracker\Modules\Detection\DTO\Platform;
 
 // Create device data
 $deviceData = new DeviceDTO(

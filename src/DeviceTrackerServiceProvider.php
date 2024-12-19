@@ -39,7 +39,7 @@ class DeviceTrackerServiceProvider extends ServiceProvider
             $encrypter->disableFor(config('devices.client_fingerprint_key'));
         });
 
-        if (Config::get('devices.load_routes')) {
+        if (config('devices.load_routes') === true) {
             $this->loadRoutesFrom(__DIR__.'/../routes/devices.php');
         }
     }
@@ -109,16 +109,19 @@ class DeviceTrackerServiceProvider extends ServiceProvider
 
     private function registerMiddlewares(): void
     {
-        $router = $this->app['router'];
-        $router->aliasMiddleware('device-tracker', DeviceTracker::class);
-        $router->aliasMiddleware('session-tracker', SessionTracker::class);
+        try {
+            $router = $this->app->get('router');
+            $router->aliasMiddleware('device-tracker', DeviceTracker::class);
+            $router->aliasMiddleware('session-tracker', SessionTracker::class);
 
-        if (Config::get('devices.fingerprinting_enabled')) {
-            $router->aliasMiddleware('fingerprint-tracker', FingerprintTracker::class);
-        }
+            if (config('devices.fingerprinting_enabled') === true) {
+                $router->aliasMiddleware('fingerprint-tracker', FingerprintTracker::class);
+            }
 
-        if (Config::get('devices.event_tracking_enabled')) {
-            $router->aliasMiddleware('event-tracker', EventTracker::class);
+            if (config('devices.event_tracking_enabled') === true) {
+                $router->aliasMiddleware('event-tracker', EventTracker::class);
+            }
+        } catch (\Throwable $e) {
         }
     }
 
@@ -135,21 +138,23 @@ class DeviceTrackerServiceProvider extends ServiceProvider
 
     private function registerAuthenticationEventHandler(): void
     {
-        Event::subscribe(AuthenticationHandler::class);
+        Event::subscribe(EventSubscriber::class);
     }
 
     private function registerPublishing(): void
     {
         if ($this->app->runningInConsole()) {
             $this->publishes([
-                __DIR__.'/../resources/views' => resource_path('views/vendor/laravel-devices')], 'views');
+                __DIR__.'/../config/devices.php' => config_path('devices.php'),
+            ], 'laravel-devices-config');
 
             $this->publishes([
-                __DIR__.'/../config/devices.php' => config_path('devices.php')], 'config');
+                __DIR__.'/../resources/views' => $this->app->resourcePath('views/vendor/laravel-devices'),
+            ], 'laravel-devices-views');
 
             $this->publishesMigrations([
                 __DIR__.'/../database/migrations' => database_path('migrations'),
-            ], 'device-tracker-migrations');
+            ], 'laravel-devices-migrations');
         }
     }
 }

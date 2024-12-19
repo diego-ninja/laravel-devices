@@ -8,14 +8,23 @@ use JsonSerializable;
 
 final class Metadata implements JsonSerializable
 {
+    /**
+     * @var array<string, mixed>
+     */
     private array $data;
 
+    /**
+     * @param  array<string, mixed>  $data
+     */
     public function __construct(array $data = [])
     {
         $this->data = $data;
     }
 
-    public function __call($name, $arguments): mixed
+    /**
+     * @param  array<int, mixed>  $arguments
+     */
+    public function __call(string $name, array $arguments): mixed
     {
         $property = $this->underscorize(substr($name, 3));
 
@@ -84,6 +93,9 @@ final class Metadata implements JsonSerializable
         return $this->increment($key, -$amount);
     }
 
+    /**
+     * @param  array<string, mixed>|self  $data
+     */
     public function merge(array|self $data): self
     {
         if ($data instanceof self) {
@@ -95,11 +107,19 @@ final class Metadata implements JsonSerializable
         return $this;
     }
 
+    /**
+     * @param  array<string>  $keys
+     * @return array<string, mixed>
+     */
     public function only(array $keys): array
     {
         return Arr::only($this->data, $keys);
     }
 
+    /**
+     * @param  array<string>  $keys
+     * @return array<string, mixed>
+     */
     public function except(array $keys): array
     {
         return Arr::except($this->data, $keys);
@@ -119,21 +139,30 @@ final class Metadata implements JsonSerializable
         return $this;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function array(): array
     {
         return $this->data;
     }
 
-    public function json(): string
+    public function json(): string|false
     {
         return json_encode($this->data);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function jsonSerialize(): array
     {
         return $this->array();
     }
 
+    /**
+     * @param  array<string, mixed>  $data
+     */
     public static function from(array $data): self
     {
         return new self($data);
@@ -141,7 +170,7 @@ final class Metadata implements JsonSerializable
 
     public function empty(): bool
     {
-        return empty($this->data);
+        return count($this->data) === 0;
     }
 
     public function count(): int
@@ -149,19 +178,20 @@ final class Metadata implements JsonSerializable
         return count($this->data);
     }
 
+    /**
+     * @return array<string>
+     */
     public function keys(): array
     {
         return array_keys($this->data);
     }
 
+    /**
+     * @return array<mixed>
+     */
     public function values(): array
     {
         return array_values($this->data);
-    }
-
-    private function camelize(string $str): string
-    {
-        return str($str)->camel()->ucfirst();
     }
 
     private function underscorize(string $str): string
@@ -169,22 +199,22 @@ final class Metadata implements JsonSerializable
         return str($str)->lower()->snake();
     }
 
-    public function offsetExists($offset): bool
+    public function offsetExists(string $offset): bool
     {
         return $this->has($offset);
     }
 
-    public function offsetGet($offset): mixed
+    public function offsetGet(string $offset): mixed
     {
         return $this->get($offset);
     }
 
-    public function offsetSet($offset, $value): void
+    public function offsetSet(string $offset, mixed $value): void
     {
         $this->set($offset, $value);
     }
 
-    public function offsetUnset($offset): void
+    public function offsetUnset(string $offset): void
     {
         $this->forget($offset);
     }

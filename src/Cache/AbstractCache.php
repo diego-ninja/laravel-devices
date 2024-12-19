@@ -2,6 +2,7 @@
 
 namespace Ninja\DeviceTracker\Cache;
 
+use Closure;
 use Illuminate\Contracts\Cache\Repository;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
@@ -9,8 +10,12 @@ use Ninja\DeviceTracker\Contracts\Cacheable;
 use Ninja\DeviceTracker\Models\Device;
 use Psr\SimpleCache\InvalidArgumentException;
 
+/** @phpstan-consistent-constructor */
 abstract class AbstractCache
 {
+    public const KEY_PREFIX = '';
+
+    /** @var static[] */
     protected static array $instances = [];
 
     protected ?Repository $cache = null;
@@ -21,7 +26,9 @@ abstract class AbstractCache
             return;
         }
 
-        $this->cache = Cache::store(Config::get('devices.cache_store'));
+        /** @var string $store */
+        $store = config('devices.cache_store');
+        $this->cache = Cache::store($store);
     }
 
     public static function instance(): self
@@ -46,18 +53,18 @@ abstract class AbstractCache
         self::instance()->putItem($item);
     }
 
-    public static function remember(string $key, callable $callback): mixed
+    public static function remember(string $key, Closure $callback): mixed
     {
         if (! self::instance()->enabled()) {
             return $callback();
         }
 
-        return self::instance()->cache->remember($key, self::instance()->ttl(), $callback);
+        return self::instance()->cache?->remember($key, self::instance()->ttl(), $callback);
     }
 
     public static function key(string $key): string
     {
-        return static::KEY_PREFIX.':'.hash('xxh128', $key);
+        return sprintf("%s:%s", static::KEY_PREFIX, hash('xxh128', $key));
     }
 
     public static function forget(Cacheable $item): void
@@ -71,7 +78,9 @@ abstract class AbstractCache
             return;
         }
 
-        self::instance()->cache->flush();
+        if (! is_null(self::instance()->cache) && method_exists(self::instance()->cache, 'flush')) {
+            self::instance()->cache->flush();
+        }
     }
 
     /**
@@ -83,7 +92,7 @@ abstract class AbstractCache
             return null;
         }
 
-        return $this->cache->get($key);
+        return $this->cache?->get($key);
     }
 
     protected function putItem(Cacheable $item): void
@@ -92,7 +101,7 @@ abstract class AbstractCache
             return;
         }
 
-        $this->cache->put($item->key(), $item, $item->ttl() ?? $this->ttl());
+        $this->cache?->put($item->key(), $item, $item->ttl() ?? $this->ttl());
     }
 
     protected function forgetItem(Cacheable $item): void
@@ -101,7 +110,7 @@ abstract class AbstractCache
             return;
         }
 
-        $this->cache->forget($item->key());
+        $this->cache?->forget($item->key());
     }
 
     protected function ttl(): int

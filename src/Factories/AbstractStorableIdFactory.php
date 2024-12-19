@@ -4,8 +4,10 @@ namespace Ninja\DeviceTracker\Factories;
 
 use Ninja\DeviceTracker\Contracts\StorableId;
 
+/** @phpstan-consistent-constructor */
 abstract class AbstractStorableIdFactory
 {
+    /** @var array<class-string<AbstractStorableIdFactory>, AbstractStorableIdFactory> */
     protected static array $instances = [];
 
     private function __construct() {}

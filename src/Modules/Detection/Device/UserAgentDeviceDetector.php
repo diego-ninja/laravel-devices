@@ -8,14 +8,13 @@ use DeviceDetector\Parser\AbstractParser;
 use DeviceDetector\Parser\Device\AbstractDeviceParser;
 use Illuminate\Http\Request;
 use Ninja\DeviceTracker\Cache\UserAgentCache;
-use Ninja\DeviceTracker\DTO\Browser;
 use Ninja\DeviceTracker\DTO\Device;
-use Ninja\DeviceTracker\DTO\DeviceType;
-use Ninja\DeviceTracker\DTO\Platform;
-use Ninja\DeviceTracker\DTO\Version;
 use Ninja\DeviceTracker\Modules\Detection\Contracts;
+use Ninja\DeviceTracker\Modules\Detection\DTO\Browser;
+use Ninja\DeviceTracker\Modules\Detection\DTO\DeviceType;
+use Ninja\DeviceTracker\Modules\Detection\DTO\Platform;
 
-final readonly class UserAgentDeviceDetector implements Contracts\DeviceDetector
+final class UserAgentDeviceDetector implements Contracts\DeviceDetector
 {
     private DeviceDetector $dd;
 
@@ -24,60 +23,62 @@ final readonly class UserAgentDeviceDetector implements Contracts\DeviceDetector
         AbstractDeviceParser::setVersionTruncation(AbstractParser::VERSION_TRUNCATION_PATCH);
     }
 
-    public function detect(Request $request): ?Device
+    public function detect(Request|string $request): ?Device
     {
-        $ua = $request->header('User-Agent', $this->fakeUA());
+        $ua = is_string($request) ? $request : $request->header('User-Agent', $this->fakeUA());
+        if ($ua === null) {
+            return null;
+        }
+
+        if (! is_string($ua)) {
+            return null;
+        }
+
         $key = UserAgentCache::key($ua);
 
         $this->dd = new DeviceDetector(
-            userAgent: $request->header('User-Agent', $ua),
+            userAgent: $ua,
             clientHints: ClientHints::factory($_SERVER)
         );
 
         $this->dd->parse();
 
-        if ($this->dd->isBot() && ! config('devices.allow_bot_devices')) {
+        if ($this->dd->isBot() === true && config('devices.allow_bot_devices') === false) {
             return null;
         }
 
         return UserAgentCache::remember($key, function () {
-            return new Device(
-                browser: $this->browser(),
-                platform: $this->platform(),
-                device: $this->device(),
-                grade: null,
-                userAgent: $this->dd->getUserAgent()
-            );
+            return Device::from([
+                'browser' => $this->browser(),
+                'platform' => $this->platform(),
+                'device' => $this->device(),
+                'grade' => null,
+                'source' => $this->dd->getUserAgent(),
+            ]);
         });
     }
 
     private function browser(): Browser
     {
-        return new Browser(
-            name: $this->dd->getClient('name'),
-            version: Version::fromString($this->dd->getClient('version')),
-            family: $this->dd->getClient('family'),
-            engine: $this->dd->getClient('engine'),
-            type: $this->dd->getClient('type')
+        return Browser::from(
+            $this->dd->getClient()
         );
     }
 
     private function platform(): Platform
     {
-        return new Platform(
-            name: $this->dd->getOs('name'),
-            version: Version::fromString($this->dd->getOs('version')),
-            family: $this->dd->getOs('family')
+        return Platform::from(
+            $this->dd->getOs()
         );
     }
 
     private function device(): DeviceType
     {
-        return new DeviceType(
-            family: $this->dd->getBrandName(),
-            model: $this->dd->getModel(),
-            type: $this->dd->getDeviceName()
-        );
+        return DeviceType::from([
+            'family' => $this->dd->getBrandName(),
+            'model' => $this->dd->getModel(),
+            'type' => $this->dd->getDeviceName(),
+        ]);
     }
 
     private function fakeUA(): string

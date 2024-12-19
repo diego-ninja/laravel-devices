@@ -9,40 +9,41 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
+use Ninja\DeviceTracker\Enums\SessionStatus;
 use Ninja\DeviceTracker\Enums\SessionTransport;
+use Ninja\DeviceTracker\Models\Session;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 
 final readonly class SessionTracker
 {
     public function __construct(protected Guard $auth) {}
 
-    public function handle(Request $request, Closure $next)
+    public function handle(Request $request, Closure $next): mixed
     {
         $device = device();
-        if (! $device) {
+        if ($device === null) {
             return $next($request);
         }
 
         $session = $device->sessions()->current() ?? $device->sessions()->recent();
 
-        if ($session) {
+        if ($session !== null) {
             if ($session->locked()) {
                 return $this->manageLock($request);
             }
 
             if ($session->blocked()) {
-                return $this->manageLogout($request);
+                return $this->manageLogout($request, $session);
             }
 
             if ($session->finished()) {
-                return $this->manageLogout($request);
+                return $this->manageLogout($request, $session);
             }
 
             if ($session->inactive()) {
-                return $this->manageInactivity($request, $next);
+                return $this->manageInactivity($request, $session, $next);
             }
 
             $session->restart($request);
@@ -53,34 +54,40 @@ final readonly class SessionTracker
         return $next($request);
     }
 
-    private function manageLogout(Request $request): JsonResponse|RedirectResponse
+    private function manageLogout(Request $request, Session $session): JsonResponse|RedirectResponse
     {
-        $guard = Config::get('devices.auth_guard');
-        if ($request->ajax() || ! Config::get('devices.use_redirects')) {
-            if (Auth::guard($guard)->check()) {
-                Auth::guard($guard)->logout();
+        $user = user();
+        $guard = guard();
 
-                event(new Logout($guard, Auth::user()));
+        if ($user === null) {
+            $session->end();
+        } else {
+            $guard::logout();
+            $session->end(user: $user);
+
+            event(new Logout(config('devices.auth_guard'), $user));
+        }
+
+        if ($request->ajax() || config('devices.use_redirects') === false) {
+            return response()->json(['message' => 'Unauthorized'], config('devices.logout_http_code', 403));
+        } else {
+            try {
+                return redirect()->route(Config::get('devices.login_route_name'));
+            } catch (RouteNotFoundException $e) {
+                Log::error('Route not found', ['route' => Config::get('devices.login_route_name'), 'exception' => $e]);
             }
-
-            SessionTransport::forget();
-
-            return response()->json(['message' => 'Unauthorized'], 401);
         }
 
-        try {
-            return redirect()->route(Config::get('devices.logout_route_name'));
-        } catch (RouteNotFoundException $e) {
-            Log::error('Route not found', ['route' => Config::get('devices.logout_route_name'), 'exception' => $e]);
-        }
-
-        return response()->json(['message' => 'Unauthorized'], 401);
+        return response()->json(['message' => 'Unauthorized'], config('devices.logout_http_code', 403));
     }
 
-    private function manageInactivity(Request $request, Closure $next): JsonResponse|RedirectResponse|Response
+    private function manageInactivity(Request $request, Session $session, Closure $next): JsonResponse|RedirectResponse|Response
     {
         if (Config::get('devices.inactivity_session_behaviour') === 'terminate') {
-            return $this->manageLogout($request);
+            return $this->manageLogout($request, $session);
+        } else {
+            $session->status = SessionStatus::Inactive;
+            $session->save();
         }
 
         return $next($request);
@@ -88,8 +95,8 @@ final readonly class SessionTracker
 
     private function manageLock(Request $request): JsonResponse|RedirectResponse
     {
-        if ($request->ajax() || ! Config::get('devices.use_redirects')) {
-            return response()->json(['message' => 'Session locked'], 423);
+        if ($request->ajax() || config('devices.use_redirects') === false) {
+            return response()->json(['message' => 'Session locked'], config('devices.lock_http_code', 403));
         }
 
         try {
@@ -98,6 +105,6 @@ final readonly class SessionTracker
             Log::error('Route not found', ['route' => Config::get('devices.2fa_route_name'), 'exception' => $e]);
         }
 
-        return response()->json(['message' => 'Session locked'], 423);
+        return response()->json(['message' => 'Session locked'], config('devices.lock_http_code', 403));
     }
 }

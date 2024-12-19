@@ -29,6 +29,10 @@ trait CanTransport
 
         $current = self::current();
 
+        if ($current === null) {
+            return $response;
+        }
+
         $callable = match ($current) {
             self::Cookie => function () use ($response, $current, $id): mixed {
                 $response->withCookie(
@@ -60,11 +64,16 @@ trait CanTransport
     public static function propagate(?StorableId $id = null): Request
     {
         $current = self::current();
+
+        if ($current === null) {
+            return request();
+        }
+
         $id = $id ?? $current->get();
 
         $requestParameter = self::DEFAULT_REQUEST_PARAMETER;
 
-        return request()->merge([$requestParameter => (string) $id ?? $current->get()->toString()]);
+        return request()->merge([$requestParameter => (string) $id]);
     }
 
     private static function isValidResponse(mixed $response): bool
@@ -74,6 +83,6 @@ trait CanTransport
             JsonResponse::class,
         ];
 
-        return in_array(get_class($response), $valid);
+        return in_array(get_class($response), $valid, true);
     }
 }

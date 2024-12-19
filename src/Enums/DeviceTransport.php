@@ -17,7 +17,7 @@ enum DeviceTransport: string
     case Header = 'header';
     case Session = 'session';
 
-    public static function current(): self
+    public static function current(): ?self
     {
         $config = config('devices.device_id_transport', self::Cookie->value);
 
@@ -31,21 +31,57 @@ enum DeviceTransport: string
 
     private function fromCookie(): ?StorableId
     {
-        return Cookie::has($this->parameter()) ? DeviceIdFactory::from(Cookie::get($this->parameter())) : null;
+        $value = Cookie::get($this->parameter());
+        if ($value === null) {
+            return null;
+        }
+
+        if (! is_string($value)) {
+            return null;
+        }
+
+        return DeviceIdFactory::from($value);
     }
 
     private function fromHeader(): ?StorableId
     {
-        return request()->hasHeader($this->parameter()) ? DeviceIdFactory::from(request()->header($this->parameter())) : null;
+        $value = request()->header($this->parameter());
+        if ($value === null) {
+            return null;
+        }
+
+        if (! is_string($value)) {
+            return null;
+        }
+
+        return DeviceIdFactory::from($value);
     }
 
     private function fromSession(): ?StorableId
     {
-        return Session::has($this->parameter()) ? DeviceIdFactory::from(Session::get($this->parameter())) : null;
+        $value = Session::get($this->parameter());
+        if ($value === null) {
+            return null;
+        }
+
+        if (! is_string($value)) {
+            return null;
+        }
+
+        return DeviceIdFactory::from($value);
     }
 
     private function fromRequest(): ?StorableId
     {
-        return request()->has(self::DEFAULT_REQUEST_PARAMETER) ? DeviceIdFactory::from(request()->input(self::DEFAULT_REQUEST_PARAMETER)) : null;
+        $value = request()->input(self::DEFAULT_REQUEST_PARAMETER);
+        if ($value === null) {
+            return null;
+        }
+
+        if (! is_string($value)) {
+            return null;
+        }
+
+        return DeviceIdFactory::from($value);
     }
 }

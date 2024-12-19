@@ -3,16 +3,19 @@
 namespace Ninja\DeviceTracker\Models;
 
 use Carbon\Carbon;
+use Closure;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Ninja\DeviceTracker\Cache\DeviceCache;
 use Ninja\DeviceTracker\Contracts\Cacheable;
 use Ninja\DeviceTracker\Contracts\StorableId;
@@ -30,7 +33,6 @@ use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Exception\FingerprintDuplicatedException;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Models\Relations\HasManySessions;
-use Ninja\DeviceTracker\Modules\Security\DTO\Risk;
 use Ninja\DeviceTracker\Modules\Tracking\Models\Event;
 use Ninja\DeviceTracker\Modules\Tracking\Models\Relations\HasManyEvents;
 use Ninja\DeviceTracker\Traits\PropertyProxy;
@@ -41,7 +43,7 @@ use PDOException;
  *
  *
  * @mixin \Illuminate\Database\Query\Builder
- * @mixin \Illuminate\Database\Eloquent\Builder
+ * @mixin Builder<Device>
  *
  * @property int $id unsigned int
  * @property StorableId $uuid string
@@ -60,19 +62,29 @@ use PDOException;
  * @property string $grade string
  * @property string $source string
  * @property string $ip string
- * @property Risk $risk json
  * @property Metadata $metadata json
  * @property Carbon $created_at datetime
  * @property Carbon $updated_at datetime
  * @property Carbon $verified_at datetime
  * @property Carbon $hijacked_at datetime
  * @property Carbon $risk_assessed_at datetime
+ * @property-read Collection<int, Session> $sessions
+ * @property-read Collection<int, Event> $events
+ * @property-read Collection<int, User> $users
  */
 class Device extends Model implements Cacheable
 {
     use PropertyProxy;
 
     protected $table = 'devices';
+
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'verified_at' => 'datetime',
+        'hijacked_at' => 'datetime',
+        'risk_assessed_at' => 'datetime',
+    ];
 
     protected $fillable = [
         'uuid',
@@ -117,13 +129,19 @@ class Device extends Model implements Cacheable
         );
     }
 
+    /**
+     * @return BelongsToMany<User, $this>
+     */
     public function users(): BelongsToMany
     {
-        $table = sprintf('%s_devices', str(\config('devices.authenticatable_table'))->singular());
-        $field = sprintf('%s_id', str(\config('devices.authenticatable_table'))->singular());
+        $table = sprintf('%s_devices', Str::singular(config('devices.authenticatable_table')));
+        $field = sprintf('%s_id', Str::singular(config('devices.authenticatable_table')));
+
+        /** @var class-string<User> $authenticatable */
+        $authenticatable = Config::get('devices.authenticatable_class', User::class);
 
         return $this->belongsToMany(
-            related: Config::get('devices.authenticatable_class'),
+            related: $authenticatable,
             table: $table,
             foreignPivotKey: 'device_uuid',
             relatedPivotKey: $field,
@@ -132,6 +150,9 @@ class Device extends Model implements Cacheable
         )->withTimestamps();
     }
 
+    /**
+     * @return Attribute<Closure, Closure>
+     */
     public function uuid(): Attribute
     {
         return Attribute::make(
@@ -140,33 +161,31 @@ class Device extends Model implements Cacheable
         );
     }
 
+    /**
+     * @return Attribute<Closure, Closure>
+     */
     public function status(): Attribute
     {
         return Attribute::make(
-            get: fn (?string $value) => $value ? DeviceStatus::from($value) : DeviceStatus::Unverified,
+            get: fn (?string $value) => $value !== null ? DeviceStatus::from($value) : DeviceStatus::Unverified,
             set: fn (DeviceStatus $value) => $value->value
         );
     }
 
-    public function risk(): Attribute
-    {
-        return Attribute::make(
-            get: fn (?string $value) => $value ? Risk::from($value) : Risk::default(),
-            set: fn (Risk $value) => $value->json()
-        );
-    }
-
+    /**
+     * @return Attribute<Closure, Closure>
+     */
     public function metadata(): Attribute
     {
         return Attribute::make(
-            get: fn (?string $value) => $value ? Metadata::from(json_decode($value, true)) : new Metadata([]),
+            get: fn (?string $value) => $value !== null ? Metadata::from(json_decode($value, true)) : new Metadata([]),
             set: fn (Metadata $value) => $value->json()
         );
     }
 
     public function isCurrent(): bool
     {
-        return $this->uuid->toString() === device_uuid()?->toString();
+        return (string) $this->uuid === (string) device_uuid();
     }
 
     /**
@@ -177,7 +196,7 @@ class Device extends Model implements Cacheable
         try {
             $this->fingerprint = $fingerprint;
             if ($this->save()) {
-                if ($cookie) {
+                if ($cookie !== null) {
                     if (! Cookie::has($cookie)) {
                         Cookie::queue(
                             Cookie::forever(
@@ -191,7 +210,7 @@ class Device extends Model implements Cacheable
                 }
                 event(new DeviceFingerprintedEvent($this));
             }
-        } catch (PDOException $exception) {
+        } catch (PDOException) {
             throw FingerprintDuplicatedException::forFingerprint($fingerprint, Device::byFingerprint($fingerprint));
         }
     }
@@ -203,41 +222,68 @@ class Device extends Model implements Cacheable
 
     public function verify(?Authenticatable $user = null): void
     {
-        $user = $user ?? Auth::user();
+        if ($this->status === DeviceStatus::Verified) {
+            return;
+        }
 
-        $this->users()->updateExistingPivot($user->id, [
+        $user = $user ?? user();
+
+        $this->users()->updateExistingPivot($user?->getAuthIdentifier(), [
             'device_uuid' => $this->uuid,
             'status' => DeviceStatus::Verified,
             'verified_at' => now(),
         ]);
 
-        $this->sessions()
+        $this->sessions
             ->where('status', SessionStatus::Locked)
-            ->where('expires_at', '>', now())
-            ->where('user_id', $user->id)
-            ->get()
-            ->each(fn (Session $session) => $session->unlock());
+            ->where('user_id', $user?->getAuthIdentifier())
+            ->each(function (Session $session) {
+                $session->unlock();
+            });
+
+        $status = $this->verifiedStatus();
+        $this->status = $status;
+
+        if ($status === DeviceStatus::Verified) {
+            $this->verified_at = now();
+        }
 
         if ($this->save()) {
             event(new DeviceVerifiedEvent($this, $user));
         }
     }
 
+    public function verifiedStatus(): DeviceStatus
+    {
+        $status = DeviceStatus::Unverified;
+        $this->users()->each(function ($user) use (&$status) {
+            if ($user->pivot->status === DeviceStatus::Verified) {
+                $status = DeviceStatus::PartiallyVerified;
+            } elseif ($user->pivot->status === DeviceStatus::Unverified && $status !== DeviceStatus::PartiallyVerified) {
+                $status = DeviceStatus::Unverified;
+            } else {
+                $status = DeviceStatus::Verified;
+            }
+        });
+
+        return $status;
+    }
+
     public function verified(?Authenticatable $user = null): bool
     {
-        $user = $user ?? Auth::user();
-        $deviceUser = $this->users()->where('user_id', $user->id)->first();
+        $user = $user ?? user();
+        $deviceUser = $this->users()::where('user_id', $user?->getAuthIdentifier())->first();
 
-        return $deviceUser && $this->status === $deviceUser->pivot->status;
+        return $deviceUser !== null && $this->status === $deviceUser->pivot->status;
     }
 
     public function hijack(?Authenticatable $user = null): void
     {
-        $user = $user ?? Auth::user();
+        $user = $user ?? user();
 
         $this->hijacked_at = now();
 
-        $this->users()->updateExistingPivot($user->id, [
+        $this->users()->updateExistingPivot($user?->getAuthIdentifier(), [
             'status' => DeviceStatus::Hijacked,
         ]);
 
@@ -255,9 +301,9 @@ class Device extends Model implements Cacheable
         return $this->hijacked_at !== null;
     }
 
-    public function forget(): bool
+    public function forget(): ?bool
     {
-        $this->sessions()->active()->each(fn (Session $session) => $session->end(forgetSession: true));
+        $this->sessions()->active()->each(fn (Session $session) => $session->end());
 
         return $this->delete();
     }
@@ -294,12 +340,14 @@ class Device extends Model implements Cacheable
         DeviceDTO $data
     ): ?self {
         $device = self::byUuid($deviceUuid, false);
-        if ($device) {
+        if ($device !== null) {
             return $device;
         }
 
         try {
-            $device = self::create([
+            $device = self::firstOrCreate([
+                'uuid' => $deviceUuid,
+            ], [
                 'uuid' => $deviceUuid,
                 'fingerprint' => fingerprint(),
                 'browser' => $data->browser->name,
@@ -315,14 +363,15 @@ class Device extends Model implements Cacheable
                 'grade' => $data->grade,
                 'ip' => request()->ip(),
                 'metadata' => new Metadata([]),
-                'source' => $data->userAgent,
+                'source' => $data->source,
             ]);
 
-            if ($device) {
+            /** @var Device $device */
+            if ($device !== null) {
                 return $device;
             }
         } catch (PDOException $e) {
-            \Log::warning(sprintf('Unable to create device for UUID: %s (%s)', $deviceUuid, $e->getMessage()));
+            Log::warning(sprintf('Unable to create device for UUID: %s (%s)', $deviceUuid, $e->getMessage()));
 
             return null;
         }
@@ -337,12 +386,15 @@ class Device extends Model implements Cacheable
         }
 
         if (! $cached) {
-            return self::where('uuid', $uuid->toString())->first();
+            /** @var Device|null $device */
+            $device = self::where('uuid', (string) $uuid)->first();
+
+            return $device;
         }
 
         return DeviceCache::remember(
             key: DeviceCache::key($uuid),
-            callback: fn () => self::where('uuid', $uuid->toString())->first()
+            callback: fn () => self::byUuid($uuid, false)
         );
     }
 
@@ -357,7 +409,10 @@ class Device extends Model implements Cacheable
     public static function byFingerprint(string $fingerprint, bool $cached = true): ?self
     {
         if (! $cached) {
-            return self::where('fingerprint', $fingerprint)->first();
+            /** @var Device|null $device */
+            $device = self::where('fingerprint', $fingerprint)->first();
+
+            return $device;
         }
 
         return DeviceCache::remember(
@@ -368,11 +423,17 @@ class Device extends Model implements Cacheable
 
     public static function current(): ?self
     {
-        if (Config::get('devices.fingerprinting_enabled')) {
-            return self::byFingerprint(fingerprint());
+        if (config('devices.fingerprinting_enabled') === true) {
+            if (fingerprint() !== null) {
+                return self::byFingerprint(fingerprint());
+            }
         }
 
-        return self::byUuid(device_uuid());
+        if (device_uuid() !== null) {
+            return self::byUuid(device_uuid());
+        }
+
+        return null;
     }
 
     public static function exists(StorableId|string $id): bool
@@ -384,18 +445,16 @@ class Device extends Model implements Cacheable
         return self::byUuid($id, false) !== null;
     }
 
-    public static function byStatus(): Collection
-    {
-        return self::query()
-            ->select('status', DB::raw('count(*) as total'))
-            ->groupBy('status')
-            ->pluck('total', 'status');
-    }
-
-    public static function orphans(): Builder
+    /**
+     * @return Collection<int, Device>
+     */
+    public static function orphans(): Collection
     {
         return self::doesntHave('users')
-            ->doesntHave('sessions');
+            ->doesntHave('sessions')
+            ->where('status', DeviceStatus::Unverified)
+            ->where('created_at', '<', now()->subSeconds(config('devices.orphan_retention_period')))
+            ->get();
     }
 
     public static function boot(): void

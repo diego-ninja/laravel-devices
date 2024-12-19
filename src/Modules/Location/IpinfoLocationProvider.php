@@ -19,7 +19,13 @@ final class IpinfoLocationProvider extends AbstractLocationProvider implements L
         $this->location = LocationCache::remember($key, function () use ($ip) {
             try {
                 $url = sprintf(self::API_URL, $ip);
-                $locationData = json_decode(file_get_contents($url), true);
+                $data = file_get_contents($url);
+
+                if ($data === false) {
+                    throw new Exception('Failed to fetch location data');
+                }
+
+                $locationData = json_decode($data, true);
 
                 [$lat, $long] = explode(',', $locationData['loc']);
 

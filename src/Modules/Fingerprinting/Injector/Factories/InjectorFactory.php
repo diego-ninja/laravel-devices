@@ -10,6 +10,9 @@ use Ninja\DeviceTracker\Modules\Fingerprinting\Injector\FingerprintJSInjector;
 
 final class InjectorFactory
 {
+    /**
+     * @var array<class-string<Injector>>
+     */
     private static array $injectors = [
         FingerprintJSInjector::class,
         ClientJSInjector::class,
@@ -18,7 +21,8 @@ final class InjectorFactory
     public static function make(Library $library): Injector
     {
         foreach (self::$injectors as $injectorClass) {
-            if ($injectorClass::library() === $library) {
+            $injector = new $injectorClass;
+            if ($injector->library() === $library) {
                 return new $injectorClass;
             }
         }

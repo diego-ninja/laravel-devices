@@ -9,14 +9,14 @@ final class AjaxRequestDetector extends AbstractRequestDetector
 {
     protected const PRIORITY = 70;
 
-    public function supports(Request $request, $response): bool
+    public function supports(Request $request, mixed $response): bool
     {
         return $request->ajax() ||
             $request->hasHeader('X-Requested-With') &&
             ! $request->hasHeader('X-Livewire');
     }
 
-    public function detect(Request $request, $response): ?EventType
+    public function detect(Request $request, mixed $response): EventType
     {
         return $request->isMethod('POST') ? EventType::Submit : EventType::Click;
     }

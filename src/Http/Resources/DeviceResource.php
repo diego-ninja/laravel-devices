@@ -4,10 +4,10 @@ namespace Ninja\DeviceTracker\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Ninja\DeviceTracker\DTO\Browser;
-use Ninja\DeviceTracker\DTO\Platform;
 use Ninja\DeviceTracker\Enums\DeviceStatus;
 use Ninja\DeviceTracker\Models\Device;
+use Ninja\DeviceTracker\Modules\Detection\DTO\Browser;
+use Ninja\DeviceTracker\Modules\Detection\DTO\Platform;
 
 /**
  * @property Device $resource
@@ -16,10 +16,13 @@ use Ninja\DeviceTracker\Models\Device;
  */
 final class DeviceResource extends JsonResource
 {
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(Request $request): array
     {
         return [
-            'uuid' => $this->resource->uuid->toString(),
+            'uuid' => (string) $this->resource->uuid,
             'fingerprint' => $this->whenNotNull($this->resource->fingerprint),
             'status' => $this->resource->status,
             'verified_at' => $this->when($this->resource->status === DeviceStatus::Verified, $this->resource->verified_at),
@@ -35,9 +38,12 @@ final class DeviceResource extends JsonResource
         ];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function browser(Device $device): array
     {
-        return Browser::fromArray([
+        return Browser::from([
             'name' => $device->browser,
             'version' => $device->browser_version,
             'family' => $device->browser_family,
@@ -45,15 +51,21 @@ final class DeviceResource extends JsonResource
         ])->array();
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function platform(Device $device): array
     {
-        return Platform::fromArray([
+        return Platform::from([
             'name' => $device->platform,
             'version' => $device->platform_version,
             'family' => $device->platform_family,
         ])->array();
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function device(Device $device): array
     {
         return [

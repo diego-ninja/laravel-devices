@@ -17,7 +17,7 @@ enum SessionTransport: string
     case Header = 'header';
     case Session = 'session';
 
-    public static function current(): self
+    public static function current(): ?self
     {
         $config = config('devices.session_id_transport', self::Cookie->value);
 
@@ -26,10 +26,15 @@ enum SessionTransport: string
 
     public static function forget(): void
     {
-        match (self::current()) {
-            self::Cookie => Cookie::queue(Cookie::forget(self::current()->parameter())),
+        $current = self::current();
+        if ($current === null) {
+            return;
+        }
+
+        match ($current) {
+            self::Cookie => Cookie::queue(Cookie::forget($current->parameter())),
             self::Header => null,
-            self::Session => Session::forget(self::current()->parameter()),
+            self::Session => Session::forget($current->parameter()),
         };
     }
 
@@ -40,22 +45,57 @@ enum SessionTransport: string
 
     private function fromCookie(): ?StorableId
     {
-        return Cookie::has($this->parameter()) ? SessionIdFactory::from(Cookie::get($this->parameter())) : null;
+        $value = Cookie::get($this->parameter());
+        if ($value === null) {
+            return null;
+        }
+
+        if (! is_string($value)) {
+            return null;
+        }
+
+        return SessionIdFactory::from($value);
     }
 
     private function fromHeader(): ?StorableId
     {
-        return request()->hasHeader($this->parameter()) ? SessionIdFactory::from(request()->header($this->parameter())) : null;
+        $value = request()->header($this->parameter());
+        if ($value === null) {
+            return null;
+        }
+
+        if (! is_string($value)) {
+            return null;
+        }
+
+        return SessionIdFactory::from($value);
     }
 
     private function fromSession(): ?StorableId
     {
+        $value = Session::get($this->parameter());
+        if ($value === null) {
+            return null;
+        }
 
-        return Session::has($this->parameter()) ? SessionIdFactory::from(Session::get($this->parameter())) : null;
+        if (! is_string($value)) {
+            return null;
+        }
+
+        return SessionIdFactory::from($value);
     }
 
     private function fromRequest(): ?StorableId
     {
-        return request()->has(self::DEFAULT_REQUEST_PARAMETER) ? SessionIdFactory::from(request()->input(self::DEFAULT_REQUEST_PARAMETER)) : null;
+        $value = request()->input(self::DEFAULT_REQUEST_PARAMETER);
+        if ($value === null) {
+            return null;
+        }
+
+        if (! is_string($value)) {
+            return null;
+        }
+
+        return SessionIdFactory::from($value);
     }
 }

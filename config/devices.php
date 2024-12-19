@@ -158,7 +158,7 @@ return [
     | when they are requested,(e.g. poller requests and chat requests)
     |
     | The format is:
-    | 'ignore_refresh' => [
+    | 'ignore_restart' => [
     |   array('method'=>'get', 'route'=>'route.name'),
     |   array('method'=>'post','route'=>'route/uri/{param}')
     | ],
@@ -175,7 +175,7 @@ return [
     | the session is considered inactive or idle. Set to zero to disable this feature.
     |
     */
-    'inactivity_seconds' => 0,
+    'inactivity_seconds' => 1200,
 
     /*
     |--------------------------------------------------------------------------
@@ -189,6 +189,16 @@ return [
     |
     */
     'inactivity_session_behaviour' => 'terminate',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Orphaned devices retention period
+    |--------------------------------------------------------------------------
+    |
+    | This option allows you to easily specify the period of time in seconds that the devices without
+    | sessions are stored. After this period, the devices are deleted from the database.
+    */
+    'orphan_retention_period' => 86400, // 1 day
 
     /*
     |--------------------------------------------------------------------------
@@ -220,7 +230,7 @@ return [
     | Options: 'fingerprintjs', 'clientjs', 'creepjs', 'none'
     |
     */
-    'fingerprint_client_library' => \Ninja\DeviceTracker\Modules\Fingerprinting\Injector\Enums\Library::FingerprintJS,
+    'fingerprint_client_library' => 'fingerprintjs',
 
     /*
     |--------------------------------------------------------------------------
@@ -253,7 +263,7 @@ return [
     | stored in the database and can be used to track user behavior and analyze risks.
     |
     */
-    'event_tracking_enabled' => true,
+    'event_tracking_enabled' => false,
 
     /*
     |--------------------------------------------------------------------------
@@ -279,7 +289,7 @@ return [
     */
     'location_providers' => [
         \Ninja\DeviceTracker\Modules\Location\IpinfoLocationProvider::class,
-        // \Ninja\DeviceTracker\Modules\Location\MaxMindLocationProvider::class,
+        \Ninja\DeviceTracker\Modules\Location\MaxmindLocationProvider::class,
     ],
 
     /*
@@ -293,7 +303,7 @@ return [
     | Options: 'device', 'location', 'session', 'ua'
     |
     */
-    'cache_enabled_for' => ['device', 'location', 'session', 'ua', 'event_type'],
+    'cache_enabled_for' => ['device, location, session, ua, event_type'],
 
     /*
     |--------------------------------------------------------------------------
@@ -397,11 +407,11 @@ return [
     | generating QR image for Google 2FA.
     |
     */
-    'google_2fa_company' => env('APP_NAME', 'diego.ninja'),
+    'google_2fa_company' => 'diego.ninja',
 
     /*
     |--------------------------------------------------------------------------
-    | Google 2FA Point
+    | Google 2FA Route
     |--------------------------------------------------------------------------
     |
     | This option allows you to easily specify the route name for Google 2FA form.
@@ -442,6 +452,24 @@ return [
     |
     */
     'authenticatable_table' => 'users',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Logout HTTP Code
+    |--------------------------------------------------------------------------
+    | The http code that will be returned when the user is logged out.
+    |
+    */
+    'logout_http_code' => 403,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Lock HTTP Code
+    |--------------------------------------------------------------------------
+    | The http code that will be returned when a session is locked.
+    |
+    */
+    'lock_http_code' => 423,
 
     /*
     |--------------------------------------------------------------------------

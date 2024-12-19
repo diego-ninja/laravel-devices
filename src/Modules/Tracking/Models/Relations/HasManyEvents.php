@@ -2,38 +2,68 @@
 
 namespace Ninja\DeviceTracker\Modules\Tracking\Models\Relations;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Collection;
+use Ninja\DeviceTracker\Models\Device;
+use Ninja\DeviceTracker\Models\Session;
 use Ninja\DeviceTracker\Modules\Tracking\Enums\EventType;
+use Ninja\DeviceTracker\Modules\Tracking\Models\Event;
+use stdClass;
 
+/**
+ * @extends HasMany<Event, Device|Session>
+ *
+ * @phpstan-param Device|Session $parent
+ */
 class HasManyEvents extends HasMany
 {
-    public function type(EventType $type): HasMany
+    /**
+     * @return HasMany<Event, Device|Session>|Builder<Event>
+     */
+    public function type(EventType $type): HasMany|Builder
     {
         return $this->where('type', $type);
+
     }
 
-    public function login(): HasMany
+    /**
+     * @return HasMany<Event, Device|Session>|Builder<Event>
+     */
+    public function login(): HasMany|Builder
     {
         return $this->type(EventType::Login);
     }
 
-    public function logout(): HasMany
+    /**
+     * @return HasMany<Event, Device|Session>|Builder<Event>
+     */
+    public function logout(): HasMany|Builder
     {
         return $this->type(EventType::Logout);
     }
 
-    public function signup(): HasMany
+    /**
+     * @return HasMany<Event, Device|Session>|Builder<Event>
+     */
+    public function signup(): HasMany|Builder
     {
         return $this->type(EventType::Signup);
     }
 
-    public function views(): HasMany
+    /**
+     * @return HasMany<Event, Device|Session>|Builder<Event>
+     */
+    public function views(): HasMany|Builder
     {
         return $this->type(EventType::PageView);
     }
 
-    public function last(int $count = 1): HasMany
+    /**
+     * @return Collection<int, Event|stdClass>
+     */
+    public function last(int $count = 1): Collection
     {
-        return $this->orderByDesc('occurred_at')->limit($count);
+        return $this->orderByDesc('occurred_at')->limit($count)->get();
     }
 }
