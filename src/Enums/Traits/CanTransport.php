@@ -83,6 +83,6 @@ trait CanTransport
             JsonResponse::class,
         ];
 
-        return in_array(get_class($response), $valid);
+        return in_array(get_class($response), $valid, true);
     }
 }

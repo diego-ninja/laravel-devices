@@ -170,7 +170,7 @@ final class Metadata implements JsonSerializable
 
     public function empty(): bool
     {
-        return empty($this->data);
+        return count($this->data) === 0;
     }
 
     public function count(): int

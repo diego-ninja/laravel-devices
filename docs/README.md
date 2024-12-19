@@ -20,7 +20,7 @@ If you find any issues or have suggestions for improvements, please open an issu
 * [Configuration](configuration.md)
 
 ### Core Concepts
-* [Overview](system-overview.md)
+* [Overview](system-overview.md)  
 * [Database Schema](database-schema.md)
 * [Device Management](device-management.md)
 * [Session Management](session-management.md)

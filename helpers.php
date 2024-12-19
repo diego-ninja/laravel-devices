@@ -12,7 +12,7 @@ use Ninja\DeviceTracker\Models\Device;
 if (! function_exists('fingerprint')) {
     function fingerprint(): ?string
     {
-        if (Config::get('devices.fingerprinting_enabled')) {
+        if (config('devices.fingerprinting_enabled') === true) {
             $cookie = Config::get('devices.fingerprint_id_cookie_name');
 
             $fingerprint = Cookie::get($cookie);
@@ -43,26 +43,26 @@ if (! function_exists('device')) {
     function device(bool $cached = true): ?Device
     {
 
-        if (Config::get('devices.fingerprinting_enabled')) {
+        if (config('devices.fingerprinting_enabled') === true) {
             $fingerprint = fingerprint();
-            if ($fingerprint) {
+            if ($fingerprint !== null) {
                 return Device::byFingerprint($fingerprint, $cached);
             }
         }
 
         $id = device_uuid();
+        if ($id === null) {
+            return null;
+        }
 
-        return $id ? Device::byUuid($id, $cached) : null;
+        return Device::byUuid($id, $cached);
     }
 }
 
 if (! function_exists('guard')) {
     function guard(): Guard
     {
-        /** @var Guard $guard */
-        $guard = auth(Config::get('devices.auth_guard'));
-
-        return $guard;
+        return auth(config('devices.auth_guard'));
     }
 }
 

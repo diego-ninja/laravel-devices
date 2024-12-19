@@ -166,6 +166,7 @@ return [
     */
     'ignore_restart' => env('DEVICES_IGNORE_RESTART') ?
         json_decode(env('DEVICES_IGNORE_RESTART'), true) : [],
+
     /*
     |--------------------------------------------------------------------------
     | Session inactivity seconds
@@ -189,6 +190,17 @@ return [
     |
     */
     'inactivity_session_behaviour' => env('DEVICES_INACTIVITY_SESSION_BEHAVIOUR', 'terminate'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Orphaned devices retention period
+    |--------------------------------------------------------------------------
+    |
+    | This option allows you to easily specify the period of time in days that the devices without
+    | sessions are stored. After this period, the devices are deleted from the database.
+    */
+    'orphan_retention_period' => env('DEVICES_ORPHAN_RETENTION_PERIOD', 1),
+
 
     /*
     |--------------------------------------------------------------------------

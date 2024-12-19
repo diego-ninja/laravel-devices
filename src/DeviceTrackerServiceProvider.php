@@ -39,7 +39,7 @@ class DeviceTrackerServiceProvider extends ServiceProvider
             $encrypter->disableFor(config('devices.client_fingerprint_key'));
         });
 
-        if (Config::get('devices.load_routes')) {
+        if (config('devices.load_routes') === true) {
             $this->loadRoutesFrom(__DIR__.'/../routes/devices.php');
         }
     }
@@ -114,11 +114,11 @@ class DeviceTrackerServiceProvider extends ServiceProvider
             $router->aliasMiddleware('device-tracker', DeviceTracker::class);
             $router->aliasMiddleware('session-tracker', SessionTracker::class);
 
-            if (Config::get('devices.fingerprinting_enabled')) {
+            if (config('devices.fingerprinting_enabled') === true) {
                 $router->aliasMiddleware('fingerprint-tracker', FingerprintTracker::class);
             }
 
-            if (Config::get('devices.event_tracking_enabled')) {
+            if (config('devices.event_tracking_enabled') === true) {
                 $router->aliasMiddleware('event-tracker', EventTracker::class);
             }
         } catch (\Throwable $e) {

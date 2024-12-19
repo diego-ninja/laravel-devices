@@ -8,7 +8,6 @@ use Illuminate\Support\Collection;
 use Ninja\DeviceTracker\Enums\SessionStatus;
 use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Models\Session;
-use stdClass;
 
 /**
  * @extends HasMany<Session, Device|User>
@@ -77,7 +76,7 @@ final class HasManySessions extends HasMany
             ->where('status', SessionStatus::Active);
 
         if ($exceptCurrent) {
-            if (session_uuid()) {
+            if (session_uuid() !== null) {
                 $query->where('id', '!=', session_uuid());
             }
         }
@@ -86,7 +85,7 @@ final class HasManySessions extends HasMany
     }
 
     /**
-     * @return Collection<int, stdClass|Session>
+     * @return Collection<int, Session>
      */
     public function finished(): Collection
     {
@@ -104,8 +103,7 @@ final class HasManySessions extends HasMany
             $this->current()?->end();
         }
 
-        $this->each(function ($session) {
-            /** @var Session $session */
+        $this->get()->each(function (Session $session) {
             $session->end();
         });
     }

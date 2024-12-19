@@ -5,7 +5,6 @@ namespace Ninja\DeviceTracker\Http\Controllers;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Config;
 use Ninja\DeviceTracker\Cache\DeviceCache;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Http\Resources\DeviceResource;
@@ -19,7 +18,11 @@ final class DeviceController extends Controller
 {
     public function list(Request $request): JsonResponse
     {
-        $user = $request->user(Config::get('devices.auth_guard'));
+        $user = user();
+        if ($user === null) {
+            return response()->json(['message' => 'User not found'], 404);
+        }
+
         $devices = DeviceCache::userDevices($user);
 
         return response()->json(DeviceResource::collection($devices));
@@ -29,7 +32,7 @@ final class DeviceController extends Controller
     {
         $device = $this->getUserDevice($request, $id);
 
-        if ($device) {
+        if ($device !== null) {
             return response()->json(DeviceResource::make($device));
         }
 
@@ -40,7 +43,7 @@ final class DeviceController extends Controller
     {
         $device = $this->getUserDevice($request, $id);
 
-        if ($device) {
+        if ($device !== null) {
             $device->verify();
 
             return response()->json(['message' => 'Device verified successfully']);
@@ -53,7 +56,7 @@ final class DeviceController extends Controller
     {
         $device = $this->getUserDevice($request, $id);
 
-        if ($device) {
+        if ($device !== null) {
             $device->hijack();
 
             return response()->json(['message' => sprintf('Device %s flagged as hijacked', $device->uuid)]);
@@ -66,7 +69,7 @@ final class DeviceController extends Controller
     {
         $device = $this->getUserDevice($request, $id);
 
-        if ($device) {
+        if ($device !== null) {
             $device->forget();
 
             return response()->json(['message' => 'Device forgotten successfully. All active sessions were ended.']);
@@ -78,7 +81,7 @@ final class DeviceController extends Controller
     public function signout(Request $request, string $id): JsonResponse
     {
         $device = $this->getUserDevice($request, $id);
-        if (! $device) {
+        if ($device === null) {
             return response()->json(['message' => 'Device not found'], 404);
         }
 
@@ -92,10 +95,10 @@ final class DeviceController extends Controller
 
     private function getUserDevice(Request $request, string $id): ?Device
     {
-        $user = $request->user(Config::get('devices.auth_guard'));
+        $user = user();
 
         return DeviceCache::remember(DeviceCache::key($id), function () use ($user, $id) {
-            return $user->devices()->where('uuid', DeviceIdFactory::from($id))->first();
+            return $user?->devices()->where('uuid', DeviceIdFactory::from($id))->first();
         });
     }
 }

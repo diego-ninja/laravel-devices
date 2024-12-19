@@ -70,7 +70,7 @@ class Google2FA extends Model
 
     public function enabled(): bool
     {
-        if (! Config::get('devices.google_2fa_enabled')) {
+        if (config('devices.google_2fa_enabled') === false) {
             return false;
         }
 

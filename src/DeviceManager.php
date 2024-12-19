@@ -5,7 +5,6 @@ namespace Ninja\DeviceTracker;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Config;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Enums\DeviceTransport;
 use Ninja\DeviceTracker\Events\DeviceAttachedEvent;
@@ -40,11 +39,11 @@ final class DeviceManager
     {
         $deviceUuid = $deviceUuid ?? device_uuid();
 
-        if (! $deviceUuid) {
+        if ($deviceUuid === null) {
             return false;
         }
 
-        if (! user()) {
+        if (user() === null) {
             return false;
         }
 
@@ -59,7 +58,7 @@ final class DeviceManager
         user()->devices()->attach($deviceUuid);
 
         $device = Device::byUuid($deviceUuid);
-        if (! $device) {
+        if ($device === null) {
             return false;
         }
 
@@ -78,12 +77,12 @@ final class DeviceManager
 
     public function tracked(): bool
     {
-        return device_uuid() && Device::exists(device_uuid());
+        return device_uuid() !== null && Device::exists(device_uuid());
     }
 
     public function fingerprinted(): bool
     {
-        return fingerprint() && Device::byFingerprint(fingerprint());
+        return fingerprint() !== null && Device::byFingerprint(fingerprint()) !== null;
     }
 
     /**
@@ -91,8 +90,8 @@ final class DeviceManager
      */
     public function track(): StorableId
     {
-        if (device_uuid()) {
-            if (Config::get('devices.regenerate_devices')) {
+        if (device_uuid() !== null) {
+            if (config('devices.regenerate_devices') === true) {
                 event(new DeviceTrackedEvent(device_uuid()));
                 DeviceTransport::propagate(device_uuid());
 
@@ -115,7 +114,7 @@ final class DeviceManager
             return
                 device_uuid() !== null &&
                 ! Device::exists(device_uuid()) &&
-                Config::get('devices.regenerate_devices');
+                config('devices.regenerate_devices') === true;
         } catch (Throwable) {
             return false;
         }
@@ -131,9 +130,9 @@ final class DeviceManager
             return null;
         }
 
-        if (! $payload->unknown() || config('devices.allow_unknown_devices')) {
+        if (! $payload->unknown() || config('devices.allow_unknown_devices') === true) {
             $deviceUuid = $deviceUuid ?? device_uuid();
-            if ($deviceUuid) {
+            if ($deviceUuid !== null) {
                 return Device::register(
                     deviceUuid: $deviceUuid,
                     data: $payload
@@ -153,12 +152,12 @@ final class DeviceManager
 
     public function current(): ?Device
     {
-        if (Config::get('devices.fingerprinting_enabled') && fingerprint()) {
+        if (config('devices.fingerprinting_enabled') === true && fingerprint() !== null) {
             return Device::byFingerprint(fingerprint());
         }
 
         $device_uuid = device_uuid();
-        if ($device_uuid) {
+        if ($device_uuid !== null) {
             return Device::byUuid($device_uuid, false);
         }
 

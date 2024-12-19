@@ -26,7 +26,9 @@ abstract class AbstractCache
             return;
         }
 
-        $this->cache = Cache::store(Config::get('devices.cache_store'));
+        /** @var string $store */
+        $store = config('devices.cache_store');
+        $this->cache = Cache::store($store);
     }
 
     public static function instance(): self
@@ -62,7 +64,7 @@ abstract class AbstractCache
 
     public static function key(string $key): string
     {
-        return static::KEY_PREFIX.':'.hash('xxh128', $key);
+        return sprintf("%s:%s", static::KEY_PREFIX, hash('xxh128', $key));
     }
 
     public static function forget(Cacheable $item): void
@@ -76,7 +78,7 @@ abstract class AbstractCache
             return;
         }
 
-        if (self::instance()->cache && method_exists(self::instance()->cache, 'flush')) {
+        if (! is_null(self::instance()->cache) && method_exists(self::instance()->cache, 'flush')) {
             self::instance()->cache->flush();
         }
     }

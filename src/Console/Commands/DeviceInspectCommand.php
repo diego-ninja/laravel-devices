@@ -22,8 +22,8 @@ final class DeviceInspectCommand extends Command
 
         $device = Device::byUuid($uuid);
 
-        if (! $device) {
-            $this->error("Device not found with UUID: {$uuid}");
+        if ($device === null) {
+            $this->error(sprintf('Device with UUID %s not found', $uuid));
 
             return;
         }
@@ -41,8 +41,8 @@ final class DeviceInspectCommand extends Command
                 ['Created', $device->created_at],
                 ['Last Updated', $device->updated_at],
                 ['Active Sessions', $device->sessions()->active()->count()],
-                ['Total Sessions', $device->sessions()->count()],
-                ['Associated Users', $device->users()->count()],
+                ['Total Sessions', $device->sessions->count()],
+                ['Associated Users', $device->users->count()],
             ]
         );
     }

@@ -17,36 +17,36 @@ use Ninja\DeviceTracker\Models\Session;
  */
 final class SessionController extends Controller
 {
-    public function list(Request $request): JsonResponse
+    public function list(): JsonResponse
     {
-        $sessions = $this->getUserSessions($request);
+        $sessions = $this->getUserSessions();
 
         return response()->json(SessionResource::collection($sessions));
     }
 
-    public function active(Request $request): JsonResponse
+    public function active(): JsonResponse
     {
-        $sessions = $this->getUserActiveSessions($request);
+        $sessions = $this->getUserActiveSessions();
 
         return response()->json(SessionResource::collection($sessions));
     }
 
-    public function show(Request $request, string $id): JsonResponse
+    public function show(string $id): JsonResponse
     {
-        $session = $this->findUserSession($request, $id);
+        $session = $this->findUserSession($id);
 
-        if ($session) {
+        if ($session !== null) {
             return response()->json(SessionResource::make($session));
         }
 
         return response()->json(['message' => 'Session not found'], 404);
     }
 
-    public function end(Request $request, string $id): JsonResponse
+    public function end(string $id): JsonResponse
     {
-        $session = $this->findUserSession($request, $id);
+        $session = $this->findUserSession($id);
 
-        if ($session) {
+        if ($session !== null) {
             $session->end();
 
             return response()->json(['message' => 'Session ended successfully']);
@@ -55,11 +55,11 @@ final class SessionController extends Controller
         return response()->json(['message' => 'Session not found'], 404);
     }
 
-    public function block(Request $request, string $id): JsonResponse
+    public function block(string $id): JsonResponse
     {
-        $session = $this->findUserSession($request, $id);
+        $session = $this->findUserSession($id);
 
-        if ($session) {
+        if ($session !== null) {
             $session->block();
 
             return response()->json(['message' => 'Session blocked successfully']);
@@ -68,11 +68,11 @@ final class SessionController extends Controller
         return response()->json(['message' => 'Session not found'], 404);
     }
 
-    public function unblock(Request $request, string $id): JsonResponse
+    public function unblock(string $id): JsonResponse
     {
-        $session = $this->findUserSession($request, $id);
+        $session = $this->findUserSession($id);
 
-        if ($session) {
+        if ($session !== null) {
             $session->unblock();
 
             return response()->json(['message' => 'Session unblocked successfully']);
@@ -81,12 +81,12 @@ final class SessionController extends Controller
         return response()->json(['message' => 'Session not found'], 404);
     }
 
-    public function renew(Request $request, string $id): JsonResponse
+    public function renew(string $id): JsonResponse
     {
-        $user = $request->user(Config::get('devices.auth_guard'));
-        $session = $this->findUserSession($request, $id);
+        $user = user();
+        $session = $this->findUserSession($id);
 
-        if ($session) {
+        if ($session !== null) {
             $session->renew($user);
 
             return response()->json(['message' => 'Session renewed successfully']);
@@ -95,10 +95,10 @@ final class SessionController extends Controller
         return response()->json(['message' => 'Session not found'], 404);
     }
 
-    public function signout(Request $request): JsonResponse
+    public function signout(): JsonResponse
     {
-        $user = $request->user(Config::get('devices.auth_guard'));
-        $user->signout(true);
+        $user = user();
+        $user?->signout(true);
 
         return response()->json(['message' => 'Signout successful']);
     }
@@ -106,9 +106,12 @@ final class SessionController extends Controller
     /**
      * @return Collection<int, Session>|null
      */
-    private function getUserSessions(Request $request): ?Collection
+    private function getUserSessions(): ?Collection
     {
-        $user = $request->user(Config::get('devices.auth_guard'));
+        $user = user();
+        if ($user === null) {
+            return null;
+        }
 
         return SessionCache::userSessions($user);
     }
@@ -116,16 +119,22 @@ final class SessionController extends Controller
     /**
      * @return Collection<int, Session>|null
      */
-    private function getUserActiveSessions(Request $request): ?Collection
+    private function getUserActiveSessions(): ?Collection
     {
-        $user = $request->user(Config::get('devices.auth_guard'));
+        $user = user();
+        if ($user === null) {
+            return null;
+        }
 
         return SessionCache::activeSessions($user);
     }
 
-    private function findUserSession(Request $request, string $id): ?Session
+    private function findUserSession(string $id): ?Session
     {
-        $user = $request->user(Config::get('devices.auth_guard'));
+        $user = user();
+        if ($user === null) {
+            return null;
+        }
 
         $sessions = SessionCache::userSessions($user);
 

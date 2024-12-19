@@ -14,7 +14,7 @@ final class CleanupDevicesCommand extends Command
 
     public function handle(): void
     {
-        if ($this->option('force')) {
+        if ($this->option('force') !== null) {
             $deletedHijacked = Device::where('status', DeviceStatus::Hijacked)->delete();
             $this->info(sprintf('Deleted %d hijacked devices.', $deletedHijacked));
         }

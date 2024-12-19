@@ -14,7 +14,7 @@ final class BelongsToManyDevices extends BelongsToMany
     public function current(): ?Device
     {
         /** @var Device|null $device */
-        $device = $this->where('uuid', device_uuid())->first();
+        $device = $this->get()->where('uuid', device_uuid())->first();
 
         return $device;
     }
@@ -24,6 +24,6 @@ final class BelongsToManyDevices extends BelongsToMany
      */
     public function uuids(): array
     {
-        return $this->pluck('uuid')->toArray();
+        return $this->get()->pluck('uuid')->toArray();
     }
 }

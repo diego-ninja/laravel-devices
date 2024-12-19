@@ -20,7 +20,7 @@ abstract class AbstractRequestDetector implements RequestTypeDetector
         $accept = $request->header('Accept');
         $contentType = $request->header('Content-Type');
 
-        if (! $accept || ! $contentType) {
+        if ($accept === null && $contentType === null) {
             return false;
         }
 

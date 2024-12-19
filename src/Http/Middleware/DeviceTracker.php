@@ -25,7 +25,7 @@ final readonly class DeviceTracker
 
         if (! DeviceManager::tracked()) {
             try {
-                if (config('devices.track_guest_sessions')) {
+                if (config('devices.track_guest_sessions') === true) {
                     DeviceManager::track();
                     DeviceManager::create();
                 } else {
@@ -39,7 +39,7 @@ final readonly class DeviceTracker
         }
 
         $deviceUuid = device_uuid();
-        if (! $deviceUuid) {
+        if ($deviceUuid === null) {
             return $next($request);
         }
 

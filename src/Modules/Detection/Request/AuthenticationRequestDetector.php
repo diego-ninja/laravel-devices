@@ -33,7 +33,7 @@ final class AuthenticationRequestDetector extends AbstractRequestDetector
         $method = strtoupper($request->method());
 
         foreach ($this->signatures as $signature) {
-            if (in_array($method, $signature['methods'])) {
+            if (in_array($method, $signature['methods'], true)) {
                 foreach ($signature['paths'] as $signaturePath) {
                     if (fnmatch($signaturePath, $path)) {
                         return true;
@@ -63,7 +63,7 @@ final class AuthenticationRequestDetector extends AbstractRequestDetector
      */
     private function matches(string $path, string $method, array $signature): bool
     {
-        return in_array(strtoupper($method), $signature['methods']) &&
+        return in_array(strtoupper($method), $signature['methods'], true) &&
             collect($signature['paths'])->contains(fn ($p) => fnmatch($p, $path));
     }
 }

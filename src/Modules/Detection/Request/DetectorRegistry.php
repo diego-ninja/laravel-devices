@@ -36,7 +36,7 @@ final class DetectorRegistry implements RequestTypeDetector
     {
         $cache = EventTypeCache::withRequest($request);
 
-        return $cache->remember($cache->key(''), function () use ($request, $response) {
+        return $cache::remember($cache::key(''), function () use ($request, $response) {
             return $this->detectors->first(
                 function (RequestTypeDetector $detector) use ($request, $response): bool {
                     return $detector->supports($request, $response);

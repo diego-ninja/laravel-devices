@@ -34,9 +34,9 @@ final readonly class Version implements JsonSerializable, Stringable
         }
 
         return new self(
-            major: $context->major ?? '0',
-            minor: $context->minor ?? '0',
-            patch: $context->patch ?? '0',
+            major: property_exists($context, 'major') ? $context->major : '0',
+            minor: property_exists($context, 'minor') ? $context->minor : '0',
+            patch: property_exists($context, 'patch') ? $context->patch : '0',
         );
     }
 

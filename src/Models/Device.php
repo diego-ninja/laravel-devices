@@ -3,6 +3,7 @@
 namespace Ninja\DeviceTracker\Models;
 
 use Carbon\Carbon;
+use Closure;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -141,6 +142,9 @@ class Device extends Model implements Cacheable
         )->withTimestamps();
     }
 
+    /**
+     * @return Attribute<Closure, Closure>
+     */
     public function uuid(): Attribute
     {
         return Attribute::make(
@@ -149,18 +153,24 @@ class Device extends Model implements Cacheable
         );
     }
 
+    /**
+     * @return Attribute<Closure, Closure>
+     */
     public function status(): Attribute
     {
         return Attribute::make(
-            get: fn (?string $value) => $value ? DeviceStatus::from($value) : DeviceStatus::Unverified,
+            get: fn (?string $value) => $value !== null ? DeviceStatus::from($value) : DeviceStatus::Unverified,
             set: fn (DeviceStatus $value) => $value->value
         );
     }
 
+    /**
+     * @return Attribute<Closure, Closure>
+     */
     public function metadata(): Attribute
     {
         return Attribute::make(
-            get: fn (?string $value) => $value ? Metadata::from(json_decode($value, true)) : new Metadata([]),
+            get: fn (?string $value) => $value !== null ? Metadata::from(json_decode($value, true)) : new Metadata([]),
             set: fn (Metadata $value) => $value->json()
         );
     }
@@ -178,7 +188,7 @@ class Device extends Model implements Cacheable
         try {
             $this->fingerprint = $fingerprint;
             if ($this->save()) {
-                if ($cookie) {
+                if ($cookie !== null) {
                     if (! Cookie::has($cookie)) {
                         Cookie::queue(
                             Cookie::forever(
@@ -216,10 +226,9 @@ class Device extends Model implements Cacheable
             'verified_at' => now(),
         ]);
 
-        $this->sessions()
+        $this->sessions
             ->where('status', SessionStatus::Locked)
             ->where('user_id', $user?->getAuthIdentifier())
-            ->get()
             ->each(function (Session $session) {
                 $session->unlock();
             });
@@ -255,9 +264,9 @@ class Device extends Model implements Cacheable
     public function verified(?Authenticatable $user = null): bool
     {
         $user = $user ?? user();
-        $deviceUser = $this->users()->where('user_id', $user?->getAuthIdentifier())->first();
+        $deviceUser = $this->users()::where('user_id', $user?->getAuthIdentifier())->first();
 
-        return $deviceUser && $this->status === $deviceUser->pivot->status;
+        return $deviceUser !== null && $this->status === $deviceUser->pivot->status;
     }
 
     public function hijack(?Authenticatable $user = null): void
@@ -323,12 +332,14 @@ class Device extends Model implements Cacheable
         DeviceDTO $data
     ): ?self {
         $device = self::byUuid($deviceUuid, false);
-        if ($device) {
+        if ($device !== null) {
             return $device;
         }
 
         try {
-            $device = self::create([
+            $device = self::firstOrCreate([
+                'uuid' => $deviceUuid,
+            ], [
                 'uuid' => $deviceUuid,
                 'fingerprint' => fingerprint(),
                 'browser' => $data->browser->name,
@@ -348,7 +359,7 @@ class Device extends Model implements Cacheable
             ]);
 
             /** @var Device $device */
-            if ($device) {
+            if ($device !== null) {
                 return $device;
             }
         } catch (PDOException $e) {
@@ -404,13 +415,13 @@ class Device extends Model implements Cacheable
 
     public static function current(): ?self
     {
-        if (Config::get('devices.fingerprinting_enabled')) {
-            if (fingerprint()) {
+        if (config('devices.fingerprinting_enabled') === true) {
+            if (fingerprint() !== null) {
                 return self::byFingerprint(fingerprint());
             }
         }
 
-        if (device_uuid()) {
+        if (device_uuid() !== null) {
             return self::byUuid(device_uuid());
         }
 
@@ -427,23 +438,14 @@ class Device extends Model implements Cacheable
     }
 
     /**
-     * @return Collection<int, string>
-     */
-    public static function byStatus(): Collection
-    {
-        return self::query()
-            ->select('status', DB::raw('count(*) as total'))
-            ->groupBy('status')
-            ->pluck('total', 'status');
-    }
-
-    /**
-     * @return Collection<int, Device|Model>
+     * @return Collection<int, Device>
      */
     public static function orphans(): Collection
     {
         return self::doesntHave('users')
             ->doesntHave('sessions')
+            ->where('status', DeviceStatus::Unverified)
+            ->where('created_at', '<', now()->subDays(config('devices.orphan_retention_period')))
             ->get();
     }
 

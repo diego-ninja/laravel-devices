@@ -26,7 +26,7 @@ final class UserAgentDeviceDetector implements Contracts\DeviceDetector
     public function detect(Request|string $request): ?Device
     {
         $ua = is_string($request) ? $request : $request->header('User-Agent', $this->fakeUA());
-        if (empty($ua)) {
+        if ($ua === null) {
             return null;
         }
 
@@ -43,7 +43,7 @@ final class UserAgentDeviceDetector implements Contracts\DeviceDetector
 
         $this->dd->parse();
 
-        if ($this->dd->isBot() && ! config('devices.allow_bot_devices')) {
+        if ($this->dd->isBot() === true && config('devices.allow_bot_devices') === false) {
             return null;
         }
 

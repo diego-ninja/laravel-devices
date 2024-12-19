@@ -43,7 +43,7 @@ final readonly class EventSubscriber
 
     public function onDeviceTracked(DeviceTrackedEvent $event): void
     {
-        if (! config('devices.track_guest_sessions')) {
+        if (config('devices.track_guest_sessions') === false) {
             return;
         }
 
@@ -51,10 +51,7 @@ final readonly class EventSubscriber
             return;
         }
 
-        /** @var Guard $guard */
-        $guard = auth(Config::get('devices.auth_guard'));
-
-        if ($guard->user()) {
+        if (user() !== null) {
             DeviceManager::attach($event->deviceUuid);
         }
     }

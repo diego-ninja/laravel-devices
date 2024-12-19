@@ -5,12 +5,10 @@ namespace Ninja\DeviceTracker\Http\Middleware;
 use Closure;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Contracts\Auth\Guard;
-use Illuminate\Contracts\Auth\StatefulGuard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Ninja\DeviceTracker\Enums\SessionStatus;
@@ -25,13 +23,13 @@ final readonly class SessionTracker
     public function handle(Request $request, Closure $next): mixed
     {
         $device = device();
-        if (! $device) {
+        if ($device === null) {
             return $next($request);
         }
 
         $session = $device->sessions()->current() ?? $device->sessions()->recent();
 
-        if ($session) {
+        if ($session !== null) {
             if ($session->locked()) {
                 return $this->manageLock($request);
             }
@@ -58,20 +56,19 @@ final readonly class SessionTracker
 
     private function manageLogout(Request $request, Session $session): JsonResponse|RedirectResponse
     {
-        /** @var StatefulGuard $guard */
-        $guard = Auth::guard(Config::get('devices.auth_guard'));
-        $user = $guard->user();
+        $user = user();
+        $guard = guard();
 
-        if (! $user) {
+        if ($user === null) {
             $session->end();
         } else {
-            $guard->logout();
+            $guard::logout();
             $session->end(user: $user);
 
-            event(new Logout(Config::get('devices.auth_guard'), $user));
+            event(new Logout(config('devices.auth_guard'), $user));
         }
 
-        if ($request->ajax() || ! Config::get('devices.use_redirects')) {
+        if ($request->ajax() || config('devices.use_redirects') === false) {
             return response()->json(['message' => 'Unauthorized'], config('devices.logout_http_code', 403));
         } else {
             try {
@@ -98,7 +95,7 @@ final readonly class SessionTracker
 
     private function manageLock(Request $request): JsonResponse|RedirectResponse
     {
-        if ($request->ajax() || ! Config::get('devices.use_redirects')) {
+        if ($request->ajax() || config('devices.use_redirects') === false) {
             return response()->json(['message' => 'Session locked'], config('devices.lock_http_code', 403));
         }
 
