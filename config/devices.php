@@ -10,7 +10,7 @@ return [
     | the device id of the current user.
     |
     */
-    'device_id_parameter' => env('DEVICES_DEVICE_ID_PARAMETER', 'laravel_device_id'),
+    'device_id_parameter' => 'laravel_device_id',
 
     /*
     |--------------------------------------------------------------------------
@@ -21,7 +21,7 @@ return [
     | Options: 'cookie', 'header', 'session'
     |
     */
-    'device_id_transport' => env('DEVICES_DEVICE_ID_TRANSPORT', 'cookie'),
+    'device_id_transport' => 'cookie',
 
     /*
     |--------------------------------------------------------------------------
@@ -31,7 +31,7 @@ return [
     | the session id for the current user.
     |
     */
-    'session_id_parameter' => env('DEVICES_SESSION_ID_PARAMETER', 'laravel_session_id'),
+    'session_id_parameter' => 'laravel_session_id',
 
     /*
     |--------------------------------------------------------------------------
@@ -42,7 +42,7 @@ return [
     | Options: 'cookie', 'header', 'session'
     |
     */
-    'session_id_transport' => env('DEVICES_SESSION_ID_TRANSPORT', 'cookie'),
+    'session_id_transport' => 'cookie',
 
     /*
     |--------------------------------------------------------------------------
@@ -81,7 +81,7 @@ return [
     | This option specifies if middleware should redirect to pages or return json
     |
     */
-    'use_redirects' => env('DEVICES_USE_REDIRECTS', true),
+    'use_redirects' => true,
 
     /*
     |--------------------------------------------------------------------------
@@ -90,7 +90,7 @@ return [
     | This option specifies if provider should load the routes
     |
     */
-    'load_routes' => env('DEVICES_LOAD_ROUTES', true),
+    'load_routes' => true,
 
     /*
     |--------------------------------------------------------------------------
@@ -99,7 +99,7 @@ return [
     | This option specifies if missing devices should be regenerated. Useful to avoid errors
     | when the device is not found in the database, but it is in the cookie.
     */
-    'regenerate_devices' => env('DEVICES_REGENERATE_DEVICES', false),
+    'regenerate_devices' => false,
 
     /*
     |--------------------------------------------------------------------------
@@ -109,7 +109,7 @@ return [
     | An unknown device is a device that has no information about the browser, platform, etc.
     |
     */
-    'allow_unknown_devices' => env('DEVICES_ALLOW_UNKNOWN_DEVICES', false),
+    'allow_unknown_devices' => false,
 
     /*
     |--------------------------------------------------------------------------
@@ -119,7 +119,7 @@ return [
     | A bot device is a device detected as bot, crawler, or spider.
     |
     */
-    'allow_bot_devices' => env('DEVICES_ALLOW_BOT_DEVICES', false),
+    'allow_bot_devices' => false,
 
     /*
     |--------------------------------------------------------------------------
@@ -128,7 +128,7 @@ return [
     | This option specifies if the user can have multiple active sessions per device
     |
     */
-    'allow_device_multi_session' => env('DEVICES_ALLOW_DEVICE_MULTI_SESSION', false),
+    'allow_device_multi_session' => false,
 
     /*
     |--------------------------------------------------------------------------
@@ -138,7 +138,7 @@ return [
     | or if he should continue refreshing the current session.
     |
     */
-    'start_new_session_on_login' => env('DEVICES_START_NEW_SESSION_ON_LOGIN', false),
+    'start_new_session_on_login' => false,
 
     /*
     |--------------------------------------------------------------------------
@@ -148,7 +148,7 @@ return [
     | or if it should ignore them.
     |
     */
-    'track_guest_sessions' => env('DEVICES_TRACK_GUEST_SESSIONS', false),
+    'track_guest_sessions' => false,
 
     /*
     |--------------------------------------------------------------------------
@@ -158,14 +158,13 @@ return [
     | when they are requested,(e.g. poller requests and chat requests)
     |
     | The format is:
-    | 'ignore_refresh' => [
+    | 'ignore_restart' => [
     |   array('method'=>'get', 'route'=>'route.name'),
     |   array('method'=>'post','route'=>'route/uri/{param}')
     | ],
     |
     */
-    'ignore_restart' => env('DEVICES_IGNORE_RESTART') ?
-        json_decode(env('DEVICES_IGNORE_RESTART'), true) : [],
+    'ignore_restart' => [],
 
     /*
     |--------------------------------------------------------------------------
@@ -176,7 +175,7 @@ return [
     | the session is considered inactive or idle. Set to zero to disable this feature.
     |
     */
-    'inactivity_seconds' => env('DEVICES_INACTIVITY_SECONDS', 1200),
+    'inactivity_seconds' => 1200,
 
     /*
     |--------------------------------------------------------------------------
@@ -189,18 +188,17 @@ return [
     | Options: 'terminate', 'ignore'
     |
     */
-    'inactivity_session_behaviour' => env('DEVICES_INACTIVITY_SESSION_BEHAVIOUR', 'terminate'),
+    'inactivity_session_behaviour' => 'terminate',
 
     /*
     |--------------------------------------------------------------------------
     | Orphaned devices retention period
     |--------------------------------------------------------------------------
     |
-    | This option allows you to easily specify the period of time in days that the devices without
+    | This option allows you to easily specify the period of time in seconds that the devices without
     | sessions are stored. After this period, the devices are deleted from the database.
     */
-    'orphan_retention_period' => env('DEVICES_ORPHAN_RETENTION_PERIOD', 1),
-
+    'orphan_retention_period' => 86400, // 1 day
 
     /*
     |--------------------------------------------------------------------------
@@ -210,7 +208,7 @@ return [
     | This option allows you to enable or disable client-side device fingerprinting.
     |
     */
-    'fingerprinting_enabled' => env('DEVICES_FINGERPRINTING_ENABLED', true),
+    'fingerprinting_enabled' => true,
 
     /*
     |--------------------------------------------------------------------------
@@ -220,7 +218,7 @@ return [
     | the client-side fingerprint of the current device.
     |
     */
-    'fingerprint_id_cookie_name' => env('DEVICES_FINGERPRINT_ID_COOKIE_NAME', 'laravel_device_fingerprint'),
+    'fingerprint_id_cookie_name' => 'laravel_device_fingerprint',
 
     /*
     |--------------------------------------------------------------------------
@@ -232,7 +230,7 @@ return [
     | Options: 'fingerprintjs', 'clientjs', 'creepjs', 'none'
     |
     */
-    'fingerprint_client_library' => env('DEVICES_FINGERPRINT_CLIENT_LIBRARY', 'fingerprintjs'),
+    'fingerprint_client_library' => 'fingerprintjs',
 
     /*
     |--------------------------------------------------------------------------
@@ -243,7 +241,7 @@ return [
     | Options: 'cookie', 'header', 'query'
     |
     */
-    'client_fingerprint_transport' => env('DEVICES_CLIENT_FINGERPRINT_TRANSPORT', 'cookie'),
+    'client_fingerprint_transport' => 'cookie',
 
     /*
     |--------------------------------------------------------------------------
@@ -254,7 +252,7 @@ return [
     | the fingerprint in cookie/header set by the client.
     |
     */
-    'client_fingerprint_key' => env('DEVICES_CLIENT_FINGERPRINT_KEY', 'csf'),
+    'client_fingerprint_key' => 'csf',
 
     /*
     |--------------------------------------------------------------------------
@@ -265,7 +263,7 @@ return [
     | stored in the database and can be used to track user behavior and analyze risks.
     |
     */
-    'event_tracking_enabled' => env('DEVICES_EVENT_TRACKING_ENABLED', true),
+    'event_tracking_enabled' => false,
 
     /*
     |--------------------------------------------------------------------------
@@ -276,7 +274,7 @@ return [
     | stored. After this period, the events are deleted from the database.
     |
     */
-    'event_retention_period' => env('DEVICES_EVENT_RETENTION_PERIOD', 30),
+    'event_retention_period' => 30,
 
     /*
     |--------------------------------------------------------------------------
@@ -289,10 +287,10 @@ return [
     | Options: 'ipinfo', 'maxmind'
     |
     */
-    'location_providers' => array_filter([
-        env('IPINFO_API_KEY') ? \Ninja\DeviceTracker\Modules\Location\IpinfoLocationProvider::class : null,
-        env('MAXMIND_LICENSE_KEY') ? \Ninja\DeviceTracker\Modules\Location\MaxMindLocationProvider::class : null,
-    ]),
+    'location_providers' => [
+        \Ninja\DeviceTracker\Modules\Location\IpinfoLocationProvider::class,
+        \Ninja\DeviceTracker\Modules\Location\MaxmindLocationProvider::class,
+    ],
 
     /*
     |--------------------------------------------------------------------------
@@ -305,7 +303,7 @@ return [
     | Options: 'device', 'location', 'session', 'ua'
     |
     */
-    'cache_enabled_for' => explode(',', env('DEVICES_CACHE_ENABLED_TYPES', 'device,location,session,ua,event_type')),
+    'cache_enabled_for' => ['device, location, session, ua, event_type'],
 
     /*
     |--------------------------------------------------------------------------
@@ -316,7 +314,7 @@ return [
     | for caching
     |
     */
-    'cache_store' => env('DEVICES_CACHE_STORE', 'file'),
+    'cache_store' => 'file',
 
     /*
     |--------------------------------------------------------------------------
@@ -328,10 +326,10 @@ return [
     |
     */
     'cache_ttl' => [
-        \Ninja\DeviceTracker\Cache\SessionCache::KEY_PREFIX => env('DEVICES_CACHE_TTL_SESSION', 3600),
-        \Ninja\DeviceTracker\Cache\DeviceCache::KEY_PREFIX => env('DEVICES_CACHE_TTL_DEVICE', 3600),
-        \Ninja\DeviceTracker\Cache\LocationCache::KEY_PREFIX => env('DEVICES_CACHE_TTL_LOCATION', 2592000),
-        \Ninja\DeviceTracker\Cache\UserAgentCache::KEY_PREFIX => env('DEVICES_CACHE_TTL_UA', 2592000),
+        \Ninja\DeviceTracker\Cache\SessionCache::KEY_PREFIX => 3600,
+        \Ninja\DeviceTracker\Cache\DeviceCache::KEY_PREFIX => 3600,
+        \Ninja\DeviceTracker\Cache\LocationCache::KEY_PREFIX => 2592000,
+        \Ninja\DeviceTracker\Cache\UserAgentCache::KEY_PREFIX => 2592000,
     ],
 
     /*
@@ -344,7 +342,7 @@ return [
     | Note: Your login route must have a name.
     |
     */
-    'login_route_name' => env('DEVICES_LOGIN_ROUTE_NAME', 'app.login'),
+    'login_route_name' => 'app.login',
 
     /*
     |--------------------------------------------------------------------------
@@ -356,7 +354,7 @@ return [
     | Note: Your logout route must have a name.
     |
     */
-    'logout_route_name' => env('DEVICES_LOGOUT_ROUTE_NAME', 'app.logout'),
+    'logout_route_name' => 'app.logout',
 
     /*
     |--------------------------------------------------------------------------
@@ -366,7 +364,7 @@ return [
     | This option allows you to easily specify the guard that should be used for
     | authenticating the user.
     */
-    'auth_guard' => env('DEVICES_AUTH_GUARD', 'web'),
+    'auth_guard' => 'web',
 
     /*
     |--------------------------------------------------------------------------
@@ -376,7 +374,7 @@ return [
     | This option allows you to easily specify the middleware that should be used for
     | authenticating the user in the routes.
     */
-    'auth_middleware' => env('DEVICES_AUTH_MIDDLEWARE', 'auth'),
+    'auth_middleware' => 'auth',
 
     /*
     |--------------------------------------------------------------------------
@@ -387,7 +385,7 @@ return [
     |
     |
     */
-    'google_2fa_enabled' => env('DEVICES_GOOGLE_2FA_ENABLED', true),
+    'google_2fa_enabled' => true,
 
     /*
     |--------------------------------------------------------------------------
@@ -398,7 +396,7 @@ return [
     | the security code of the Google 2FA is considered valid. Value: window * 30 seconds
     |
     */
-    'google_2fa_window' => env('DEVICES_GOOGLE_2FA_WINDOW', 1),
+    'google_2fa_window' => 1,
 
     /*
     |--------------------------------------------------------------------------
@@ -409,7 +407,7 @@ return [
     | generating QR image for Google 2FA.
     |
     */
-    'google_2fa_company' => env('DEVICES_GOOGLE_2FA_COMPANY', env('APP_NAME', 'diego.ninja')),
+    'google_2fa_company' => 'diego.ninja',
 
     /*
     |--------------------------------------------------------------------------
@@ -419,7 +417,7 @@ return [
     | This option allows you to easily specify the route name for Google 2FA form.
     | This route should show the form to enter the Google 2FA code and QR code.
     */
-    'google_2fa_route_name' => env('DEVICES_2FA_ROUTE_NAME', 'app.2fa'),
+    'google_2fa_route_name' => 'app.2fa',
 
     /*
     |--------------------------------------------------------------------------
@@ -429,7 +427,7 @@ return [
     | This option allows you to easily specify the format of the QR image for Google 2FA.
     | Options: 'base64', 'svg'
     */
-    'google_2fa_qr_format' => env('DEVICES_GOOGLE_2FA_QR_FORMAT', 'base64'),
+    'google_2fa_qr_format' => 'base64',
 
     /*
     |--------------------------------------------------------------------------
@@ -441,7 +439,7 @@ return [
     | implements the Authenticatable contract.
     |
     */
-    'authenticatable_class' => env('DEVICES_AUTHENTICATABLE_CLASS', 'App\Models\User'),
+    'authenticatable_class' => 'App\Models\User',
 
     /*
     |--------------------------------------------------------------------------
@@ -453,7 +451,7 @@ return [
     | implements the Authenticatable contract.
     |
     */
-    'authenticatable_table' => env('DEVICES_AUTHENTICATABLE_TABLE', 'users'),
+    'authenticatable_table' => 'users',
 
     /*
     |--------------------------------------------------------------------------

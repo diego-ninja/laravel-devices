@@ -453,7 +453,7 @@ class Device extends Model implements Cacheable
         return self::doesntHave('users')
             ->doesntHave('sessions')
             ->where('status', DeviceStatus::Unverified)
-            ->where('created_at', '<', now()->subDays(config('devices.orphan_retention_period')))
+            ->where('created_at', '<', now()->subSeconds(config('devices.orphan_retention_period')))
             ->get();
     }
 
