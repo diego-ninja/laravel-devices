@@ -11,13 +11,13 @@ final class Browser implements JsonSerializable, Stringable
 {
     use DataModel;
 
-    public string $name;
+    public string $name = '';
 
-    public Version $version;
+    public ?Version $version = null;
 
-    public string $family;
+    public string $family = '';
 
-    public string $engine;
+    public string $engine = '';
 
     public ?string $type = null;
 

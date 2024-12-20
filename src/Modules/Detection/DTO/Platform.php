@@ -11,11 +11,11 @@ final class Platform implements JsonSerializable, Stringable
 {
     use DataModel;
 
-    public string $name;
+    public string $name = '';
 
-    public Version $version;
+    public ?Version $version = null;
 
-    public string $family;
+    public string $family = '';
 
     /**
      * @return array<string, mixed>
