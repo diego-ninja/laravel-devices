@@ -11,11 +11,11 @@ final class Platform implements JsonSerializable, Stringable
 {
     use DataModel;
 
-    public string $name;
+    public string $name = Device::UNKNOWN;
 
-    public Version $version;
+    public ?Version $version = null;
 
-    public string $family;
+    public string $family = Device::UNKNOWN;
 
     /**
      * @return array<string, mixed>
@@ -24,7 +24,7 @@ final class Platform implements JsonSerializable, Stringable
     {
         return [
             'name' => $this->name,
-            'version' => $this->version->array(),
+            'version' => $this->version?->array(),
             'family' => $this->family,
             'label' => (string) $this,
         ];

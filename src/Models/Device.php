@@ -147,7 +147,9 @@ class Device extends Model implements Cacheable
             relatedPivotKey: $field,
             parentKey: 'uuid',
             relatedKey: 'id'
-        )->withTimestamps();
+        )
+            ->withPivot('status', 'verified_at', 'device_uuid', 'last_activity_at')
+            ->withTimestamps();
     }
 
     /**
@@ -256,7 +258,7 @@ class Device extends Model implements Cacheable
     public function verifiedStatus(): DeviceStatus
     {
         $status = DeviceStatus::Unverified;
-        $this->users()->each(function ($user) use (&$status) {
+        $this->users()->each(function (Authenticatable $user) use (&$status) {
             if ($user->pivot->status === DeviceStatus::Verified) {
                 $status = DeviceStatus::PartiallyVerified;
             } elseif ($user->pivot->status === DeviceStatus::Unverified && $status !== DeviceStatus::PartiallyVerified) {

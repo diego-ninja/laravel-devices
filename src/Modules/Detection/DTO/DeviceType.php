@@ -11,11 +11,11 @@ final class DeviceType implements JsonSerializable, Stringable
 {
     use DataModel;
 
-    public string $family;
+    public string $family = Device::UNKNOWN;
 
-    public string $model;
+    public string $model = Device::UNKNOWN;
 
-    public string $type;
+    public string $type = Device::UNKNOWN;
 
     /**
      * @return array<string, mixed>

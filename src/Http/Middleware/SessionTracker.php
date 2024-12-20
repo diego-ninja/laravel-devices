@@ -62,7 +62,7 @@ final readonly class SessionTracker
         if ($user === null) {
             $session->end();
         } else {
-            $guard::logout();
+            $guard->logout();
             $session->end(user: $user);
 
             event(new Logout(config('devices.auth_guard'), $user));
