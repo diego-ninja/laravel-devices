@@ -8,6 +8,7 @@ use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Enums\DeviceTransport;
 use Ninja\DeviceTracker\Enums\SessionTransport;
 use Ninja\DeviceTracker\Models\Device;
+use Ninja\DeviceTracker\Models\Session;
 
 if (! function_exists('fingerprint')) {
     function fingerprint(): ?string
@@ -56,6 +57,24 @@ if (! function_exists('device')) {
         }
 
         return Device::byUuid($id, $cached);
+    }
+}
+
+if (! function_exists('device_session')) {
+    function device_session(bool $cached = true): ?Session
+    {
+
+        $sessionId = session_uuid();
+        if ($sessionId === null) {
+            return null;
+        }
+
+        $session = Session::byUuid($sessionId);
+        if ($session === null) {
+            return null;
+        }
+
+        return $session;
     }
 }
 

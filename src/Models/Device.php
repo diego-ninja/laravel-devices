@@ -190,31 +190,26 @@ class Device extends Model implements Cacheable
         return (string) $this->uuid === (string) device_uuid();
     }
 
-    /**
-     * @throws FingerprintDuplicatedException
-     */
     public function fingerprint(string $fingerprint, ?string $cookie = null): void
     {
-        try {
-            $this->fingerprint = $fingerprint;
-            if ($this->save()) {
-                if ($cookie !== null) {
-                    if (! Cookie::has($cookie)) {
-                        Cookie::queue(
-                            Cookie::forever(
-                                name: $cookie,
-                                value: $fingerprint,
-                                secure: Config::get('session.secure', false),
-                                httpOnly: Config::get('session.http_only', true)
-                            )
-                        );
+        DB::transaction(function () use ($fingerprint, $cookie) {
+            try {
+                $this->fingerprint = $fingerprint;
+                if ($this->save()) {
+                    if ($cookie !== null) {
+                        Cookie::queue(Cookie::forever(
+                            name: $cookie,
+                            value: $fingerprint,
+                            secure: Config::get('session.secure', false),
+                            httpOnly: Config::get('session.http_only', true)
+                        ));
                     }
+                    event(new DeviceFingerprintedEvent($this));
                 }
-                event(new DeviceFingerprintedEvent($this));
+            } catch (PDOException) {
+                throw FingerprintDuplicatedException::forFingerprint($fingerprint, Device::byFingerprint($fingerprint));
             }
-        } catch (PDOException) {
-            throw FingerprintDuplicatedException::forFingerprint($fingerprint, Device::byFingerprint($fingerprint));
-        }
+        });
     }
 
     public function fingerprinted(): bool
@@ -454,7 +449,10 @@ class Device extends Model implements Cacheable
     {
         return self::doesntHave('users')
             ->doesntHave('sessions')
-            ->where('status', DeviceStatus::Unverified)
+            ->where(function ($query) {
+                $query->where('status', DeviceStatus::Unverified)
+                    ->orWhereNull('fingerprint');
+            })
             ->where('created_at', '<', now()->subSeconds(config('devices.orphan_retention_period')))
             ->get();
     }

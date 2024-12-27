@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Ninja\DeviceTracker\Enums\SessionStatus;
 use Ninja\DeviceTracker\Enums\SessionTransport;
+use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
+use Ninja\DeviceTracker\Facades\SessionManager;
 use Ninja\DeviceTracker\Models\Session;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 
@@ -27,7 +29,7 @@ final readonly class SessionTracker
             return $next($request);
         }
 
-        $session = $device->sessions()->current() ?? $device->sessions()->recent();
+        $session = device_session();
 
         if ($session !== null) {
             if ($session->locked()) {
@@ -51,6 +53,16 @@ final readonly class SessionTracker
             return SessionTransport::set($next($request), $session->uuid);
         }
 
+        if (guard()->check()) {
+            try {
+                $session = SessionManager::start();
+
+                return SessionTransport::set($next($request), $session->uuid);
+            } catch (DeviceNotFoundException $e) {
+                Log::error('Failed to start session', ['error' => $e->getMessage()]);
+            }
+        }
+
         return $next($request);
     }
 
@@ -59,13 +71,17 @@ final readonly class SessionTracker
         $user = user();
         $guard = guard();
 
-        if ($user === null) {
-            $session->end();
-        } else {
+        if ($user !== null) {
+            if ($user->google2faEnabled()) {
+                $user->google2fa->last_success_at = null;
+                $user->google2fa->save();
+            }
+
             $guard->logout();
             $session->end(user: $user);
-
             event(new Logout(config('devices.auth_guard'), $user));
+        } else {
+            $session->end();
         }
 
         if ($request->ajax() || config('devices.use_redirects') === false) {

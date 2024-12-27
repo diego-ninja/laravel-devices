@@ -123,6 +123,16 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | User Agent Whitelist
+    |--------------------------------------------------------------------------
+    | This option specifies the allowed bot/unknown user agents that can
+    | create devices event with allow_bot_devices set to false
+    |
+    */
+    'user_agent_whitelist' => [],
+
+    /*
+    |--------------------------------------------------------------------------
     | Allows multiple sessions per device
     |--------------------------------------------------------------------------
     | This option specifies if the user can have multiple active sessions per device

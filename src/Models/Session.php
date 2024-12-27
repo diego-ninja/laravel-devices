@@ -272,13 +272,31 @@ class Session extends Model implements Cacheable
 
     public function restart(Request $request): bool
     {
+        if ($this->blocked() || $this->finished()) {
+            return false;
+        }
+
+        $device = $this->device;
+        if ($device === null || $device->hijacked()) {
+            return false;
+        }
+
         foreach (Config::get('devices.ignore_restart', []) as $ignore) {
             if ($this->shouldIgnoreRestart($request, $ignore)) {
                 return false;
             }
         }
 
-        return $this->renew($request->user(Config::get('devices.auth_guard')));
+        $user = $request->user(Config::get('devices.auth_guard'));
+        if ($user === null) {
+            return false;
+        }
+
+        if (! $user->hasDevice($device)) {
+            return false;
+        }
+
+        return $this->renew($user);
     }
 
     /**
