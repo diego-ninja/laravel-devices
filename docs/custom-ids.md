@@ -337,7 +337,7 @@ class StorableIdValidator
 ## Testing Custom IDs
 
 ```php
-use Tests\TestCase;
+use Ninja\DeviceTracker\Tests\TestCase;
 
 class CustomIdTest extends TestCase
 {

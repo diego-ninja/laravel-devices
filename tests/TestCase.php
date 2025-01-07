@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests;
+namespace Ninja\DeviceTracker\Tests;
 
 use PHPUnit\Framework\TestCase as BaseTestCase;
 
