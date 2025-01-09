@@ -40,7 +40,8 @@
     "autoload": {
         "psr-4": {
             "Ninja\\DeviceTracker\\": "src/",
-            "Ninja\\DeviceTracker\\Database\\Seeders\\": "database/seeders"
+            "Ninja\\DeviceTracker\\Database\\Seeders\\": "database/seeders",
+            "Ninja\\DeviceTracker\\Database\\Factories\\": "database/factories"
         },
         "files": [
             "helpers.php"

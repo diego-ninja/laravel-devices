@@ -82,10 +82,6 @@ trait CanTransport
 
         $requestParameter = self::DEFAULT_REQUEST_PARAMETER;
 
-        if (! static::validateId($transportId)) {
-            return request();
-        }
-
         return request()->merge([$requestParameter => (string) $transportId]);
     }
 

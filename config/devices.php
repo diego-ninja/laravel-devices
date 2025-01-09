@@ -121,6 +121,34 @@ return [
     */
     'allow_bot_devices' => false,
 
+    'middlewares' => [
+        'device-tracker' => [
+            /*
+            |--------------------------------------------------------------------------
+            | Device Tracker Middleware exception on unknown devices
+            |--------------------------------------------------------------------------
+            | This option specifies how the device tracker middleware should respond when an unknown device is encountered
+            | and the `allow_unknown_device` option is set to false.
+            | By default the middleware will abort with a 403 - Forbidden - Unknown device detected
+            | When true the Ninja\DeviceTracker\Exception\UnknownDeviceDetectedException is thrown.
+            |
+            */
+            'exception_on_unknown_devices' => false,
+        ],
+        'device-checker' => [
+            /*
+            |--------------------------------------------------------------------------
+            | Device Checker Middleware exception on unavailable devices
+            |--------------------------------------------------------------------------
+            | This option specifies how the device checker middleware should respond when an undefined device is encountered.
+            | By default the middleware will abort with a 403 - Forbidden - Device not found.
+            | When true the Ninja\DeviceTracker\Exception\DeviceNotFoundException is thrown.
+            |
+            */
+            'exception_on_unavailable_devices' => false,
+        ],
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | User Agent Whitelist
