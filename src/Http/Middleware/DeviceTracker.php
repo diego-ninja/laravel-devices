@@ -9,21 +9,31 @@ use Illuminate\Support\Facades\Log;
 use Ninja\DeviceTracker\Enums\DeviceTransport;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Exception\FingerprintNotFoundException;
+use Ninja\DeviceTracker\Exception\InvalidDeviceDetectedException;
 use Ninja\DeviceTracker\Exception\UnknownDeviceDetectedException;
 use Ninja\DeviceTracker\Facades\DeviceManager;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
-use Ninja\DeviceTracker\Modules\Detection\Contracts\DeviceDetector;
 
 final readonly class DeviceTracker
 {
     /**
      * @throws UnknownDeviceDetectedException
+     * @throws InvalidDeviceDetectedException
      */
     public function handle(Request $request, Closure $next): mixed
     {
-        $detectedDevice = app(DeviceDetector::class)->detect(request());
-        if (! $detectedDevice || $detectedDevice->unknown()) {
-            $this->checkUnknownDevices();
+        $detectedDevice = DeviceManager::detect();
+        if (! $detectedDevice || ! DeviceManager::isWhitelisted($detectedDevice->source)) {
+            if (! $detectedDevice || $detectedDevice->unknown()) {
+                $this->isDeviceAllowed(
+                    userAgent: $detectedDevice->source ?? null,
+                );
+            } elseif ($detectedDevice->bot()) {
+                $this->isDeviceAllowed(
+                    unknown: false,
+                    userAgent: $detectedDevice->source,
+                );
+            }
         }
 
         if (DeviceManager::shouldRegenerate()) {
@@ -44,7 +54,7 @@ final readonly class DeviceTracker
             } catch (DeviceNotFoundException|FingerprintNotFoundException|UnknownDeviceDetectedException $e) {
                 Log::info($e->getMessage());
 
-                $this->checkUnknownDevices();
+                $this->isDeviceAllowed(userAgent: $detectedDevice->source);
 
                 return $next($request);
             }
@@ -52,7 +62,7 @@ final readonly class DeviceTracker
 
         $deviceUuid = device_uuid();
         if ($deviceUuid === null) {
-            $this->checkUnknownDevices();
+            $this->isDeviceAllowed(userAgent: $detectedDevice->source);
             return $next($request);
         }
 
@@ -61,14 +71,25 @@ final readonly class DeviceTracker
 
     /**
      * @throws UnknownDeviceDetectedException
+     * @throws InvalidDeviceDetectedException
      */
-    private function checkUnknownDevices(): void
+    private function isDeviceAllowed(bool $unknown = true, ?string $userAgent = null): void
     {
-        if (Config::get('devices.allow_unknown_devices', false) === false) {
-            if (Config::get('devices.middlewares.device-tracker.exception_on_unknown_devices', false) === false) {
-                abort(403, 'Unknown device detected');
+        if (isset($userAgent) && DeviceManager::isWhitelisted($userAgent)) {
+            return;
+        }
+        if (Config::get('devices.allow_' . ($unknown ? 'unknown' : 'bot') . '_devices', false) === false) {
+            if (Config::get('devices.middlewares.device-tracker.exception_on_invalid_devices', false) === false) {
+                abort(403, sprintf(
+                    '%s device detected: user-agent %s',
+                    $unknown ? 'Unknown' : 'Bot',
+                    $userAgent
+                ));
             } else {
-                throw new UnknownDeviceDetectedException();
+                if ($unknown === true) {
+                    throw UnknownDeviceDetectedException::withUA($userAgent);
+                }
+                throw InvalidDeviceDetectedException::withUA($userAgent);
             }
         }
     }

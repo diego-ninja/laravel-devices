@@ -9,6 +9,9 @@ use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 
 final readonly class DeviceChecker
 {
+    /**
+     * @throws DeviceNotFoundException
+     */
     public function handle(Request $request, Closure $next): mixed
     {
         if (is_null(device())) {

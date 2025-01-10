@@ -125,15 +125,16 @@ return [
         'device-tracker' => [
             /*
             |--------------------------------------------------------------------------
-            | Device Tracker Middleware exception on unknown devices
+            | Device Tracker Middleware exception on invalid devices
             |--------------------------------------------------------------------------
-            | This option specifies how the device tracker middleware should respond when an unknown device is encountered
-            | and the `allow_unknown_device` option is set to false.
+            | This option specifies how the device tracker middleware should respond when an unknown/invalid/bot device
+            | is encountered and the `allow_unknown_device` or the `allow_bot_device` option respectively are set to
+            | false.
             | By default the middleware will abort with a 403 - Forbidden - Unknown device detected
             | When true the Ninja\DeviceTracker\Exception\UnknownDeviceDetectedException is thrown.
             |
             */
-            'exception_on_unknown_devices' => false,
+            'exception_on_invalid_devices' => false,
         ],
         'device-checker' => [
             /*

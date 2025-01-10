@@ -2,9 +2,9 @@
 
 namespace Ninja\DeviceTracker\Exception;
 
-final class UnknownDeviceDetectedException extends \Exception
+final class InvalidDeviceDetectedException extends \Exception
 {
-    public function __construct(string $message = 'Unknown device detected', int $code = 0, ?\Throwable $previous = null)
+    public function __construct(string $message = 'Invalid device detected', int $code = 0, ?\Throwable $previous = null)
     {
         parent::__construct($message, $code, $previous);
     }
