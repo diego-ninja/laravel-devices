@@ -10,10 +10,10 @@ use Orchestra\Testbench\TestCase;
 
 abstract class FeatureTestCase extends TestCase
 {
-    use WithWorkbench;
     use RefreshDatabase;
+    use WithWorkbench;
 
-    public function setup(): void
+    protected function setup(): void
     {
         parent::setUp();
         $this->setConfig([

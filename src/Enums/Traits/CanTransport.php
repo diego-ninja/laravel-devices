@@ -7,14 +7,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cookie;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 use Ninja\DeviceTracker\Contracts\StorableId;
-use Ninja\DeviceTracker\Enums\DeviceStatus;
-use Ninja\DeviceTracker\Enums\DeviceTransport;
-use Ninja\DeviceTracker\Enums\SessionStatus;
-use Ninja\DeviceTracker\Enums\SessionTransport;
-use Ninja\DeviceTracker\Models\Device;
 
 trait CanTransport
 {

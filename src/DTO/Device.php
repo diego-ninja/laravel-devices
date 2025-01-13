@@ -20,6 +20,7 @@ final class Device implements JsonSerializable, Stringable
     public Platform $platform;
 
     public DeviceType $device;
+
     public ?bool $bot = false;
 
     public ?string $grade = self::UNKNOWN;
@@ -50,6 +51,16 @@ final class Device implements JsonSerializable, Stringable
             'label' => (string) $this,
             'bot' => $this->bot(),
         ];
+    }
+
+    public function valid(): bool
+    {
+        $validUnknown = $this->unknown() && config('devices.allow_unknown_devices') === true;
+        $validBot = $this->bot() && config('devices.allow_bot_devices') === true;
+        $validDevice = ! $this->unknown() && ! $this->bot();
+
+        return $validUnknown || $validBot || $validDevice;
+
     }
 
     public function __toString(): string

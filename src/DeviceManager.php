@@ -126,8 +126,12 @@ final class DeviceManager
         return app(DeviceDetector::class)->detect(request());
     }
 
-    public function isWhitelisted(DeviceDTO|string $device): bool
+    public function isWhitelisted(DeviceDTO|string|null $device): bool
     {
+        if ($device === null) {
+            return false;
+        }
+
         $userAgent = is_string($device) ? $device : $device->source;
 
         return in_array($userAgent, config('devices.user_agent_whitelist', []));
@@ -145,10 +149,7 @@ final class DeviceManager
 
         $ua = request()->header('User-Agent');
 
-        $validUnknown = $payload->unknown() && config('devices.allow_unknown_devices') === true;
-        $validBot = $payload->bot() && config('devices.allow_bot_devices') === true;
-        $validDevice = !$payload->unknown() && !$payload->bot();
-        if ($validUnknown || $validBot || $validDevice || $this->isWhitelisted($ua)) {
+        if ($payload->valid() || $this->isWhitelisted($ua)) {
             $deviceUuid = $deviceUuid ?? device_uuid();
             if ($deviceUuid !== null) {
                 return Device::register(

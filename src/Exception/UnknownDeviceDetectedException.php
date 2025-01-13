@@ -11,6 +11,6 @@ final class UnknownDeviceDetectedException extends \Exception
 
     public static function withUA(?string $ua): self
     {
-        return new self(sprintf("Unknown device detected with user agent: %s", $ua ?? 'undefined user-agent'));
+        return new self(sprintf('Unknown device detected with user agent: %s', $ua ?? 'undefined user-agent'));
     }
 }

@@ -487,6 +487,6 @@ class Device extends Model implements Cacheable
 
     protected static function newFactory()
     {
-        return new DeviceFactory();
+        return new DeviceFactory;
     }
 }

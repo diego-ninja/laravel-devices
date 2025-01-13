@@ -121,6 +121,12 @@ return [
     */
     'allow_bot_devices' => false,
 
+    /*
+    |--------------------------------------------------------------------------
+    | Middleware configuration
+    |--------------------------------------------------------------------------
+    |
+    */
     'middlewares' => [
         'device-tracker' => [
             /*
@@ -177,7 +183,7 @@ return [
     | User Agent Whitelist
     |--------------------------------------------------------------------------
     | This option specifies the allowed bot/unknown user agents that can
-    | create devices event with allow_bot_devices set to false
+    | create devices even with allow_bot_devices set to false
     |
     */
     'user_agent_whitelist' => [],

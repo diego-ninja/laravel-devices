@@ -2,16 +2,11 @@
 
 namespace Ninja\DeviceTracker\Tests\Feature\Http\Middleware;
 
-use Faker\Provider\UserAgent;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Ninja\DeviceTracker\DeviceManager;
 use Ninja\DeviceTracker\Enums\DeviceTransport;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
-use Ninja\DeviceTracker\Exception\UnknownDeviceDetectedException;
-use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Http\Middleware\DeviceChecker;
-use Ninja\DeviceTracker\Http\Middleware\DeviceTracker;
 use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Tests\FeatureTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -23,18 +18,19 @@ class DeviceCheckerTest extends FeatureTestCase
     {
         return [
             'exception' => [
-                'middlewareException' => true
+                'middlewareException' => true,
             ],
             '403' => [
-                'middlewareException' => false
+                'middlewareException' => false,
             ],
         ];
     }
 
     #[DataProvider('unavailableDeviceDataProvider')]
-    public function testWithUnavailableDevice(bool $middlewareException): void {
+    public function test_with_unavailable_device(bool $middlewareException): void
+    {
         $this->setConfig([
-            'devices.middlewares.device-checker.exception_on_unavailable_devices' => $middlewareException
+            'devices.middlewares.device-checker.exception_on_unavailable_devices' => $middlewareException,
         ]);
 
         $request = request();
@@ -44,11 +40,12 @@ class DeviceCheckerTest extends FeatureTestCase
 
         $this->expectException($middlewareException ? DeviceNotFoundException::class : HttpException::class);
 
-        $middleware = new DeviceChecker();
+        $middleware = new DeviceChecker;
         $middleware->handle($request, $next);
     }
 
-    public function testWithAvailableDevice(): void {
+    public function test_with_available_device(): void
+    {
         $device = Device::factory()
             ->create();
         $request = DeviceTransport::propagate($device->uuid);
@@ -56,14 +53,15 @@ class DeviceCheckerTest extends FeatureTestCase
         $next = function (Request $request) {
             return new Response(null, 200);
         };
-        $middleware = new DeviceChecker();
+        $middleware = new DeviceChecker;
 
         /** @var Response $response */
         $response = $middleware->handle($request, $next);
         $this->assertTrue($response->isOk());
     }
 
-    public function testCustomHttpErrorCode(): void {
+    public function test_custom_http_error_code(): void
+    {
         $code = 412;
         $this->setConfig([
             'devices.middlewares.device-checker.exception_on_unavailable_devices' => false,
@@ -72,19 +70,20 @@ class DeviceCheckerTest extends FeatureTestCase
 
         $request = request();
         $next = function (Request $request) {
-            $this->fail("It should not have entered the next() function");
+            $this->fail('It should not have entered the next() function');
         };
 
-        $middleware = new DeviceChecker();
+        $middleware = new DeviceChecker;
         try {
             $middleware->handle($request, $next);
-            $this->fail("It should generate an exception");
+            $this->fail('It should generate an exception');
         } catch (HttpException $e) {
             $this->assertEquals($code, $e->getStatusCode());
         }
     }
 
-    public function testCustomHttpErrorCodeWithInvalidCode(): void {
+    public function test_custom_http_error_code_with_invalid_code(): void
+    {
         $code = 10000;
         $this->setConfig([
             'devices.middlewares.device-checker.exception_on_unavailable_devices' => false,
@@ -93,13 +92,13 @@ class DeviceCheckerTest extends FeatureTestCase
 
         $request = request();
         $next = function (Request $request) {
-            $this->fail("It should not have entered the next() function");
+            $this->fail('It should not have entered the next() function');
         };
 
-        $middleware = new DeviceChecker();
+        $middleware = new DeviceChecker;
         try {
             $middleware->handle($request, $next);
-            $this->fail("It should generate an exception");
+            $this->fail('It should generate an exception');
         } catch (HttpException $e) {
             $this->assertEquals(403, $e->getStatusCode());
         }

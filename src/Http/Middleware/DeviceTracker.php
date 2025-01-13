@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
+use Ninja\DeviceTracker\DTO\Device;
 use Ninja\DeviceTracker\Enums\DeviceTransport;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Exception\FingerprintNotFoundException;
@@ -23,6 +24,7 @@ final readonly class DeviceTracker
      */
     public function handle(Request $request, Closure $next): mixed
     {
+        /** @var Device|null $detectedDevice */
         $detectedDevice = DeviceManager::detect();
         if (! $detectedDevice || ! DeviceManager::isWhitelisted($detectedDevice->source)) {
             if (! $detectedDevice || $detectedDevice->unknown()) {
@@ -55,7 +57,7 @@ final readonly class DeviceTracker
             } catch (DeviceNotFoundException|FingerprintNotFoundException|UnknownDeviceDetectedException $e) {
                 Log::info($e->getMessage());
 
-                $this->isDeviceAllowed(userAgent: $detectedDevice->source);
+                $this->isDeviceAllowed(userAgent: $detectedDevice?->source);
 
                 return $next($request);
             }
@@ -63,7 +65,8 @@ final readonly class DeviceTracker
 
         $deviceUuid = device_uuid();
         if ($deviceUuid === null) {
-            $this->isDeviceAllowed(userAgent: $detectedDevice->source);
+            $this->isDeviceAllowed(userAgent: $detectedDevice?->source);
+
             return $next($request);
         }
 
@@ -79,10 +82,10 @@ final readonly class DeviceTracker
         if (isset($userAgent) && DeviceManager::isWhitelisted($userAgent)) {
             return;
         }
-        if (Config::get('devices.allow_' . ($unknown ? 'unknown' : 'bot') . '_devices', false) === false) {
-            if (Config::get('devices.middlewares.device-tracker.exception_on_invalid_devices', false) === false) {
+        if (Config::get('devices.allow_'.($unknown ? 'unknown' : 'bot').'_devices', false) === false) {
+            if (! $this->shouldThrow()) {
                 $errorCode = config('devices.middlewares.device-tracker.http_error_code', 403);
-                if (!array_key_exists($errorCode, Response::$statusTexts)) {
+                if (! array_key_exists($errorCode, Response::$statusTexts)) {
                     $errorCode = 403;
                 }
                 abort($errorCode, sprintf(
@@ -97,5 +100,10 @@ final readonly class DeviceTracker
                 throw InvalidDeviceDetectedException::withUA($userAgent);
             }
         }
+    }
+
+    private function shouldThrow(): bool
+    {
+        return Config::get('devices.middlewares.device-tracker.exception_on_unavailable_devices', false);
     }
 }
