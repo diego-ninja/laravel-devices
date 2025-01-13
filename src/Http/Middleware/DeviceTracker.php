@@ -104,6 +104,6 @@ final readonly class DeviceTracker
 
     private function shouldThrow(): bool
     {
-        return Config::get('devices.middlewares.device-tracker.exception_on_unavailable_devices', false);
+        return Config::get('devices.middlewares.device-tracker.exception_on_invalid_devices', false);
     }
 }
