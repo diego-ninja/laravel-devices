@@ -62,4 +62,46 @@ class DeviceCheckerTest extends FeatureTestCase
         $response = $middleware->handle($request, $next);
         $this->assertTrue($response->isOk());
     }
+
+    public function testCustomHttpErrorCode(): void {
+        $code = 412;
+        $this->setConfig([
+            'devices.middlewares.device-checker.exception_on_unavailable_devices' => false,
+            'devices.middlewares.device-checker.http_error_code' => $code,
+        ]);
+
+        $request = request();
+        $next = function (Request $request) {
+            $this->fail("It should not have entered the next() function");
+        };
+
+        $middleware = new DeviceChecker();
+        try {
+            $middleware->handle($request, $next);
+            $this->fail("It should generate an exception");
+        } catch (HttpException $e) {
+            $this->assertEquals($code, $e->getStatusCode());
+        }
+    }
+
+    public function testCustomHttpErrorCodeWithInvalidCode(): void {
+        $code = 10000;
+        $this->setConfig([
+            'devices.middlewares.device-checker.exception_on_unavailable_devices' => false,
+            'devices.middlewares.device-checker.http_error_code' => $code,
+        ]);
+
+        $request = request();
+        $next = function (Request $request) {
+            $this->fail("It should not have entered the next() function");
+        };
+
+        $middleware = new DeviceChecker();
+        try {
+            $middleware->handle($request, $next);
+            $this->fail("It should generate an exception");
+        } catch (HttpException $e) {
+            $this->assertEquals(403, $e->getStatusCode());
+        }
+    }
 }
