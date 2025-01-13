@@ -14,6 +14,7 @@ use Ninja\DeviceTracker\Console\Commands\DeviceInspectCommand;
 use Ninja\DeviceTracker\Console\Commands\DeviceStatusCommand;
 use Ninja\DeviceTracker\Contracts\CodeGenerator;
 use Ninja\DeviceTracker\Generators\Google2FACodeGenerator;
+use Ninja\DeviceTracker\Http\Middleware\DeviceChecker;
 use Ninja\DeviceTracker\Http\Middleware\DeviceTracker;
 use Ninja\DeviceTracker\Http\Middleware\SessionTracker;
 use Ninja\DeviceTracker\Modules\Detection\Contracts\DeviceDetector;
@@ -112,6 +113,7 @@ class DeviceTrackerServiceProvider extends ServiceProvider
         try {
             $router = $this->app->get('router');
             $router->aliasMiddleware('device-tracker', DeviceTracker::class);
+            $router->aliasMiddleware('device-checker', DeviceChecker::class);
             $router->aliasMiddleware('session-tracker', SessionTracker::class);
 
             if (config('devices.fingerprinting_enabled') === true) {

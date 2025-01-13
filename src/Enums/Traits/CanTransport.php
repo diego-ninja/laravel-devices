@@ -65,15 +65,18 @@ trait CanTransport
     {
         $current = self::current();
 
-        if ($current === null) {
+        if ($id === null && $current === null) {
             return request();
         }
 
-        $id = $id ?? $current->get();
+        $transportId = $id ?? $current->get();
+        if ($transportId === null) {
+            return request();
+        }
 
         $requestParameter = self::DEFAULT_REQUEST_PARAMETER;
 
-        return request()->merge([$requestParameter => (string) $id]);
+        return request()->merge([$requestParameter => (string) $transportId]);
     }
 
     private static function isValidResponse(mixed $response): bool

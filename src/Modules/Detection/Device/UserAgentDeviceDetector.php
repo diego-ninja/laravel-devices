@@ -26,11 +26,7 @@ final class UserAgentDeviceDetector implements Contracts\DeviceDetector
     public function detect(Request|string $request): ?Device
     {
         $ua = is_string($request) ? $request : $request->header('User-Agent', $this->fakeUA());
-        if ($ua === null) {
-            return null;
-        }
-
-        if (! is_string($ua)) {
+        if (! is_string($ua) || empty($ua)) {
             return null;
         }
 
@@ -43,10 +39,6 @@ final class UserAgentDeviceDetector implements Contracts\DeviceDetector
 
         $this->dd->parse();
 
-        if ($this->dd->isBot() === true && config('devices.allow_bot_devices') === false) {
-            return null;
-        }
-
         return UserAgentCache::remember($key, function () {
             return Device::from([
                 'browser' => $this->browser(),
@@ -54,6 +46,7 @@ final class UserAgentDeviceDetector implements Contracts\DeviceDetector
                 'device' => $this->device(),
                 'grade' => null,
                 'source' => $this->dd->getUserAgent(),
+                'bot' => $this->dd->isBot(),
             ]);
         });
     }
@@ -81,15 +74,15 @@ final class UserAgentDeviceDetector implements Contracts\DeviceDetector
         ]);
     }
 
-    private function fakeUA(): string
+    private function fakeUA(): ?string
     {
         if (app()->environment('local')) {
             $uas = config('devices.development_ua_pool');
             shuffle($uas);
 
-            return $uas[0];
+            return $uas[0] ?? null;
         }
 
-        return '';
+        return null;
     }
 }

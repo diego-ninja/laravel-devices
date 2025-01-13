@@ -64,7 +64,7 @@ abstract class AbstractCache
 
     public static function key(string $key): string
     {
-        return sprintf("%s:%s", static::KEY_PREFIX, hash('xxh128', $key));
+        return sprintf('%s:%s', static::KEY_PREFIX, hash('xxh128', $key));
     }
 
     public static function forget(Cacheable $item): void

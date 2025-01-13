@@ -7,6 +7,7 @@ use Closure;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User;
@@ -19,6 +20,7 @@ use Illuminate\Support\Str;
 use Ninja\DeviceTracker\Cache\DeviceCache;
 use Ninja\DeviceTracker\Contracts\Cacheable;
 use Ninja\DeviceTracker\Contracts\StorableId;
+use Ninja\DeviceTracker\Database\Factories\DeviceFactory;
 use Ninja\DeviceTracker\DTO\Device as DeviceDTO;
 use Ninja\DeviceTracker\DTO\Metadata;
 use Ninja\DeviceTracker\Enums\DeviceStatus;
@@ -74,6 +76,7 @@ use PDOException;
  */
 class Device extends Model implements Cacheable
 {
+    use HasFactory;
     use PropertyProxy;
 
     protected $table = 'devices';
@@ -190,31 +193,26 @@ class Device extends Model implements Cacheable
         return (string) $this->uuid === (string) device_uuid();
     }
 
-    /**
-     * @throws FingerprintDuplicatedException
-     */
     public function fingerprint(string $fingerprint, ?string $cookie = null): void
     {
-        try {
-            $this->fingerprint = $fingerprint;
-            if ($this->save()) {
-                if ($cookie !== null) {
-                    if (! Cookie::has($cookie)) {
-                        Cookie::queue(
-                            Cookie::forever(
-                                name: $cookie,
-                                value: $fingerprint,
-                                secure: Config::get('session.secure', false),
-                                httpOnly: Config::get('session.http_only', true)
-                            )
-                        );
+        DB::transaction(function () use ($fingerprint, $cookie) {
+            try {
+                $this->fingerprint = $fingerprint;
+                if ($this->save()) {
+                    if ($cookie !== null) {
+                        Cookie::queue(Cookie::forever(
+                            name: $cookie,
+                            value: $fingerprint,
+                            secure: Config::get('session.secure', false),
+                            httpOnly: Config::get('session.http_only', true)
+                        ));
                     }
+                    event(new DeviceFingerprintedEvent($this));
                 }
-                event(new DeviceFingerprintedEvent($this));
+            } catch (PDOException) {
+                throw FingerprintDuplicatedException::forFingerprint($fingerprint, Device::byFingerprint($fingerprint));
             }
-        } catch (PDOException) {
-            throw FingerprintDuplicatedException::forFingerprint($fingerprint, Device::byFingerprint($fingerprint));
-        }
+        });
     }
 
     public function fingerprinted(): bool
@@ -454,7 +452,10 @@ class Device extends Model implements Cacheable
     {
         return self::doesntHave('users')
             ->doesntHave('sessions')
-            ->where('status', DeviceStatus::Unverified)
+            ->where(function ($query) {
+                $query->where('status', DeviceStatus::Unverified)
+                    ->orWhereNull('fingerprint');
+            })
             ->where('created_at', '<', now()->subSeconds(config('devices.orphan_retention_period')))
             ->get();
     }
@@ -482,5 +483,10 @@ class Device extends Model implements Cacheable
 
             event(new DeviceUpdatedEvent($device));
         });
+    }
+
+    protected static function newFactory()
+    {
+        return new DeviceFactory;
     }
 }

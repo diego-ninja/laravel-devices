@@ -6,6 +6,7 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Collection;
 use Ninja\DeviceTracker\Contracts\StorableId;
+use Ninja\DeviceTracker\DTO\Device as DeviceDTO;
 use Ninja\DeviceTracker\Enums\DeviceTransport;
 use Ninja\DeviceTracker\Events\DeviceAttachedEvent;
 use Ninja\DeviceTracker\Events\DeviceTrackedEvent;
@@ -120,17 +121,35 @@ final class DeviceManager
         }
     }
 
+    public function detect(): ?DeviceDTO
+    {
+        return app(DeviceDetector::class)->detect(request());
+    }
+
+    public function isWhitelisted(DeviceDTO|string|null $device): bool
+    {
+        if ($device === null) {
+            return false;
+        }
+
+        $userAgent = is_string($device) ? $device : $device->source;
+
+        return in_array($userAgent, config('devices.user_agent_whitelist', []));
+    }
+
     /**
      * @throws UnknownDeviceDetectedException
      */
     public function create(?StorableId $deviceUuid = null): ?Device
     {
-        $payload = app(DeviceDetector::class)->detect(request());
+        $payload = $this->detect();
         if (! $payload) {
             return null;
         }
 
-        if (! $payload->unknown() || config('devices.allow_unknown_devices') === true) {
+        $ua = request()->header('User-Agent');
+
+        if ($payload->valid() || $this->isWhitelisted($ua)) {
             $deviceUuid = $deviceUuid ?? device_uuid();
             if ($deviceUuid !== null) {
                 return Device::register(
@@ -142,7 +161,6 @@ final class DeviceManager
             return null;
         }
 
-        $ua = request()->header('User-Agent');
         if (is_string($ua)) {
             throw UnknownDeviceDetectedException::withUA($ua);
         }

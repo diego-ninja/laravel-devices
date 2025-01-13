@@ -123,6 +123,73 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Middleware configuration
+    |--------------------------------------------------------------------------
+    |
+    */
+    'middlewares' => [
+        'device-tracker' => [
+            /*
+            |--------------------------------------------------------------------------
+            | Device Tracker Middleware exception on invalid devices
+            |--------------------------------------------------------------------------
+            | This option specifies how the device tracker middleware should respond when an unknown/invalid/bot device
+            | is encountered and the `allow_unknown_device` or the `allow_bot_device` option respectively are set to
+            | false.
+            | By default the middleware will abort with a 403 - Forbidden - Unknown device detected
+            | When true the Ninja\DeviceTracker\Exception\UnknownDeviceDetectedException is thrown.
+            |
+            */
+            'exception_on_invalid_devices' => false,
+
+            /*
+            |--------------------------------------------------------------------------
+            | Device Tracker Middleware invalid devices http code
+            |--------------------------------------------------------------------------
+            | This option specifies the error code that should generate when an unknown/invalid/bot device is
+            | encountered and the `exception_on_invalid_devices` option is set to `false`.
+            | By default the middleware will abort with a 403 - Forbidden - Unknown device detected
+            |
+            */
+            'http_error_code' => 403,
+        ],
+        'device-checker' => [
+            /*
+            |--------------------------------------------------------------------------
+            | Device Checker Middleware exception on unavailable devices
+            |--------------------------------------------------------------------------
+            | This option specifies how the device checker middleware should respond when an undefined device is encountered.
+            | By default the middleware will abort with a 403 - Forbidden - Device not found.
+            | When true the Ninja\DeviceTracker\Exception\DeviceNotFoundException is thrown.
+            |
+            */
+            'exception_on_unavailable_devices' => false,
+
+            /*
+            |--------------------------------------------------------------------------
+            | Device Checker Middleware invalid devices http code
+            |--------------------------------------------------------------------------
+            | This option specifies the error code that should generate when an unknown/invalid/bot device is
+            | encountered and the `exception_on_invalid_devices` option is set to `false`.
+            | By default the middleware will abort with a 403 - Forbidden - Unknown device detected
+            |
+            */
+            'http_error_code' => 403,
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | User Agent Whitelist
+    |--------------------------------------------------------------------------
+    | This option specifies the allowed bot/unknown user agents that can
+    | create devices even with allow_bot_devices set to false
+    |
+    */
+    'user_agent_whitelist' => [],
+
+    /*
+    |--------------------------------------------------------------------------
     | Allows multiple sessions per device
     |--------------------------------------------------------------------------
     | This option specifies if the user can have multiple active sessions per device

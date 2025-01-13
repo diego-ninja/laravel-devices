@@ -3,10 +3,8 @@
 namespace Ninja\DeviceTracker\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Config;
 use Ninja\DeviceTracker\Cache\SessionCache;
 use Ninja\DeviceTracker\Factories\SessionIdFactory;
 use Ninja\DeviceTracker\Http\Resources\SessionResource;
