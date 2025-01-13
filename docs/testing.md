@@ -80,9 +80,9 @@ abstract class DeviceTestCase extends BaseTestCase
 ### Device Tests
 
 ```php
-namespace Tests\Unit;
+namespace Ninja\DeviceTracker\Tests\Unit;
 
-use Tests\DeviceTestCase;
+use Ninja\DeviceTracker\Tests\DeviceTestCase;
 use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Enums\DeviceStatus;
 
@@ -135,9 +135,9 @@ class DeviceTest extends DeviceTestCase
 ### Session Tests
 
 ```php
-namespace Tests\Unit;
+namespace Ninja\DeviceTracker\Tests\Unit;
 
-use Tests\DeviceTestCase;
+use Ninja\DeviceTracker\Tests\DeviceTestCase;
 use Ninja\DeviceTracker\Models\Session;
 use Ninja\DeviceTracker\Enums\SessionStatus;
 
@@ -188,9 +188,9 @@ class SessionTest extends DeviceTestCase
 ### API Tests
 
 ```php
-namespace Tests\Feature;
+namespace Ninja\DeviceTracker\Tests\Feature;
 
-use Tests\DeviceTestCase;
+use Ninja\DeviceTracker\Tests\DeviceTestCase;
 
 class DeviceApiTest extends DeviceTestCase
 {
@@ -246,9 +246,9 @@ class DeviceApiTest extends DeviceTestCase
 ### Middleware Tests
 
 ```php
-namespace Tests\Feature;
+namespace Ninja\DeviceTracker\Tests\Feature;
 
-use Tests\DeviceTestCase;
+use Ninja\DeviceTracker\Tests\DeviceTestCase;
 
 class MiddlewareTest extends DeviceTestCase
 {
@@ -287,9 +287,9 @@ class MiddlewareTest extends DeviceTestCase
 ### External Service Integration
 
 ```php
-namespace Tests\Integration;
+namespace Ninja\DeviceTracker\Tests\Integration;
 
-use Tests\DeviceTestCase;
+use Ninja\DeviceTracker\Tests\DeviceTestCase;
 
 class LocationProviderTest extends DeviceTestCase
 {
@@ -321,9 +321,9 @@ class LocationProviderTest extends DeviceTestCase
 ## Performance Tests
 
 ```php
-namespace Tests\Performance;
+namespace Ninja\DeviceTracker\Tests\Performance;
 
-use Tests\DeviceTestCase;
+use Ninja\DeviceTracker\Tests\DeviceTestCase;
 
 class PerformanceTest extends DeviceTestCase
 {

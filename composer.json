@@ -30,7 +30,7 @@
         "laravel/octane": "^2.5",
         "laravel/pint": "^1.18",
         "mockery/mockery": "^1.4.4",
-        "orchestra/testbench": "^9.6",
+        "orchestra/testbench": "^9.9",
         "pestphp/pest": "^2 || ^3",
         "phpstan/phpstan": "^2",
         "phpstan/phpstan-deprecation-rules": "^2",
@@ -41,7 +41,7 @@
         "psr-4": {
             "Ninja\\DeviceTracker\\": "src/",
             "Ninja\\DeviceTracker\\Database\\Seeders\\": "database/seeders",
-            "Ninja\\DeviceTracker\\Tests\\": "tests/"
+            "Ninja\\DeviceTracker\\Database\\Factories\\": "database/factories"
         },
         "files": [
             "helpers.php"
@@ -49,7 +49,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Tests\\": "tests/"
+            "Ninja\\DeviceTracker\\Tests\\": "tests/"
         }
     },
     "config": {

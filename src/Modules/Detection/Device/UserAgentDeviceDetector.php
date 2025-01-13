@@ -43,9 +43,9 @@ final class UserAgentDeviceDetector implements Contracts\DeviceDetector
 
         $this->dd->parse();
 
-        if ($this->dd->isBot() === true && config('devices.allow_bot_devices') === false) {
-            return null;
-        }
+//        if ($this->dd->isBot() === true && config('devices.allow_bot_devices') === false) {
+//            return null;
+//        }
 
         return UserAgentCache::remember($key, function () {
             return Device::from([
@@ -54,6 +54,7 @@ final class UserAgentDeviceDetector implements Contracts\DeviceDetector
                 'device' => $this->device(),
                 'grade' => null,
                 'source' => $this->dd->getUserAgent(),
+                'bot' => $this->dd->isBot(),
             ]);
         });
     }

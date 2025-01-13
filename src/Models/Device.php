@@ -7,6 +7,7 @@ use Closure;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\User;
@@ -19,6 +20,7 @@ use Illuminate\Support\Str;
 use Ninja\DeviceTracker\Cache\DeviceCache;
 use Ninja\DeviceTracker\Contracts\Cacheable;
 use Ninja\DeviceTracker\Contracts\StorableId;
+use Ninja\DeviceTracker\Database\Factories\DeviceFactory;
 use Ninja\DeviceTracker\DTO\Device as DeviceDTO;
 use Ninja\DeviceTracker\DTO\Metadata;
 use Ninja\DeviceTracker\Enums\DeviceStatus;
@@ -74,6 +76,7 @@ use PDOException;
  */
 class Device extends Model implements Cacheable
 {
+    use HasFactory;
     use PropertyProxy;
 
     protected $table = 'devices';
@@ -480,5 +483,10 @@ class Device extends Model implements Cacheable
 
             event(new DeviceUpdatedEvent($device));
         });
+    }
+
+    protected static function newFactory()
+    {
+        return new DeviceFactory();
     }
 }

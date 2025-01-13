@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Facade;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Models\Device;
+use Ninja\DeviceTracker\DTO\Device as DeviceDto;
 
 /**
  * @method static Device|null current()
@@ -17,6 +18,8 @@ use Ninja\DeviceTracker\Models\Device;
  * @method static bool tracked()
  * @method static bool fingerprinted()
  * @method static bool shouldRegenerate()
+ * @method static DeviceDto|null detect()
+ * @method static bool isWhitelisted(string $userAgent)
  */
 final class DeviceManager extends Facade
 {

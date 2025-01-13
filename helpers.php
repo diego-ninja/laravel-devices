@@ -43,7 +43,6 @@ if (! function_exists('session_uuid')) {
 if (! function_exists('device')) {
     function device(bool $cached = true): ?Device
     {
-
         if (config('devices.fingerprinting_enabled') === true) {
             $fingerprint = fingerprint();
             if ($fingerprint !== null) {
@@ -63,7 +62,6 @@ if (! function_exists('device')) {
 if (! function_exists('device_session')) {
     function device_session(bool $cached = true): ?Session
     {
-
         $sessionId = session_uuid();
         if ($sessionId === null) {
             return null;

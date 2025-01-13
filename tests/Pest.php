@@ -11,9 +11,11 @@
 |
 */
 
-use Tests\TestCase;
+use Ninja\DeviceTracker\Tests\FeatureTestCase;
+use Ninja\DeviceTracker\Tests\TestCase;
 
-pest()->extend(TestCase::class)->in('Unit', 'Feature');
+pest()->extend(FeatureTestCase::class)->in('Feature');
+pest()->extend(TestCase::class)->in('Unit');
 
 /*
 |--------------------------------------------------------------------------

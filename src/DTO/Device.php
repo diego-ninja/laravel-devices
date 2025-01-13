@@ -20,6 +20,7 @@ final class Device implements JsonSerializable, Stringable
     public Platform $platform;
 
     public DeviceType $device;
+    public ?bool $bot = false;
 
     public ?string $grade = self::UNKNOWN;
 
@@ -28,6 +29,11 @@ final class Device implements JsonSerializable, Stringable
     public function unknown(): bool
     {
         return $this->browser->unknown() || $this->platform->unknown();
+    }
+
+    public function bot(): bool
+    {
+        return $this->bot ?? false;
     }
 
     /**
@@ -42,6 +48,7 @@ final class Device implements JsonSerializable, Stringable
             'grade' => $this->grade,
             'source' => $this->source,
             'label' => (string) $this,
+            'bot' => $this->bot(),
         ];
     }
 
