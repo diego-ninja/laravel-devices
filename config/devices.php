@@ -135,6 +135,17 @@ return [
             |
             */
             'exception_on_invalid_devices' => false,
+
+            /*
+            |--------------------------------------------------------------------------
+            | Device Tracker Middleware invalid devices http code
+            |--------------------------------------------------------------------------
+            | This option specifies the error code that should generate when an unknown/invalid/bot device is
+            | encountered and the `exception_on_invalid_devices` option is set to `false`.
+            | By default the middleware will abort with a 403 - Forbidden - Unknown device detected
+            |
+            */
+            'http_error_code' => 403,
         ],
         'device-checker' => [
             /*
@@ -147,6 +158,17 @@ return [
             |
             */
             'exception_on_unavailable_devices' => false,
+
+            /*
+            |--------------------------------------------------------------------------
+            | Device Checker Middleware invalid devices http code
+            |--------------------------------------------------------------------------
+            | This option specifies the error code that should generate when an unknown/invalid/bot device is
+            | encountered and the `exception_on_invalid_devices` option is set to `false`.
+            | By default the middleware will abort with a 403 - Forbidden - Unknown device detected
+            |
+            */
+            'http_error_code' => 403,
         ],
     ],
 

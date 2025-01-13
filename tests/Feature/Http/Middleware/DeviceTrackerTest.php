@@ -405,4 +405,62 @@ class DeviceTrackerTest extends FeatureTestCase
         $this->assertStringStartsWith(self::DEVICE_ID_PARAMETER, implode(',', $cookies));
         $this->assertEquals(0, Device::query()->count());
     }
+
+    public function testCustomHttpErrorCode(): void
+    {
+        $code = 412;
+        $config = [
+            'devices.middlewares.device-tracker.exception_on_invalid_devices' => false,
+            'devices.middlewares.device-tracker.http_error_code' => $code,
+            'devices.allow_unknown_devices' => false,
+            'devices.user_agent_whitelist' => [],
+        ];
+        $this->setConfig($config);
+
+        $request = request();
+        $request->headers->set('User-Agent', null);
+
+        $next = function (Request $nextRequest) {
+            $this->fail('It should not enter in the next middleware');
+        };
+
+        // Nothing happened yet
+        $this->assertNull(device_uuid());
+        $middleware = new DeviceTracker;
+        try {
+            $middleware->handle($request, $next);
+            $this->fail("It should generate an exception");
+        } catch (HttpException $e) {
+            $this->assertEquals($code, $e->getStatusCode());
+        }
+    }
+
+    public function testCustomHttpErrorCodeWithInvalidCode(): void
+    {
+        $code = 10000;
+        $config = [
+            'devices.middlewares.device-tracker.exception_on_invalid_devices' => false,
+            'devices.middlewares.device-tracker.http_error_code' => $code,
+            'devices.allow_unknown_devices' => false,
+            'devices.user_agent_whitelist' => [],
+        ];
+        $this->setConfig($config);
+
+        $request = request();
+        $request->headers->set('User-Agent', null);
+
+        $next = function (Request $nextRequest) {
+            $this->fail('It should not enter in the next middleware');
+        };
+
+        // Nothing happened yet
+        $this->assertNull(device_uuid());
+        $middleware = new DeviceTracker;
+        try {
+            $middleware->handle($request, $next);
+            $this->fail("It should generate an exception");
+        } catch (HttpException $e) {
+            $this->assertEquals(403, $e->getStatusCode());
+        }
+    }
 }

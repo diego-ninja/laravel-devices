@@ -4,6 +4,7 @@ namespace Ninja\DeviceTracker\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Ninja\DeviceTracker\Enums\DeviceTransport;
@@ -80,7 +81,11 @@ final readonly class DeviceTracker
         }
         if (Config::get('devices.allow_' . ($unknown ? 'unknown' : 'bot') . '_devices', false) === false) {
             if (Config::get('devices.middlewares.device-tracker.exception_on_invalid_devices', false) === false) {
-                abort(403, sprintf(
+                $errorCode = config('devices.middlewares.device-tracker.http_error_code', 403);
+                if (!array_key_exists($errorCode, Response::$statusTexts)) {
+                    $errorCode = 403;
+                }
+                abort($errorCode, sprintf(
                     '%s device detected: user-agent %s',
                     $unknown ? 'Unknown' : 'Bot',
                     $userAgent
