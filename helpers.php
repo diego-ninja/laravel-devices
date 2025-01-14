@@ -29,14 +29,14 @@ if (! function_exists('fingerprint')) {
 if (! function_exists('device_uuid')) {
     function device_uuid(): ?StorableId
     {
-        return DeviceTransport::current()?->get();
+        return DeviceTransport::getIdFromHierarchy();
     }
 }
 
 if (! function_exists('session_uuid')) {
     function session_uuid(): ?StorableId
     {
-        return SessionTransport::current()?->get();
+        return SessionTransport::getIdFromHierarchy();
     }
 }
 

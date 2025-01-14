@@ -11,27 +11,39 @@ enum DeviceTransport: string
 {
     use Traits\CanTransport;
 
-    private const DEFAULT_REQUEST_PARAMETER = 'internal_device_id';
-
     case Cookie = 'cookie';
     case Header = 'header';
     case Session = 'session';
+    case Request = 'request';
 
-    public static function current(): ?self
+    public static function current(): self
     {
-        $config = config('devices.device_id_transport', self::Cookie->value);
+        $hierarchy = config('devices.device_id_transport_hierarchy', [self::Cookie->value]);
+        if (empty($hierarchy)) {
+            $hierarchy = [self::Cookie->value];
+        }
 
-        return self::tryFrom($config);
+        return self::currentFromHierarchy($hierarchy, self::Cookie);
     }
 
-    private function parameter(): string
+    public static function getIdFromHierarchy(): ?StorableId
+    {
+        $hierarchy = config('devices.device_id_transport_hierarchy', [self::Cookie->value]);
+        if (empty($hierarchy)) {
+            $hierarchy = [self::Cookie->value];
+        }
+
+        return self::storableIdFromHierarchy($hierarchy);
+    }
+
+    private static function parameter(): string
     {
         return config('devices.device_id_parameter');
     }
 
     private function fromCookie(): ?StorableId
     {
-        $value = Cookie::get($this->parameter());
+        $value = Cookie::get(self::parameter());
         if ($value === null) {
             return null;
         }
@@ -45,7 +57,7 @@ enum DeviceTransport: string
 
     private function fromHeader(): ?StorableId
     {
-        $value = request()->header($this->parameter());
+        $value = request()->header(self::parameter());
         if ($value === null) {
             return null;
         }
@@ -59,7 +71,7 @@ enum DeviceTransport: string
 
     private function fromSession(): ?StorableId
     {
-        $value = Session::get($this->parameter());
+        $value = Session::get(self::parameter());
         if ($value === null) {
             return null;
         }
@@ -73,7 +85,7 @@ enum DeviceTransport: string
 
     private function fromRequest(): ?StorableId
     {
-        $value = request()->input(self::DEFAULT_REQUEST_PARAMETER);
+        $value = request()->input(self::parameter());
         if ($value === null) {
             return null;
         }

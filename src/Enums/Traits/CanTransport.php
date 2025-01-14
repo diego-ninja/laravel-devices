@@ -18,7 +18,43 @@ trait CanTransport
             self::Cookie => $this->fromCookie(),
             self::Header => $this->fromHeader(),
             self::Session => $this->fromSession(),
+            self::Request => $this->fromRequest(),
         } ?? $this->fromRequest();
+    }
+
+    public static function currentFromHierarchy(array $hierarchy, self $default): self
+    {
+        $defaultTransport = null;
+
+        foreach ($hierarchy as $item) {
+            $transport = self::tryFrom($item);
+            if (! is_null($transport)) {
+                if (is_null($defaultTransport)) {
+                    $defaultTransport = $transport;
+                }
+                $storableId = $transport->get();
+                if (! is_null($storableId)) {
+                    return $transport;
+                }
+            }
+        }
+
+        return $defaultTransport ?? $default;
+    }
+
+    protected static function storableIdFromHierarchy(array $hierarchy): ?StorableId
+    {
+        foreach ($hierarchy as $item) {
+            $transport = self::tryFrom($item);
+            if (! is_null($transport)) {
+                $storableId = $transport->get();
+                if (! is_null($storableId)) {
+                    return $storableId;
+                }
+            }
+        }
+
+        return null;
     }
 
     public static function set(mixed $response, StorableId $id): mixed
@@ -65,16 +101,12 @@ trait CanTransport
     {
         $current = self::current();
 
-        if ($id === null && $current === null) {
-            return request();
-        }
-
         $transportId = $id ?? $current->get();
         if ($transportId === null) {
             return request();
         }
 
-        $requestParameter = self::DEFAULT_REQUEST_PARAMETER;
+        $requestParameter = self::parameter();
 
         return request()->merge([$requestParameter => (string) $transportId]);
     }

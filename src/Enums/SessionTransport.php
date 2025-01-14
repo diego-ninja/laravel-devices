@@ -11,17 +11,29 @@ enum SessionTransport: string
 {
     use Traits\CanTransport;
 
-    private const DEFAULT_REQUEST_PARAMETER = 'internal_session_id';
-
     case Cookie = 'cookie';
     case Header = 'header';
     case Session = 'session';
+    case Request = 'request';
 
-    public static function current(): ?self
+    public static function current(): self
     {
-        $config = config('devices.session_id_transport', self::Cookie->value);
+        $hierarchy = config('devices.session_id_transport_hierarchy', [self::Cookie->value]);
+        if (empty($hierarchy)) {
+            $hierarchy = [self::Cookie->value];
+        }
 
-        return self::tryFrom($config);
+        return self::currentFromHierarchy($hierarchy, self::Cookie);
+    }
+
+    public static function getIdFromHierarchy(): ?StorableId
+    {
+        $hierarchy = config('devices.session_id_transport_hierarchy', [self::Cookie->value]);
+        if (empty($hierarchy)) {
+            $hierarchy = [self::Cookie->value];
+        }
+
+        return self::storableIdFromHierarchy($hierarchy);
     }
 
     public static function forget(): void
@@ -38,14 +50,14 @@ enum SessionTransport: string
         };
     }
 
-    private function parameter(): string
+    private static function parameter(): string
     {
         return config('devices.session_id_parameter');
     }
 
     private function fromCookie(): ?StorableId
     {
-        $value = Cookie::get($this->parameter());
+        $value = Cookie::get(self::parameter());
         if ($value === null) {
             return null;
         }
@@ -59,7 +71,7 @@ enum SessionTransport: string
 
     private function fromHeader(): ?StorableId
     {
-        $value = request()->header($this->parameter());
+        $value = request()->header(self::parameter());
         if ($value === null) {
             return null;
         }
@@ -73,7 +85,7 @@ enum SessionTransport: string
 
     private function fromSession(): ?StorableId
     {
-        $value = Session::get($this->parameter());
+        $value = Session::get(self::parameter());
         if ($value === null) {
             return null;
         }
@@ -87,7 +99,7 @@ enum SessionTransport: string
 
     private function fromRequest(): ?StorableId
     {
-        $value = request()->input(self::DEFAULT_REQUEST_PARAMETER);
+        $value = request()->input(self::parameter());
         if ($value === null) {
             return null;
         }

@@ -14,14 +14,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Transport for device id
+    | Hierarchy of transports for device id
     |--------------------------------------------------------------------------
-    | This option specifies the transport method for the device id.
+    | This option specifies the transport method for the device id in order of priority.
+    | When searching for a device id, the first transport method that have the device id set will determine
+    | the device id.
+    | By default only 'cookie' transport is used
     |
-    | Options: 'cookie', 'header', 'session'
+    | Possible array values: 'cookie', 'header', 'session', 'request'
     |
     */
-    'device_id_transport' => 'cookie',
+    'device_id_transport_hierarchy' => [
+        'cookie',
+    ],
 
     /*
     |--------------------------------------------------------------------------
@@ -35,14 +40,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Transport for session id
+    | Hierarchy of transports for session id
     |--------------------------------------------------------------------------
-    | This option specifies the transport method for the session id.
+    | This option specifies the transport method for the session id in order of priority.
+    | When searching for a session id, the first transport method that have the session id set will determine
+    | the session id.
+    | By default only 'cookie' transport is used
     |
-    | Options: 'cookie', 'header', 'session'
+    | Possible array values: 'cookie', 'header', 'session', 'request'
     |
     */
-    'session_id_transport' => 'cookie',
+    'session_id_transport_hierarchy' => [
+        'cookie',
+    ],
 
     /*
     |--------------------------------------------------------------------------
