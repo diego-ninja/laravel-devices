@@ -18,7 +18,6 @@ enum DeviceTransport: string
 
     public static function current(): self
     {
-        set_breakpoint();
         $hierarchy = config('devices.device_id_transport_hierarchy', [self::Cookie->value]);
         if (empty($hierarchy)) {
             $hierarchy = [self::Cookie->value];
