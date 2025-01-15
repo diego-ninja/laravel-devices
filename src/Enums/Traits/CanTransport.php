@@ -25,18 +25,15 @@ trait CanTransport
 
     public static function currentFromHierarchy(array $hierarchy, self $default): self
     {
-        Log::info((new \Exception())->getTraceAsString());
         $defaultTransport = null;
 
         foreach ($hierarchy as $item) {
             $transport = self::tryFrom($item);
             if (! is_null($transport)) {
-                Log::info($transport->value);
                 if (is_null($defaultTransport)) {
                     $defaultTransport = $transport;
                 }
                 $storableId = $transport->get();
-                Log::info($storableId);
                 if (! is_null($storableId)) {
                     return $transport;
                 }
