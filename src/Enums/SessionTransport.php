@@ -26,6 +26,21 @@ enum SessionTransport: string
         return self::currentFromHierarchy($hierarchy, self::Cookie);
     }
 
+    public static function responseTransport(): self
+    {
+        $hierarchy = config('devices.session_id_transport_hierarchy', []);
+        if (empty($hierarchy)) {
+            $hierarchy = [];
+        }
+        $hierarchy = array_map(fn (string $transport) => self::tryFrom($transport), $hierarchy);
+        $hierarchy = array_filter($hierarchy, fn (?self $transport) => ! is_null($transport) && $transport !== self::Request->value);
+        if (empty($hierarchy)) {
+            $hierarchy = [self::Cookie];
+        }
+
+        return $hierarchy[0];
+    }
+
     public static function getIdFromHierarchy(): ?StorableId
     {
         $hierarchy = config('devices.session_id_transport_hierarchy', [self::Cookie->value]);

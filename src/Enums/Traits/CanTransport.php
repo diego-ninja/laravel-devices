@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 use Ninja\DeviceTracker\Contracts\StorableId;
 
@@ -24,15 +25,18 @@ trait CanTransport
 
     public static function currentFromHierarchy(array $hierarchy, self $default): self
     {
+        Log::info((new \Exception())->getTraceAsString());
         $defaultTransport = null;
 
         foreach ($hierarchy as $item) {
             $transport = self::tryFrom($item);
             if (! is_null($transport)) {
+                Log::info($transport->value);
                 if (is_null($defaultTransport)) {
                     $defaultTransport = $transport;
                 }
                 $storableId = $transport->get();
+                Log::info($storableId);
                 if (! is_null($storableId)) {
                     return $transport;
                 }
@@ -63,17 +67,14 @@ trait CanTransport
             return $response;
         }
 
-        $current = self::current();
+        $transport = self::responseTransport();
 
-        if ($current === null) {
-            return $response;
-        }
-
-        $callable = match ($current) {
-            self::Cookie => function () use ($response, $current, $id): mixed {
+        $callable = match ($transport) {
+            // Transport::Cookie and Transport::Request
+            default => function () use ($response, $transport, $id): mixed {
                 $response->withCookie(
                     Cookie::forever(
-                        name: $current->parameter(),
+                        name: $transport->parameter(),
                         value: (string) $id,
                         secure: Config::get('session.secure', false),
                         httpOnly: Config::get('session.http_only', true)
@@ -82,13 +83,13 @@ trait CanTransport
 
                 return $response;
             },
-            self::Header => function () use ($response, $current, $id): mixed {
-                $response->header($current->parameter(), (string) $id);
+            self::Header => function () use ($response, $transport, $id): mixed {
+                $response->header($transport->parameter(), (string) $id);
 
                 return $response;
             },
-            self::Session => function () use ($response, $current, $id): mixed {
-                Session::put($current->parameter(), (string) $id);
+            self::Session => function () use ($response, $transport, $id): mixed {
+                Session::put($transport->parameter(), (string) $id);
 
                 return $response;
             },
