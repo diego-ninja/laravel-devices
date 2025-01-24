@@ -22,8 +22,15 @@ final readonly class DeviceTracker
      * @throws UnknownDeviceDetectedException
      * @throws InvalidDeviceDetectedException
      */
-    public function handle(Request $request, Closure $next): mixed
+    public function handle(Request $request, Closure $next, ?string $hierarchyParametersString = null): mixed
     {
+        if (! empty($hierarchyParametersString)) {
+            $hierarchy = array_filter(explode(':', $hierarchyParametersString), fn (string $value) => DeviceTransport::tryFrom($value) !== null);
+            if (! empty($hierarchy)) {
+                Config::set('devices.device_id_transport_hierarchy', $hierarchy);
+            }
+        }
+
         /** @var Device|null $detectedDevice */
         $detectedDevice = DeviceManager::detect();
         if (! $detectedDevice || ! DeviceManager::isWhitelisted($detectedDevice->source)) {
