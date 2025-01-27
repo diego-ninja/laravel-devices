@@ -25,7 +25,7 @@ final readonly class DeviceTracker
     public function handle(Request $request, Closure $next, ?string $hierarchyParametersString = null): mixed
     {
         if (! empty($hierarchyParametersString)) {
-            $hierarchy = array_filter(explode(':', $hierarchyParametersString), fn (string $value) => DeviceTransport::tryFrom($value) !== null);
+            $hierarchy = array_filter(explode('|', $hierarchyParametersString), fn (string $value) => DeviceTransport::tryFrom($value) !== null);
             if (! empty($hierarchy)) {
                 Config::set('devices.device_id_transport_hierarchy', $hierarchy);
             }
