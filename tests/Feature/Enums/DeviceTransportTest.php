@@ -172,4 +172,26 @@ class DeviceTransportTest extends FeatureTestCase
         $this->assertTrue($storableId instanceof StorableId);
         $this->assertEquals($id, $storableId);
     }
+
+    public function test_current_from_alternative_parameter(): void
+    {
+        $parameter = 'device_id';
+        $this->setConfig([
+            'devices.device_id_transport_hierarchy' => [DeviceTransport::Cookie->value],
+            'devices.device_id_parameter' => 'invalid_parameter',
+            'devices.device_id_alternative_parameter' => $parameter,
+        ]);
+        $id = 'f765e4d4-a990-4c59-aeed-d16f0aed2665';
+
+        request()->cookies->set($parameter, $id);
+
+        $transport = DeviceTransport::current();
+
+        $this->assertEquals(DeviceTransport::Cookie, $transport);
+
+        $storableId = DeviceTransport::getIdFromHierarchy();
+
+        $this->assertTrue($storableId instanceof StorableId);
+        $this->assertEquals($id, $storableId);
+    }
 }

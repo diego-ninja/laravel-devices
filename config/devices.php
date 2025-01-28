@@ -14,6 +14,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Alternative parameter name for user device tracking
+    |--------------------------------------------------------------------------
+    | This option is used as a backup key to search for the device id. If the
+    | 'device_id_parameter' is not set then this parameter is searched.
+    | This option is also useful when migrating the parameter name, making sure
+    | that devices still using the old parameter can still be identified
+    | through it.
+    |
+    */
+    'device_id_alternative_parameter' => null,
+
+    /*
+    |--------------------------------------------------------------------------
     | Hierarchy of transports for device id
     |--------------------------------------------------------------------------
     | This option specifies the transport method for the device id in order of priority.
@@ -39,6 +52,19 @@ return [
     |
     */
     'session_id_parameter' => 'laravel_session_id',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Alternative parameter name for user session tracking
+    |--------------------------------------------------------------------------
+    | This option is used as a backup key to search for the session id. If the
+    | 'session_id_parameter' is not set then this parameter is searched.
+    | This option is also useful when migrating the parameter name, making sure
+    | that devices still using the old parameter can still be identified
+    | through it.
+    |
+    */
+    'session_id_alternative_parameter' => null,
 
     /*
     |--------------------------------------------------------------------------

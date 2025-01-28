@@ -5,6 +5,7 @@ namespace Ninja\DeviceTracker\Enums;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Session;
 use Ninja\DeviceTracker\Contracts\StorableId;
+use Ninja\DeviceTracker\Factories\AbstractStorableIdFactory;
 use Ninja\DeviceTracker\Factories\SessionIdFactory;
 
 enum SessionTransport: string
@@ -29,16 +30,7 @@ enum SessionTransport: string
     public static function responseTransport(): self
     {
         $hierarchy = config('devices.session_id_transport_hierarchy', []);
-        if (empty($hierarchy)) {
-            $hierarchy = [];
-        }
-        $hierarchy = array_map(fn (string $transport) => self::tryFrom($transport), $hierarchy);
-        $hierarchy = array_filter($hierarchy, fn (?self $transport) => ! is_null($transport) && $transport !== self::Request->value);
-        if (empty($hierarchy)) {
-            $hierarchy = [self::Cookie];
-        }
-
-        return $hierarchy[0];
+        return self::getResponseTransport($hierarchy);
     }
 
     public static function getIdFromHierarchy(): ?StorableId
@@ -70,73 +62,16 @@ enum SessionTransport: string
         return config('devices.session_id_parameter');
     }
 
-    private function fromCookie(): ?StorableId
+    private static function alternativeParameter(): ?string
     {
-        $value = Cookie::get(self::parameter());
-        if ($value === null) {
-            return null;
-        }
-
-        if (! is_string($value)) {
-            return null;
-        }
-
-        $id = null;
-        try {
-            $id = SessionIdFactory::from($value);
-        } catch (\Throwable) {
-            try {
-                $id = SessionIdFactory::from($this->decryptCookie($value));
-            } catch (\Throwable) {
-            }
-        }
-
-        if (! $id instanceof StorableId) {
-            $id = SessionIdFactory::from($value);
-        }
-
-        return $id;
+        return config('devices.session_id_alternative_parameter');
     }
 
-    private function fromHeader(): ?StorableId
+    /**
+     * @return class-string<AbstractStorableIdFactory>
+     */
+    private static function storableIdFactory(): string
     {
-        $value = request()->header(self::parameter());
-        if ($value === null) {
-            return null;
-        }
-
-        if (! is_string($value)) {
-            return null;
-        }
-
-        return SessionIdFactory::from($value);
-    }
-
-    private function fromSession(): ?StorableId
-    {
-        $value = Session::get(self::parameter());
-        if ($value === null) {
-            return null;
-        }
-
-        if (! is_string($value)) {
-            return null;
-        }
-
-        return SessionIdFactory::from($value);
-    }
-
-    private function fromRequest(): ?StorableId
-    {
-        $value = request()->input(self::parameter());
-        if ($value === null) {
-            return null;
-        }
-
-        if (! is_string($value)) {
-            return null;
-        }
-
-        return SessionIdFactory::from($value);
+        return SessionIdFactory::class;
     }
 }

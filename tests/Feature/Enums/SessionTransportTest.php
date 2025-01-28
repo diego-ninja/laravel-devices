@@ -147,7 +147,7 @@ class SessionTransportTest extends FeatureTestCase
 
     public function test_current_with_encrypted_cookie(): void
     {
-        $parameter = 'device_id';
+        $parameter = 'session_id';
         $key = 'base64:Lzrm+AkE+RrRJWDHON58e8unP7LBK6PlyyLo5k4i6Q0=';
         $this->setConfig([
             'devices.session_id_transport_hierarchy' => [SessionTransport::Cookie->value],
@@ -162,6 +162,28 @@ class SessionTransportTest extends FeatureTestCase
         );
 
         request()->cookies->set($parameter, $encryptedCookie);
+
+        $transport = SessionTransport::current();
+
+        $this->assertEquals(SessionTransport::Cookie, $transport);
+
+        $storableId = SessionTransport::getIdFromHierarchy();
+
+        $this->assertTrue($storableId instanceof StorableId);
+        $this->assertEquals($id, $storableId);
+    }
+
+    public function test_current_from_alternative_parameter(): void
+    {
+        $parameter = 'session_id';
+        $this->setConfig([
+            'devices.session_id_transport_hierarchy' => [SessionTransport::Cookie->value],
+            'devices.session_id_parameter' => 'invalid_parameter',
+            'devices.session_id_alternative_parameter' => $parameter,
+        ]);
+        $id = 'f765e4d4-a990-4c59-aeed-d16f0aed2665';
+
+        request()->cookies->set($parameter, $id);
 
         $transport = SessionTransport::current();
 
