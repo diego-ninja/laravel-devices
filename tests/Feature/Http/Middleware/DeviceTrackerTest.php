@@ -5,11 +5,13 @@ namespace Ninja\DeviceTracker\Tests\Feature\Http\Middleware;
 use Faker\Provider\UserAgent;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Ninja\DeviceTracker\Enums\DeviceTransport;
 use Ninja\DeviceTracker\Exception\UnknownDeviceDetectedException;
 use Ninja\DeviceTracker\Http\Middleware\DeviceTracker;
 use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Tests\FeatureTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class DeviceTrackerTest extends FeatureTestCase
@@ -377,7 +379,7 @@ class DeviceTrackerTest extends FeatureTestCase
         ?string $exceptionClass = null
     ): void {
         $config = array_merge($config, [
-            'devices.device_id_transport' => 'cookie',
+            'devices.device_id_transport_hierarchy' => ['cookie'],
             'devices.device_id_parameter' => self::DEVICE_ID_PARAMETER,
         ]);
         $this->setConfig($config);
@@ -467,5 +469,64 @@ class DeviceTrackerTest extends FeatureTestCase
         } catch (HttpException $e) {
             $this->assertEquals(403, $e->getStatusCode());
         }
+    }
+
+    public function test_default_device_response_transport(): void
+    {
+        $config = [
+            'devices.middlewares.device-tracker.exception_on_invalid_devices' => false,
+            'devices.allow_unknown_devices' => true,
+            'devices.device_id_transport_hierarchy' => ['cookie'],
+            'devices.device_id_parameter' => self::DEVICE_ID_PARAMETER,
+            'devices.user_agent_whitelist' => [],
+        ];
+        $this->setConfig($config);
+
+        $request = request();
+        $request->headers->set('User-Agent', null);
+
+        $next = function () {
+            return new Response('', 200);
+        };
+
+        $middleware = new DeviceTracker;
+        $response = $middleware->handle($request, $next);
+
+        $this->assertTrue($response instanceof Response);
+        /** @var Response $response */
+        $this->assertNotEmpty($response->headers->getCookies());
+
+        $cookieNames = array_map(fn (Cookie $cookie) => $cookie->getName(), $response->headers->getCookies());
+        $this->assertContains(self::DEVICE_ID_PARAMETER, $cookieNames);
+
+        $this->assertFalse($response->headers->has(self::DEVICE_ID_PARAMETER));
+    }
+
+    public function test_custom_device_response_transport(): void
+    {
+        $config = [
+            'devices.middlewares.device-tracker.exception_on_invalid_devices' => false,
+            'devices.allow_unknown_devices' => true,
+            'devices.device_id_transport_hierarchy' => ['cookie'],
+            'devices.device_id_parameter' => self::DEVICE_ID_PARAMETER,
+            'devices.user_agent_whitelist' => [],
+        ];
+        $this->setConfig($config);
+
+        $request = request();
+        $request->headers->set('User-Agent', null);
+
+        $next = function () {
+            return new Response('', 200);
+        };
+
+        $middleware = new DeviceTracker;
+        $response = $middleware->handle($request, $next, null, DeviceTransport::Header->value);
+
+        $this->assertTrue($response instanceof Response);
+        /** @var Response $response */
+        $this->assertEmpty($response->headers->getCookies());
+
+        $this->assertTrue($response->headers->has(self::DEVICE_ID_PARAMETER));
     }
 }

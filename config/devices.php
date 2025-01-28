@@ -33,8 +33,6 @@ return [
     | When searching for a device id, the first transport method that have the device id set will determine
     | the device id.
     | By default only 'cookie' transport is used.
-    | The 'request' transport is only valid when retrieving the information and will be ignored when sending back the
-    | device id.
     |
     | Possible array values: 'cookie', 'header', 'session', 'request'
     |
@@ -42,6 +40,19 @@ return [
     'device_id_transport_hierarchy' => [
         'cookie',
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Transport for device id in the response
+    |--------------------------------------------------------------------------
+    | This option specifies the transport method for the device id when sending
+    | the response.
+    | By default the 'cookie' transport is used.
+    |
+    | Possible values: 'cookie', 'header', 'session'
+    |
+    */
+    'device_id_response_transport' => 'cookie',
 
     /*
     |--------------------------------------------------------------------------
@@ -74,8 +85,6 @@ return [
     | When searching for a session id, the first transport method that have the session id set will determine
     | the session id.
     | By default only 'cookie' transport is used
-    | The 'request' transport is only valid when retrieving the information and will be ignored when sending back the
-    | session id.
     |
     | Possible array values: 'cookie', 'header', 'session', 'request'
     |
@@ -83,6 +92,19 @@ return [
     'session_id_transport_hierarchy' => [
         'cookie',
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Transport for session id in the response
+    |--------------------------------------------------------------------------
+    | This option specifies the transport method for the session id when sending
+    | the response.
+    | By default the 'cookie' transport is used.
+    |
+    | Possible values: 'cookie', 'header', 'session'
+    |
+    */
+    'session_id_response_transport' => 'cookie',
 
     /*
     |--------------------------------------------------------------------------

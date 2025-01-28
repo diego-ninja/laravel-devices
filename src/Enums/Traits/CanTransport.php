@@ -11,17 +11,22 @@ use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Session;
 use Ninja\DeviceTracker\Contracts\StorableId;
+use Throwable;
 
 trait CanTransport
 {
     public function get(?string $parameter = null): ?StorableId
     {
-        return match ($this) {
-            self::Cookie => $this->fromCookie($parameter),
-            self::Header => $this->fromHeader($parameter),
-            self::Session => $this->fromSession($parameter),
-            self::Request => $this->fromRequest($parameter),
-        } ?? $this->fromRequest($parameter);
+        try {
+            return match ($this) {
+                self::Cookie => $this->fromCookie($parameter),
+                self::Header => $this->fromHeader($parameter),
+                self::Session => $this->fromSession($parameter),
+                self::Request => $this->fromRequest($parameter),
+            } ?? $this->fromRequest($parameter);
+        } catch (Throwable) {
+            return null;
+        }
     }
 
     public static function currentFromHierarchy(array $hierarchy, self $default): self
@@ -69,23 +74,6 @@ trait CanTransport
         }
 
         return null;
-    }
-
-    protected static function getResponseTransport(?array $hierarchy = null, self $default = self::Cookie): self
-    {
-        if (empty($hierarchy)) {
-            $hierarchy = [];
-        }
-        $hierarchy = array_map(fn (string $transport) => self::tryFrom($transport), $hierarchy);
-        $hierarchy = array_filter(
-            $hierarchy,
-            fn (?self $transport) => ! is_null($transport) && $transport !== self::Request->value
-        );
-        if (empty($hierarchy)) {
-            $hierarchy = [$default];
-        }
-
-        return $hierarchy[0];
     }
 
     public static function set(mixed $response, StorableId $id): mixed
@@ -170,14 +158,11 @@ trait CanTransport
         $id = null;
         try {
             $id = self::storableIdFactory()::from($value);
-        } catch (\Throwable) {
+        } catch (Throwable) {
         }
 
         if (! $id instanceof StorableId) {
-            try {
-                $id = self::storableIdFactory()::from($this->decryptCookie($value));
-            } catch (\Throwable) {
-            }
+            $id = self::storableIdFactory()::from($this->decryptCookie($value));
         }
 
         return $id;

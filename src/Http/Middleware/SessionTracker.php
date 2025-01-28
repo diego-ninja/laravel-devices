@@ -23,14 +23,14 @@ final readonly class SessionTracker
 {
     public function __construct(protected Guard $auth) {}
 
-    public function handle(Request $request, Closure $next, ?string $hierarchyParametersString = null): mixed
-    {
-        if (! empty($hierarchyParametersString)) {
-            $hierarchy = array_filter(explode('|', $hierarchyParametersString), fn (string $value) => SessionTransport::tryFrom($value) !== null);
-            if (! empty($hierarchy)) {
-                Config::set('devices.session_id_transport_hierarchy', $hierarchy);
-            }
-        }
+    public function handle(
+        Request $request,
+        Closure $next,
+        ?string $hierarchyParameterString = null,
+        ?string $responseTransport = null,
+    ): mixed {
+        $this->checkCustomSessionTransportHierarchy($hierarchyParameterString);
+        $this->checkCustomSessionResponseTransport($responseTransport);
 
         $device = device();
         if ($device === null) {
@@ -72,6 +72,30 @@ final readonly class SessionTracker
         }
 
         return $next($request);
+    }
+
+    private function checkCustomSessionTransportHierarchy(?string $hierarchyParameterString = null): void
+    {
+        if (! empty($hierarchyParameterString)) {
+            $hierarchy = array_filter(
+                explode('|', $hierarchyParameterString),
+                fn (string $value) => SessionTransport::tryFrom($value) !== null,
+            );
+            if (! empty($hierarchy)) {
+                Config::set('devices.session_id_transport_hierarchy', $hierarchy);
+            }
+        }
+    }
+
+    private function checkCustomSessionResponseTransport(?string $parameterString = null): void
+    {
+        if (
+            ! empty($parameterString)
+            && SessionTransport::tryFrom($parameterString) !== null
+            && $parameterString !== SessionTransport::Request->value
+        ) {
+            Config::set('devices.session_id_response_transport', $parameterString);
+        }
     }
 
     private function manageLogout(Request $request, Session $session): JsonResponse|RedirectResponse

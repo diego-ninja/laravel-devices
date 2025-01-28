@@ -29,8 +29,8 @@ enum SessionTransport: string
 
     public static function responseTransport(): self
     {
-        $hierarchy = config('devices.session_id_transport_hierarchy', []);
-        return self::getResponseTransport($hierarchy);
+        $responseTransportString = config('devices.session_id_response_transport', self::Cookie->value);
+        return self::tryFrom($responseTransportString) ?? self::Cookie;
     }
 
     public static function getIdFromHierarchy(): ?StorableId
