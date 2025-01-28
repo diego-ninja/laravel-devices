@@ -81,7 +81,21 @@ enum SessionTransport: string
             return null;
         }
 
-        return SessionIdFactory::from($value);
+        $id = null;
+        try {
+            $id = SessionIdFactory::from($value);
+        } catch (\Throwable) {
+            try {
+                $id = SessionIdFactory::from($this->decryptCookie($value));
+            } catch (\Throwable) {
+            }
+        }
+
+        if (! $id instanceof StorableId) {
+            $id = SessionIdFactory::from($value);
+        }
+
+        return $id;
     }
 
     private function fromHeader(): ?StorableId

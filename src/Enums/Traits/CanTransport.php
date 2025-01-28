@@ -2,12 +2,13 @@
 
 namespace Ninja\DeviceTracker\Enums\Traits;
 
+use Illuminate\Cookie\CookieValuePrefix;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cookie;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Session;
 use Ninja\DeviceTracker\Contracts\StorableId;
 
@@ -117,5 +118,11 @@ trait CanTransport
         ];
 
         return in_array(get_class($response), $valid, true);
+    }
+
+    private function decryptCookie(string $cookieValue): string
+    {
+        $decryptedString = Crypt::decrypt($cookieValue, false);
+        return CookieValuePrefix::remove($decryptedString);
     }
 }

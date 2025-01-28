@@ -29,7 +29,7 @@ abstract class AbstractStorableIdFactory
         return $idClass::build();
     }
 
-    public static function from(string $id): StorableId
+    public static function from(string $id): ?StorableId
     {
         $idClass = self::instance()->getIdClass();
 

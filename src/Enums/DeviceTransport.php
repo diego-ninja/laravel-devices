@@ -67,7 +67,20 @@ enum DeviceTransport: string
             return null;
         }
 
-        return DeviceIdFactory::from($value);
+        $id = null;
+        try {
+            $id = DeviceIdFactory::from($value);
+        } catch (\Throwable) {
+        }
+
+        if (! $id instanceof StorableId) {
+            try {
+                $id = DeviceIdFactory::from($this->decryptCookie($value));
+            } catch (\Throwable) {
+            }
+        }
+
+        return $id;
     }
 
     private function fromHeader(): ?StorableId
