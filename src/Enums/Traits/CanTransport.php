@@ -180,7 +180,17 @@ trait CanTransport
             return null;
         }
 
-        return self::storableIdFactory()::from($value);
+        $id = null;
+        try {
+            $id = self::storableIdFactory()::from($value);
+        } catch (Throwable) {
+        }
+
+        if (! $id instanceof StorableId) {
+            $id = self::storableIdFactory()::from($this->decryptCookie($value));
+        }
+
+        return $id;
     }
 
     private function fromSession(?string $parameter = null): ?StorableId
@@ -195,7 +205,17 @@ trait CanTransport
             return null;
         }
 
-        return self::storableIdFactory()::from($value);
+        $id = null;
+        try {
+            $id = self::storableIdFactory()::from($value);
+        } catch (Throwable) {
+        }
+
+        if (! $id instanceof StorableId) {
+            $id = self::storableIdFactory()::from($this->decryptCookie($value));
+        }
+
+        return $id;
     }
 
     private function fromRequest(?string $parameter = null): ?StorableId
@@ -210,6 +230,16 @@ trait CanTransport
             return null;
         }
 
-        return self::storableIdFactory()::from($value);
+        $id = null;
+        try {
+            $id = self::storableIdFactory()::from($value);
+        } catch (Throwable) {
+        }
+
+        if (! $id instanceof StorableId) {
+            $id = self::storableIdFactory()::from($this->decryptCookie($value));
+        }
+
+        return $id;
     }
 }
