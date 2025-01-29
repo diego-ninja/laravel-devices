@@ -14,14 +14,45 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Transport for device id
+    | Alternative parameter name for user device tracking
     |--------------------------------------------------------------------------
-    | This option specifies the transport method for the device id.
-    |
-    | Options: 'cookie', 'header', 'session'
+    | This option is used as a backup key to search for the device id. If the
+    | 'device_id_parameter' is not set then this parameter is searched.
+    | This option is also useful when migrating the parameter name, making sure
+    | that devices still using the old parameter can still be identified
+    | through it.
     |
     */
-    'device_id_transport' => 'cookie',
+    'device_id_alternative_parameter' => null,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Hierarchy of transports for device id
+    |--------------------------------------------------------------------------
+    | This option specifies the transport method for the device id in order of priority.
+    | When searching for a device id, the first transport method that have the device id set will determine
+    | the device id.
+    | By default only 'cookie' transport is used.
+    |
+    | Possible array values: 'cookie', 'header', 'session', 'request'
+    |
+    */
+    'device_id_transport_hierarchy' => [
+        'cookie',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Transport for device id in the response
+    |--------------------------------------------------------------------------
+    | This option specifies the transport method for the device id when sending
+    | the response.
+    | By default the 'cookie' transport is used.
+    |
+    | Possible values: 'cookie', 'header', 'session'
+    |
+    */
+    'device_id_response_transport' => 'cookie',
 
     /*
     |--------------------------------------------------------------------------
@@ -35,14 +66,45 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Transport for session id
+    | Alternative parameter name for user session tracking
     |--------------------------------------------------------------------------
-    | This option specifies the transport method for the session id.
-    |
-    | Options: 'cookie', 'header', 'session'
+    | This option is used as a backup key to search for the session id. If the
+    | 'session_id_parameter' is not set then this parameter is searched.
+    | This option is also useful when migrating the parameter name, making sure
+    | that devices still using the old parameter can still be identified
+    | through it.
     |
     */
-    'session_id_transport' => 'cookie',
+    'session_id_alternative_parameter' => null,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Hierarchy of transports for session id
+    |--------------------------------------------------------------------------
+    | This option specifies the transport method for the session id in order of priority.
+    | When searching for a session id, the first transport method that have the session id set will determine
+    | the session id.
+    | By default only 'cookie' transport is used
+    |
+    | Possible array values: 'cookie', 'header', 'session', 'request'
+    |
+    */
+    'session_id_transport_hierarchy' => [
+        'cookie',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Transport for session id in the response
+    |--------------------------------------------------------------------------
+    | This option specifies the transport method for the session id when sending
+    | the response.
+    | By default the 'cookie' transport is used.
+    |
+    | Possible values: 'cookie', 'header', 'session'
+    |
+    */
+    'session_id_response_transport' => 'cookie',
 
     /*
     |--------------------------------------------------------------------------

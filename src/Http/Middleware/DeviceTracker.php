@@ -22,8 +22,15 @@ final readonly class DeviceTracker
      * @throws UnknownDeviceDetectedException
      * @throws InvalidDeviceDetectedException
      */
-    public function handle(Request $request, Closure $next): mixed
-    {
+    public function handle(
+        Request $request,
+        Closure $next,
+        ?string $hierarchyParameterString = null,
+        ?string $responseTransport = null,
+    ): mixed {
+        $this->checkCustomDeviceTransportHierarchy($hierarchyParameterString);
+        $this->checkCustomDeviceResponseTransport($responseTransport);
+
         /** @var Device|null $detectedDevice */
         $detectedDevice = DeviceManager::detect();
         if (! $detectedDevice || ! DeviceManager::isWhitelisted($detectedDevice->source)) {
@@ -71,6 +78,30 @@ final readonly class DeviceTracker
         }
 
         return DeviceTransport::set($next(DeviceTransport::propagate($deviceUuid)), $deviceUuid);
+    }
+
+    private function checkCustomDeviceTransportHierarchy(?string $hierarchyParameterString = null): void
+    {
+        if (! empty($hierarchyParameterString)) {
+            $hierarchy = array_filter(
+                explode('|', $hierarchyParameterString),
+                fn (string $value) => DeviceTransport::tryFrom($value) !== null,
+            );
+            if (! empty($hierarchy)) {
+                Config::set('devices.device_id_transport_hierarchy', $hierarchy);
+            }
+        }
+    }
+
+    private function checkCustomDeviceResponseTransport(?string $parameterString = null): void
+    {
+        if (
+            ! empty($parameterString)
+            && DeviceTransport::tryFrom($parameterString) !== null
+            && $parameterString !== DeviceTransport::Request->value
+        ) {
+            Config::set('devices.device_id_response_transport', $parameterString);
+        }
     }
 
     /**

@@ -5,83 +5,59 @@ namespace Ninja\DeviceTracker\Enums;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Session;
 use Ninja\DeviceTracker\Contracts\StorableId;
+use Ninja\DeviceTracker\Factories\AbstractStorableIdFactory;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 
 enum DeviceTransport: string
 {
     use Traits\CanTransport;
 
-    private const DEFAULT_REQUEST_PARAMETER = 'internal_device_id';
-
     case Cookie = 'cookie';
     case Header = 'header';
     case Session = 'session';
+    case Request = 'request';
 
-    public static function current(): ?self
+    public static function current(): self
     {
-        $config = config('devices.device_id_transport', self::Cookie->value);
+        $hierarchy = config('devices.device_id_transport_hierarchy', [self::Cookie->value]);
+        if (empty($hierarchy)) {
+            $hierarchy = [self::Cookie->value];
+        }
 
-        return self::tryFrom($config);
+        return self::currentFromHierarchy($hierarchy, self::Cookie);
     }
 
-    private function parameter(): string
+    public static function responseTransport(): self
+    {
+        $responseTransportString = config('devices.device_id_response_transport', self::Cookie->value);
+        return self::tryFrom($responseTransportString) ?? self::Cookie;
+    }
+
+    public static function getIdFromHierarchy(): ?StorableId
+    {
+        $hierarchy = config('devices.device_id_transport_hierarchy', [self::Cookie->value]);
+        if (empty($hierarchy)) {
+            $hierarchy = [self::Cookie->value];
+        }
+
+        return self::storableIdFromHierarchy($hierarchy);
+    }
+
+    private static function parameter(): string
     {
         return config('devices.device_id_parameter');
     }
 
-    private function fromCookie(): ?StorableId
+    private static function alternativeParameter(): ?string
     {
-        $value = Cookie::get($this->parameter());
-        if ($value === null) {
-            return null;
-        }
-
-        if (! is_string($value)) {
-            return null;
-        }
-
-        return DeviceIdFactory::from($value);
+        return config('devices.device_id_alternative_parameter');
     }
 
-    private function fromHeader(): ?StorableId
+    /**
+     * @return class-string<AbstractStorableIdFactory>
+     */
+    private static function storableIdFactory(): string
     {
-        $value = request()->header($this->parameter());
-        if ($value === null) {
-            return null;
-        }
-
-        if (! is_string($value)) {
-            return null;
-        }
-
-        return DeviceIdFactory::from($value);
-    }
-
-    private function fromSession(): ?StorableId
-    {
-        $value = Session::get($this->parameter());
-        if ($value === null) {
-            return null;
-        }
-
-        if (! is_string($value)) {
-            return null;
-        }
-
-        return DeviceIdFactory::from($value);
-    }
-
-    private function fromRequest(): ?StorableId
-    {
-        $value = request()->input(self::DEFAULT_REQUEST_PARAMETER);
-        if ($value === null) {
-            return null;
-        }
-
-        if (! is_string($value)) {
-            return null;
-        }
-
-        return DeviceIdFactory::from($value);
+        return DeviceIdFactory::class;
     }
 }
