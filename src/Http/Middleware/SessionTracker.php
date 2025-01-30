@@ -11,7 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
-use Ninja\DeviceTracker\Enums\DeviceTransport;
+use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Enums\SessionStatus;
 use Ninja\DeviceTracker\Enums\SessionTransport;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
@@ -66,6 +66,23 @@ final readonly class SessionTracker
                 $session = SessionManager::start();
 
                 return SessionTransport::set($next($request), $session->uuid);
+            } catch (DeviceNotFoundException $e) {
+                Log::error('Failed to start session', ['error' => $e->getMessage()]);
+            }
+        } else {
+            try {
+                $response = $next($request);
+
+                if (guard()->check()) {
+                    // Here the api must have done the login which set the session uuid
+                    $sessionUuid = session_uuid();
+
+                    if ($sessionUuid instanceof StorableId) {
+                        return SessionTransport::set($response, $sessionUuid);
+                    }
+                }
+
+                return $response;
             } catch (DeviceNotFoundException $e) {
                 Log::error('Failed to start session', ['error' => $e->getMessage()]);
             }
