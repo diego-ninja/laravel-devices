@@ -14,12 +14,12 @@ use Ninja\DeviceTracker\Models\Session;
  * @method static bool end(?StorableId $sessionId = null, ?Authenticatable $user = null)
  * @method static bool renew(Authenticatable $user)
  * @method static bool restart(Request $request)
- * @method static bool refresh(?Authenticatable $user = null)
+ * @method static Session refresh(?Authenticatable $user = null)
  * @method static bool inactive(?Authenticatable $user = null)
  * @method static bool block(StorableId $sessionId)
  * @method static bool blocked(StorableId $sessionId)
  * @method static bool locked(StorableId $sessionId)
- * @method static bool delete()
+ * @method static void delete()
  */
 final class SessionManager extends Facade
 {

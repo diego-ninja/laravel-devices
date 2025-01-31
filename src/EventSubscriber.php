@@ -6,6 +6,7 @@ use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Support\Facades\Log;
+use Ninja\DeviceTracker\Enums\SessionTransport;
 use Ninja\DeviceTracker\Events\DeviceTrackedEvent;
 use Ninja\DeviceTracker\Events\Google2FASuccess;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
@@ -34,7 +35,8 @@ final readonly class EventSubscriber
                 throw new DeviceNotFoundException('Failed to attach device during login');
             }
 
-            SessionManager::refresh($event->user);
+            $session = SessionManager::refresh($event->user);
+            SessionTransport::propagate($session?->uuid);
         } catch (DeviceNotFoundException $e) {
             Log::error('Login failed due to device error', [
                 'error' => $e->getMessage(),
