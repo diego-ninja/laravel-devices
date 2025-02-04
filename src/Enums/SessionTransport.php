@@ -45,13 +45,11 @@ enum SessionTransport: string
 
     public static function forget(): void
     {
-        $current = self::current();
-        if ($current === null) {
-            return;
-        }
+        $current = self::responseTransport();
 
         match ($current) {
             self::Cookie => Cookie::queue(Cookie::forget($current->parameter())),
+            self::Request,
             self::Header => null,
             self::Session => Session::forget($current->parameter()),
         };

@@ -21,6 +21,7 @@ use Ninja\DeviceTracker\Contracts\Cacheable;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\DTO\Metadata;
 use Ninja\DeviceTracker\Enums\SessionStatus;
+use Ninja\DeviceTracker\Enums\SessionTransport;
 use Ninja\DeviceTracker\Events\SessionBlockedEvent;
 use Ninja\DeviceTracker\Events\SessionFinishedEvent;
 use Ninja\DeviceTracker\Events\SessionStartedEvent;
@@ -242,6 +243,7 @@ class Session extends Model implements Cacheable
     public function end(?Authenticatable $user = null): bool
     {
         if ($this->status === SessionStatus::Finished) {
+            SessionTransport::forget();
             return true;
         }
 
@@ -249,6 +251,8 @@ class Session extends Model implements Cacheable
         $this->finished_at = Carbon::now();
 
         if ($this->save()) {
+            SessionTransport::forget();
+
             event(new SessionFinishedEvent($this, $user ?? user()));
 
             return true;

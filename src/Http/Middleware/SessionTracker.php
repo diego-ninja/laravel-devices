@@ -58,14 +58,25 @@ final readonly class SessionTracker
 
             $session->restart($request);
 
-            return SessionTransport::set($next($request), $session->uuid);
+            $response = $next($request);
+            if (guard()->check()) {
+                return SessionTransport::set($response, $session->uuid);
+            }
+
+            return $response;
         }
 
         if (guard()->check()) {
             try {
                 $session = SessionManager::start();
+                $response = $next($request);
 
-                return SessionTransport::set($next($request), $session->uuid);
+                if (guard()->check()) {
+                    return SessionTransport::set($response, $session->uuid);
+                }
+
+                // User has done logout, avoid setting session
+                return $response;
             } catch (DeviceNotFoundException $e) {
                 Log::error('Failed to start session', ['error' => $e->getMessage()]);
             }
