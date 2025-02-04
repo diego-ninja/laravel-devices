@@ -4,6 +4,8 @@ namespace Ninja\DeviceTracker\Tests\Feature\Enums;
 
 use Illuminate\Cookie\CookieValuePrefix;
 use Illuminate\Encryption\Encrypter;
+use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Enums\DeviceTransport;
@@ -193,5 +195,55 @@ class DeviceTransportTest extends FeatureTestCase
 
         $this->assertTrue($storableId instanceof StorableId);
         $this->assertEquals($id, $storableId);
+    }
+
+    public function test_forget_device_from_session(): void
+    {
+        $parameter = 'device_id';
+        $this->setConfig([
+            'devices.device_id_response_transport' => DeviceTransport::Session->value,
+            'devices.device_id_parameter' => $parameter,
+        ]);
+        $id = 'f765e4d4-a990-4c59-aeed-d16f0aed2665';
+
+        Session::start();
+        Session::put($parameter, $id);
+
+        DeviceTransport::forget();
+
+        $this->assertNull(Session::get($parameter));
+    }
+
+    public function test_forget_device_from_cookie(): void
+    {
+        $parameter = 'device_id';
+        $this->setConfig([
+            'devices.device_id_response_transport' => DeviceTransport::Cookie->value,
+            'devices.device_id_parameter' => $parameter,
+        ]);
+        $id = 'f765e4d4-a990-4c59-aeed-d16f0aed2665';
+
+        Cookie::queue(
+            Cookie::forever(
+                name: $parameter,
+                value: $id,
+            ),
+        );
+
+        $cookies = Cookie::getQueuedCookies();
+        foreach ($cookies as $cookie) {
+            if ($cookie->getName() === $parameter) {
+                $this->assertEquals($id, $cookie->getValue());
+            }
+        }
+
+        DeviceTransport::forget();
+
+        $cookies = Cookie::getQueuedCookies();
+        foreach ($cookies as $cookie) {
+            if ($cookie->getName() === $parameter) {
+                $this->assertNull($cookie->getValue());
+            }
+        }
     }
 }

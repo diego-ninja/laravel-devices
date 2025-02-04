@@ -43,18 +43,6 @@ enum SessionTransport: string
         return self::storableIdFromHierarchy($hierarchy);
     }
 
-    public static function forget(): void
-    {
-        $current = self::responseTransport();
-
-        match ($current) {
-            self::Cookie => Cookie::queue(Cookie::forget($current->parameter())),
-            self::Request,
-            self::Header => null,
-            self::Session => Session::forget($current->parameter()),
-        };
-    }
-
     private static function parameter(): string
     {
         return config('devices.session_id_parameter');
