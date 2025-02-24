@@ -4,6 +4,9 @@ namespace Ninja\DeviceTracker\Tests\Feature\Enums;
 
 use Illuminate\Cookie\CookieValuePrefix;
 use Illuminate\Encryption\Encrypter;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Enums\SessionTransport;
@@ -193,5 +196,55 @@ class SessionTransportTest extends FeatureTestCase
 
         $this->assertTrue($storableId instanceof StorableId);
         $this->assertEquals($id, $storableId);
+    }
+
+    public function test_forget_session_from_session(): void
+    {
+        $parameter = 'session_id';
+        $this->setConfig([
+            'devices.session_id_response_transport' => SessionTransport::Session->value,
+            'devices.session_id_parameter' => $parameter,
+        ]);
+        $id = 'f765e4d4-a990-4c59-aeed-d16f0aed2665';
+
+        Session::start();
+        Session::put($parameter, $id);
+
+        SessionTransport::forget();
+
+        $this->assertNull(Session::get($parameter));
+    }
+
+    public function test_forget_session_from_cookie(): void
+    {
+        $parameter = 'session_id';
+        $this->setConfig([
+            'devices.session_id_response_transport' => SessionTransport::Cookie->value,
+            'devices.session_id_parameter' => $parameter,
+        ]);
+        $id = 'f765e4d4-a990-4c59-aeed-d16f0aed2665';
+
+        Cookie::queue(
+            Cookie::forever(
+                name: $parameter,
+                value: $id,
+            ),
+        );
+
+        $cookies = Cookie::getQueuedCookies();
+        foreach ($cookies as $cookie) {
+            if ($cookie->getName() === $parameter) {
+                $this->assertEquals($id, $cookie->getValue());
+            }
+        }
+
+        SessionTransport::forget();
+
+        $cookies = Cookie::getQueuedCookies();
+        foreach ($cookies as $cookie) {
+            if ($cookie->getName() === $parameter) {
+                $this->assertNull($cookie->getValue());
+            }
+        }
     }
 }
