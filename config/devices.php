@@ -631,4 +631,77 @@ return [
         'Mozilla/5.0 (Linux; Android 13; 2211133G Build/TKQ1.220905.001; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/113.0.5672.76 Mobile Safari/537.36',
         'Mozilla/5.0 (Linux; U; Android 13; pl-pl; Xiaomi 13 Build/TKQ1.220905.001) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/100.0.4896.127 Mobile Safari/537.36 XiaoMi/MiuiBrowser/13.28.0-gn',
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Modules
+    |--------------------------------------------------------------------------
+    |
+    | This option allows you to specify settings for the laravel-devices
+    | modules.
+    |
+    */
+    'modules' => [
+
+        /*
+        |--------------------------------------------------------------------------
+        | Security Module
+        |--------------------------------------------------------------------------
+        |
+        | This option allows you to specify settings for the laravel-devices
+        | security module.
+        |
+        */
+        'security' => [
+
+            /*
+            |--------------------------------------------------------------------------
+            | Enabled
+            |--------------------------------------------------------------------------
+            |
+            | This option allows to enable or disable the entire security module.
+            |
+            */
+            'enabled' => false,
+
+            /*
+            |--------------------------------------------------------------------------
+            | Reporters
+            |--------------------------------------------------------------------------
+            |
+            | This option allows you to specify the reporters to use when any risk is
+            | detected during the security module execution.
+            |
+            */
+            'reporters' => [
+                [
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Reporter Type
+                    |--------------------------------------------------------------------------
+                    |
+                    | This option allows you to specify the type of reporter to use.
+                    | This value can either be one of the values specified in the enum
+                    | Ninja\DeviceTracker\Modules\Security\Enums\ReporterType or alternatively
+                    | should be a laravel container resolvable name.
+                    |
+                    */
+                    'type' => 'log',
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Level
+                    |--------------------------------------------------------------------------
+                    |
+                    | This option allows you to define the minimum risk level from which the
+                    | reporter should actually start reporting.
+                    | Options: 'none', 'low', 'medium', 'high', 'critical'
+                    | Default: 'low'
+                    |
+                    */
+                    'level' => 'low',
+                ],
+            ],
+        ],
+    ],
 ];

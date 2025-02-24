@@ -22,6 +22,7 @@ use Ninja\DeviceTracker\Modules\Detection\Device\UserAgentDeviceDetector;
 use Ninja\DeviceTracker\Modules\Fingerprinting\Http\Middleware\FingerprintTracker;
 use Ninja\DeviceTracker\Modules\Location\Contracts\LocationProvider;
 use Ninja\DeviceTracker\Modules\Location\FallbackLocationProvider;
+use Ninja\DeviceTracker\Modules\Security\Providers\DeviceSecurityServiceProvider;
 use Ninja\DeviceTracker\Modules\Tracking\Http\Middleware\EventTracker;
 use PragmaRX\Google2FA\Google2FA;
 use PragmaRX\Google2FA\Support\Constants;
@@ -53,7 +54,7 @@ class DeviceTrackerServiceProvider extends ServiceProvider
             key: 'devices'
         );
 
-        $this->registerLocationProviders();
+        $this->registerModules();
 
         $this->app->singleton(DeviceDetector::class, function () {
             return new UserAgentDeviceDetector;
@@ -75,6 +76,12 @@ class DeviceTrackerServiceProvider extends ServiceProvider
         $this->registerAuthenticationEventHandler();
     }
 
+    private function registerModules(): void
+    {
+        $this->registerLocationProviders();
+        $this->registerSecurityModule();
+    }
+
     private function registerLocationProviders(): void
     {
         $providers = Config::get('devices.location_providers');
@@ -92,6 +99,13 @@ class DeviceTrackerServiceProvider extends ServiceProvider
 
             return $fallbackProvider;
         });
+    }
+
+    private function registerSecurityModule(): void
+    {
+        if (Config::get('devices.modules.security.enabled', false)) {
+            $this->app->register(DeviceSecurityServiceProvider::class);
+        }
     }
 
     private function registerCommands(): void
