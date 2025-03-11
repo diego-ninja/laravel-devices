@@ -3,7 +3,6 @@
 namespace Ninja\DeviceTracker\Http\Middleware;
 
 use Closure;
-use Illuminate\Auth\Events\Logout;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -56,10 +55,14 @@ final readonly class SessionTracker
                 return $this->manageInactivity($request, $session, $next);
             }
 
+            // Make sure session is kept alive
             $session->restart($request);
 
             $response = $next($request);
+
             if (guard()->check()) {
+                // The login api could have been called again, get again the session to get the latest active one
+                $session = device_session();
                 return SessionTransport::set($response, $session->uuid);
             }
 
@@ -138,8 +141,6 @@ final readonly class SessionTracker
             }
 
             $guard->logout();
-            $session->end(user: $user);
-            event(new Logout(config('devices.auth_guard'), $user));
         } else {
             $session->end();
         }
