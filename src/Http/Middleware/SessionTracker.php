@@ -146,7 +146,7 @@ final readonly class SessionTracker
         }
 
         if ($request->ajax() || config('devices.use_redirects') === false) {
-            return response()->json(['message' => 'Forbidden'], config('devices.logout_http_code', 403));
+            return response()->json(['message' => 'Unauthorized'], config('devices.logout_http_code', 403));
         } else {
             try {
                 return redirect()->route(Config::get('devices.login_route_name'));
@@ -155,7 +155,7 @@ final readonly class SessionTracker
             }
         }
 
-        return response()->json(['message' => 'Forbidden'], config('devices.logout_http_code', 403));
+        return response()->json(['message' => 'Unauthorized'], config('devices.logout_http_code', 403));
     }
 
     private function manageInactivity(Request $request, Session $session, Closure $next): JsonResponse|RedirectResponse|Response
