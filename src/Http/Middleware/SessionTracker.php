@@ -55,12 +55,14 @@ final readonly class SessionTracker
                 return $this->manageInactivity($request, $session, $next);
             }
 
+            // Make sure session is kept alive
+            $session->restart($request);
+
             $response = $next($request);
 
             if (guard()->check()) {
                 // The login api could have been called again, get again the session to get the latest active one
                 $session = device_session();
-                $session->restart($request);
                 return SessionTransport::set($response, $session->uuid);
             }
 
