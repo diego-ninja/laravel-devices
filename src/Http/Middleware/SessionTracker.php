@@ -3,7 +3,6 @@
 namespace Ninja\DeviceTracker\Http\Middleware;
 
 use Closure;
-use Illuminate\Auth\Events\Logout;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -56,10 +55,12 @@ final readonly class SessionTracker
                 return $this->manageInactivity($request, $session, $next);
             }
 
-            $session->restart($request);
-
             $response = $next($request);
+
             if (guard()->check()) {
+                // The login api could have been called again, get again the session to get the latest active one
+                $session = device_session();
+                $session->restart($request);
                 return SessionTransport::set($response, $session->uuid);
             }
 
@@ -138,14 +139,12 @@ final readonly class SessionTracker
             }
 
             $guard->logout();
-            $session->end(user: $user);
-            event(new Logout(config('devices.auth_guard'), $user));
         } else {
             $session->end();
         }
 
         if ($request->ajax() || config('devices.use_redirects') === false) {
-            return response()->json(['message' => 'Unauthorized'], config('devices.logout_http_code', 403));
+            return response()->json(['message' => 'Forbidden'], config('devices.logout_http_code', 403));
         } else {
             try {
                 return redirect()->route(Config::get('devices.login_route_name'));
@@ -154,7 +153,7 @@ final readonly class SessionTracker
             }
         }
 
-        return response()->json(['message' => 'Unauthorized'], config('devices.logout_http_code', 403));
+        return response()->json(['message' => 'Forbidden'], config('devices.logout_http_code', 403));
     }
 
     private function manageInactivity(Request $request, Session $session, Closure $next): JsonResponse|RedirectResponse|Response
