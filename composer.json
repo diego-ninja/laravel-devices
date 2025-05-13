@@ -18,7 +18,7 @@
         "ext-json": "*",
         "ext-pdo": "*",
         "bacon/bacon-qr-code": "^3.0",
-        "laravel/framework": "^10 || ^11",
+        "laravel/framework": "^10 || ^11 || ^12",
         "matomo/device-detector": "^6.4",
         "nesbot/carbon": "^2 || ^3",
         "pragmarx/google2fa": "^8.0",
