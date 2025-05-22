@@ -281,6 +281,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Session IP change behaviour
+    |--------------------------------------------------------------------------
+    | This option specifies how should the session change when the IP change
+    | when using the same session id.
+    |
+    | Possible values: 'relocate', 'start_new', 'none'
+    |
+    */
+    'session_ip_change_behaviour' => 'relocate',
+
+    /*
+    |--------------------------------------------------------------------------
     | Ignore routes for restarting the session
     |--------------------------------------------------------------------------
     | This option specifies the routes which the session must not be restarted

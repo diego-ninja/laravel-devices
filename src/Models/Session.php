@@ -175,13 +175,7 @@ class Session extends Model implements Cacheable
             throw new RuntimeException('No user provided');
         }
 
-        if (App::environment() === 'local') {
-            $development_ips = config('devices.development_ip_pool', []);
-            shuffle($development_ips);
-            $ip = $development_ips[0];
-        } else {
-            $ip = request()->ip();
-        }
+        $ip = self::getIp();
 
         $location = app(LocationProvider::class)->locate($ip);
 
@@ -204,6 +198,16 @@ class Session extends Model implements Cacheable
         event(new SessionStartedEvent($session, $user));
 
         return $session;
+    }
+
+    public function relocate(): Session
+    {
+        $ip = self::getIp();
+
+        $this->ip = $ip;
+        $this->location = app(LocationProvider::class)->locate($ip);;
+
+        return $this;
     }
 
     private static function initialStatus(Device $device): SessionStatus
@@ -454,5 +458,18 @@ class Session extends Model implements Cacheable
             SessionCache::forget($session);
             SessionCache::put($session);
         });
+    }
+
+    private static function getIp(): string
+    {
+        if (App::environment() === 'local') {
+            $development_ips = config('devices.development_ip_pool', []);
+            shuffle($development_ips);
+            $ip = $development_ips[0];
+        } else {
+            $ip = request()->ip();
+        }
+
+        return $ip;
     }
 }

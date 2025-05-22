@@ -18,7 +18,8 @@ final readonly class Location implements Cacheable, JsonSerializable, Stringable
         public ?string $postal,
         public ?string $latitude,
         public ?string $longitude,
-        public ?string $timezone
+        public ?string $timezone,
+        public ?string $accuracyRadius,
     ) {}
 
     /**
@@ -35,7 +36,8 @@ final readonly class Location implements Cacheable, JsonSerializable, Stringable
             postal: $location['postal'] ?? null,
             latitude: $location['latitude'] ?? null,
             longitude: $location['longitude'] ?? null,
-            timezone: $location['timezone'] ?? null
+            timezone: $location['timezone'] ?? null,
+            accuracyRadius: $location['accuracyRadius'] ?? null,
         );
     }
 
@@ -55,6 +57,7 @@ final readonly class Location implements Cacheable, JsonSerializable, Stringable
             'longitude' => $this->longitude,
             'timezone' => $this->timezone,
             'label' => (string) $this,
+            'accuracyRadius' => $this->accuracyRadius,
         ];
     }
 
@@ -78,7 +81,6 @@ final readonly class Location implements Cacheable, JsonSerializable, Stringable
 
     public function key(): string
     {
-
         return sprintf('%s:%s', LocationCache::KEY_PREFIX, $this->ip);
     }
 
