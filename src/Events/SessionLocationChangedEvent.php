@@ -16,10 +16,13 @@ final class SessionLocationChangedEvent
     use SerializesModels;
 
     public function __construct(
-        public readonly Session $session,
+        public readonly Session $oldSession,
         public readonly Location $oldLocation,
-        public readonly Carbon $lastActivityAt,
+        public readonly Carbon $oldFirstActivityAt,
+        public readonly Carbon $oldLastActivityAt,
+        public readonly Session $currentSession,
         public readonly Location $currentLocation,
-        public readonly Carbon $currentActivityAt,
+        public readonly Carbon $currentFirstActivityAt,
+        public readonly Carbon $currentLastActivityAt,
     ) {}
 }

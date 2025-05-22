@@ -2,7 +2,6 @@
 
 namespace Ninja\DeviceTracker\Http\Middleware;
 
-use Carbon\Carbon;
 use Closure;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\JsonResponse;
@@ -12,14 +11,13 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Ninja\DeviceTracker\Contracts\StorableId;
+use Ninja\DeviceTracker\Enums\SessionIpChangeBehaviour;
 use Ninja\DeviceTracker\Enums\SessionStatus;
 use Ninja\DeviceTracker\Enums\SessionTransport;
 use Ninja\DeviceTracker\Events\SessionLocationChangedEvent;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Facades\SessionManager;
 use Ninja\DeviceTracker\Models\Session;
-use Ninja\DeviceTracker\Modules\Location\Contracts\LocationProvider;
-use Ninja\DeviceTracker\Modules\Location\DTO\Location;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 
 final readonly class SessionTracker
@@ -204,24 +202,46 @@ final readonly class SessionTracker
             return $session;
         }
 
-        $oldIp = $session->ip;
+        $oldSession = $session;
         $oldLocation = $session->location;
         $oldLastActivityAt = $session->last_activity_at;
 
-        $session->ip = $request->ip();
-        /** @var LocationProvider $locationProvider */
-        $locationProvider = app(LocationProvider::class);
-        $session->location = $locationProvider->locate($request->ip());
+        $sessionIpChangeBehaviour = config('devices.session_ip_change_behaviour', SessionIpChangeBehaviour::Relocate->value);
 
-        $session->save();
+        $session = match ($sessionIpChangeBehaviour) {
+            SessionIpChangeBehaviour::Relocate->value => $this->relocateSession($session),
+            SessionIpChangeBehaviour::StartNew->value => $this->startNewSession($session),
+            default => $session,
+        };
 
         event(new SessionLocationChangedEvent(
-            session: $session,
+            oldSession: $oldSession,
             oldLocation: $oldLocation,
-            lastActivityAt: $oldLastActivityAt,
+            oldFirstActivityAt: $oldSession->started_at,
+            oldLastActivityAt: $oldLastActivityAt,
+            currentSession: $session,
             currentLocation: $session->location,
-            currentActivityAt: Carbon::now(),
+            currentFirstActivityAt: $session->started_at,
+            currentLastActivityAt: $session->last_activity_at,
         ));
+
+        return $session;
+    }
+
+    private function relocateSession(Session $session): Session
+    {
+        $session = $session->relocate();
+        $session->save();
+
+        return $session;
+    }
+
+    private function startNewSession(Session $session): Session
+    {
+        $session->end();
+        $session = SessionManager::start();
+
+        SessionTransport::propagate($session->uuid);
 
         return $session;
     }
