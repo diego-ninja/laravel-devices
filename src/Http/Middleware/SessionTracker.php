@@ -2,6 +2,7 @@
 
 namespace Ninja\DeviceTracker\Http\Middleware;
 
+use Carbon\Carbon;
 use Closure;
 use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Http\JsonResponse;
@@ -13,9 +14,12 @@ use Illuminate\Support\Facades\Log;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Enums\SessionStatus;
 use Ninja\DeviceTracker\Enums\SessionTransport;
+use Ninja\DeviceTracker\Events\SessionLocationChangedEvent;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Facades\SessionManager;
 use Ninja\DeviceTracker\Models\Session;
+use Ninja\DeviceTracker\Modules\Location\Contracts\LocationProvider;
+use Ninja\DeviceTracker\Modules\Location\DTO\Location;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 
 final readonly class SessionTracker
@@ -55,6 +59,10 @@ final readonly class SessionTracker
                 return $this->manageInactivity($request, $session, $next);
             }
 
+            if ($this->changedLocation($request, $session)) {
+                $session = $this->manageSessionLocationChange($request, $session);
+            }
+
             // Make sure session is kept alive
             $session->restart($request);
 
@@ -88,7 +96,7 @@ final readonly class SessionTracker
                 $response = $next($request);
 
                 if (guard()->check()) {
-                    // Here the api must have done the login which set the session uuid
+                    // Here the api must have done the login which sets the session uuid
                     $sessionUuid = session_uuid();
 
                     if ($sessionUuid instanceof StorableId) {
@@ -183,5 +191,40 @@ final readonly class SessionTracker
         }
 
         return response()->json(['message' => 'Session locked'], config('devices.lock_http_code', 403));
+    }
+
+    private function changedLocation(Request $request, Session $session): bool
+    {
+        return $request->ip() !== $session->ip;
+    }
+
+    private function manageSessionLocationChange(Request $request, Session $session): Session
+    {
+        if ( ! $this->changedLocation($request, $session)) {
+            return $session;
+        }
+
+        $oldIp = $session->ip;
+        $oldLocation = $session->location;
+        $oldLastActivityAt = $session->last_activity_at;
+
+        $session->ip = $request->ip();
+        /** @var LocationProvider $locationProvider */
+        $locationProvider = app(LocationProvider::class);
+        $session->location = $locationProvider->locate($request->ip());
+
+        $session->save();
+
+        event(new SessionLocationChangedEvent(
+            session: $session,
+            oldIp: $oldIp,
+            oldLocation: $oldLocation,
+            lastActivityAt: $oldLastActivityAt,
+            currentIp: $session->ip,
+            currentLocation: $session->location,
+            currentActivityAt: Carbon::now(),
+        ));
+
+        return $session;
     }
 }
