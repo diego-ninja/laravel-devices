@@ -17,10 +17,8 @@ final class SessionLocationChangedEvent
 
     public function __construct(
         public readonly Session $session,
-        public readonly string $oldIp,
         public readonly Location $oldLocation,
         public readonly Carbon $lastActivityAt,
-        public readonly string $currentIp,
         public readonly Location $currentLocation,
         public readonly Carbon $currentActivityAt,
     ) {}

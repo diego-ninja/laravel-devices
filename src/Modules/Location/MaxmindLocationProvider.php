@@ -44,6 +44,7 @@ final class MaxmindLocationProvider extends AbstractLocationProvider
             'latitude' => (string) $record->location->latitude,
             'longitude' => (string) $record->location->longitude,
             'timezone' => $record->location->timeZone,
+            'accuracyRadius' => $record->location->accuracyRadius,
         ]);
     }
 }

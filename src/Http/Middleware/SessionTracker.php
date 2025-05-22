@@ -217,10 +217,8 @@ final readonly class SessionTracker
 
         event(new SessionLocationChangedEvent(
             session: $session,
-            oldIp: $oldIp,
             oldLocation: $oldLocation,
             lastActivityAt: $oldLastActivityAt,
-            currentIp: $session->ip,
             currentLocation: $session->location,
             currentActivityAt: Carbon::now(),
         ));
