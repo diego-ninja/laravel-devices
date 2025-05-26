@@ -11,8 +11,10 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Ninja\DeviceTracker\Contracts\StorableId;
+use Ninja\DeviceTracker\Enums\SessionIpChangeBehaviour;
 use Ninja\DeviceTracker\Enums\SessionStatus;
 use Ninja\DeviceTracker\Enums\SessionTransport;
+use Ninja\DeviceTracker\Events\SessionLocationChangedEvent;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Facades\SessionManager;
 use Ninja\DeviceTracker\Models\Session;
@@ -55,6 +57,10 @@ final readonly class SessionTracker
                 return $this->manageInactivity($request, $session, $next);
             }
 
+            if ($this->changedLocation($request, $session)) {
+                $session = $this->manageSessionLocationChange($request, $session);
+            }
+
             // Make sure session is kept alive
             $session->restart($request);
 
@@ -88,7 +94,7 @@ final readonly class SessionTracker
                 $response = $next($request);
 
                 if (guard()->check()) {
-                    // Here the api must have done the login which set the session uuid
+                    // Here the api must have done the login which sets the session uuid
                     $sessionUuid = session_uuid();
 
                     if ($sessionUuid instanceof StorableId) {
@@ -183,5 +189,60 @@ final readonly class SessionTracker
         }
 
         return response()->json(['message' => 'Session locked'], config('devices.lock_http_code', 403));
+    }
+
+    private function changedLocation(Request $request, Session $session): bool
+    {
+        return $request->ip() !== $session->ip;
+    }
+
+    private function manageSessionLocationChange(Request $request, Session $session): Session
+    {
+        if ( ! $this->changedLocation($request, $session)) {
+            return $session;
+        }
+
+        $oldSession = $session;
+        $oldLocation = $session->location;
+        $oldLastActivityAt = $session->last_activity_at;
+
+        $sessionIpChangeBehaviour = config('devices.session_ip_change_behaviour', SessionIpChangeBehaviour::Relocate->value);
+
+        $session = match ($sessionIpChangeBehaviour) {
+            SessionIpChangeBehaviour::Relocate->value => $this->relocateSession($session),
+            SessionIpChangeBehaviour::StartNew->value => $this->startNewSession($session),
+            default => $session,
+        };
+
+        event(new SessionLocationChangedEvent(
+            oldSession: $oldSession,
+            oldLocation: $oldLocation,
+            oldFirstActivityAt: $oldSession->started_at,
+            oldLastActivityAt: $oldLastActivityAt,
+            currentSession: $session,
+            currentLocation: $session->location,
+            currentFirstActivityAt: $session->started_at,
+            currentLastActivityAt: $session->last_activity_at,
+        ));
+
+        return $session;
+    }
+
+    private function relocateSession(Session $session): Session
+    {
+        $session = $session->relocate();
+        $session->save();
+
+        return $session;
+    }
+
+    private function startNewSession(Session $session): Session
+    {
+        $session->end();
+        $session = SessionManager::start();
+
+        SessionTransport::propagate($session->uuid);
+
+        return $session;
     }
 }
