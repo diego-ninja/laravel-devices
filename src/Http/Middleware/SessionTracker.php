@@ -11,6 +11,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Ninja\DeviceTracker\Contracts\StorableId;
+use Ninja\DeviceTracker\Enums\FinishedSessionBehaviour;
 use Ninja\DeviceTracker\Enums\SessionIpChangeBehaviour;
 use Ninja\DeviceTracker\Enums\SessionStatus;
 use Ninja\DeviceTracker\Enums\SessionTransport;
@@ -50,7 +51,11 @@ final readonly class SessionTracker
             }
 
             if ($session->finished()) {
-                return $this->manageLogout($request, $session);
+                if (config('devices.finished_session_behaviour', FinishedSessionBehaviour::Logout->value) === FinishedSessionBehaviour::StartNew->value) {
+                    $session = $this->startNewSession($session);
+                } else {
+                    return $this->manageLogout($request, $session);
+                }
             }
 
             if ($session->inactive()) {
