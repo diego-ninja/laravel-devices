@@ -293,6 +293,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Finished session behaviour
+    |--------------------------------------------------------------------------
+    | This option specifies what should happen when a finished session is used.
+    |
+    | Possible values: 'start_new', 'logout'
+    | Default: 'logout'
+    |
+    */
+    'finished_session_behaviour' => 'logout',
+
+    /*
+    |--------------------------------------------------------------------------
     | Ignore routes for restarting the session
     |--------------------------------------------------------------------------
     | This option specifies the routes which the session must not be restarted
