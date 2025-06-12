@@ -145,7 +145,7 @@ final readonly class SessionTracker
         $session = device_session();
 
         // This could happen if the user has been soft-deleted
-        if (null === $session->user) {
+        if (null !== $session && null === $session->user) {
             $session->end();
             $session = null;
             SessionTransport::cleanRequest();
