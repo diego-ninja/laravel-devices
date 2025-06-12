@@ -148,7 +148,7 @@ final readonly class SessionTracker
         if (null === $session->user) {
             $session->end();
             $session = null;
-            SessionTransport::propagate();
+            SessionTransport::cleanRequest();
             SessionTransport::forget();
         }
 
