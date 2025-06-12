@@ -51,7 +51,7 @@ final readonly class SessionTracker
             }
 
             if ($session->finished()) {
-                if (config('devices.finished_session_behaviour', FinishedSessionBehaviour::Logout->value) === FinishedSessionBehaviour::StartNew->value) {
+                if ($this->shouldRenewFinishedSession($session)) {
                     $session = $this->startNewSession($session);
                 } else {
                     return $this->manageLogout($request, $session);
@@ -138,6 +138,13 @@ final readonly class SessionTracker
         ) {
             Config::set('devices.session_id_response_transport', $parameterString);
         }
+    }
+
+    private function shouldRenewFinishedSession(Session $session): bool
+    {
+        return config('devices.finished_session_behaviour', FinishedSessionBehaviour::Logout->value) === FinishedSessionBehaviour::StartNew->value
+            // Finished sessions without user should not be renewed. This could happen if the user has been soft-deleted
+            && null !== $session->user;
     }
 
     private function manageLogout(Request $request, Session $session): JsonResponse|RedirectResponse
