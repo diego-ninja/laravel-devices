@@ -39,7 +39,7 @@ final readonly class SessionTracker
             return $next($request);
         }
 
-        $session = device_session();
+        $session = $this->getSession();
 
         if ($session !== null) {
             if ($session->locked()) {
@@ -51,7 +51,7 @@ final readonly class SessionTracker
             }
 
             if ($session->finished()) {
-                if ($this->shouldRenewFinishedSession($session)) {
+                if (config('devices.finished_session_behaviour', FinishedSessionBehaviour::Logout->value) === FinishedSessionBehaviour::StartNew->value) {
                     $session = $this->startNewSession($session);
                 } else {
                     return $this->manageLogout($request, $session);
@@ -140,11 +140,19 @@ final readonly class SessionTracker
         }
     }
 
-    private function shouldRenewFinishedSession(Session $session): bool
+    private function getSession(): ?Session
     {
-        return config('devices.finished_session_behaviour', FinishedSessionBehaviour::Logout->value) === FinishedSessionBehaviour::StartNew->value
-            // Finished sessions without user should not be renewed. This could happen if the user has been soft-deleted
-            && null !== $session->user;
+        $session = device_session();
+
+        // This could happen if the user has been soft-deleted
+        if (null === $session->user) {
+            $session->end();
+            $session = null;
+            SessionTransport::propagate();
+            SessionTransport::forget();
+        }
+
+        return $session;
     }
 
     private function manageLogout(Request $request, Session $session): JsonResponse|RedirectResponse
