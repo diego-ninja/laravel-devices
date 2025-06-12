@@ -31,7 +31,7 @@ final readonly class SessionManager
     /**
      * @throws DeviceNotFoundException
      */
-    public function start(): Session
+    public function start(?Authenticatable $user = null): Session
     {
         $device = DeviceManager::current();
         if (! $device) {
@@ -42,7 +42,10 @@ final readonly class SessionManager
             throw new DeviceNotFoundException('Device is flagged as hijacked.');
         }
 
-        return Session::start(device: $device);
+        return Session::start(
+            device: $device,
+            user: $user,
+        );
     }
 
     public function end(?StorableId $sessionId = null, ?Authenticatable $user = null): bool
@@ -80,13 +83,13 @@ final readonly class SessionManager
     {
         $current = Session::current();
         if (! $current) {
-            return $this->start();
+            return $this->start($user);
         }
 
         if (Config::get('devices.start_new_session_on_login')) {
             $current->end($user);
 
-            return $this->start();
+            return $this->start($user);
         }
 
         $current->renew($user);

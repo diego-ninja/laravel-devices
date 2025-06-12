@@ -244,7 +244,7 @@ final readonly class SessionTracker
     private function startNewSession(Session $session): Session
     {
         $session->end();
-        $session = SessionManager::start();
+        $session = SessionManager::start($session->user);
 
         SessionTransport::propagate($session->uuid);
 
