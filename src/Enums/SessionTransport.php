@@ -35,6 +35,8 @@ enum SessionTransport: string
         }
 
         self::cleanRequestHierarchy($hierarchy);
+        // Clean any propagation
+        self::Request->clean();
     }
 
     public static function responseTransport(): self

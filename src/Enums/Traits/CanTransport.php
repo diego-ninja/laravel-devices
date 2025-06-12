@@ -283,6 +283,7 @@ trait CanTransport
 
     private function cleanFromRequest(?string $parameter = null): void
     {
+        $parameter ??= self::parameter();
         request()->merge([$parameter => null]);
     }
 
