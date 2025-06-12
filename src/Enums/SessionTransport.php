@@ -27,6 +27,18 @@ enum SessionTransport: string
         return self::currentFromHierarchy($hierarchy, self::Cookie);
     }
 
+    public static function cleanRequest(): void
+    {
+        $hierarchy = config('devices.session_id_transport_hierarchy', [self::Cookie->value]);
+        if (empty($hierarchy)) {
+            $hierarchy = [self::Cookie->value];
+        }
+
+        self::cleanRequestHierarchy($hierarchy);
+        // Clean any propagation
+        self::Request->clean();
+    }
+
     public static function responseTransport(): self
     {
         $responseTransportString = config('devices.session_id_response_transport', self::Cookie->value);

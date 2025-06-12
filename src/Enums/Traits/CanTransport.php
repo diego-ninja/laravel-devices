@@ -29,6 +29,19 @@ trait CanTransport
         }
     }
 
+    public function clean(?string $parameter = null): void
+    {
+        try {
+            match ($this) {
+                self::Cookie => $this->cleanFromCookie($parameter),
+                self::Header => $this->cleanFromHeader($parameter),
+                self::Session => $this->cleanFromSession($parameter),
+                self::Request => $this->cleanFromRequest($parameter),
+            };
+        } catch (Throwable) {
+        }
+    }
+
     public static function currentFromHierarchy(array $hierarchy, self $default): self
     {
         $defaultTransport = null;
@@ -74,6 +87,16 @@ trait CanTransport
         }
 
         return null;
+    }
+
+    protected static function cleanRequestHierarchy(array $hierarchy): void
+    {
+        foreach ($hierarchy as $item) {
+            $transport = self::tryFrom($item);
+            if (! is_null($transport)) {
+                $transport->clean();
+            }
+        }
     }
 
     public static function set(mixed $response, StorableId $id): mixed
@@ -241,6 +264,27 @@ trait CanTransport
         }
 
         return $id;
+    }
+
+    private function cleanFromCookie(?string $parameter = null): void
+    {
+        Cookie::forget($parameter ?? self::parameter());
+    }
+
+    private function cleanFromHeader(?string $parameter = null): void
+    {
+        request()->headers->remove($parameter ?? self::parameter());
+    }
+
+    private function cleanFromSession(?string $parameter = null): void
+    {
+        Session::forget($parameter ?? self::parameter());
+    }
+
+    private function cleanFromRequest(?string $parameter = null): void
+    {
+        $parameter ??= self::parameter();
+        request()->merge([$parameter => null]);
     }
 
     public static function forget(): void

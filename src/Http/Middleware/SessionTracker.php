@@ -39,7 +39,7 @@ final readonly class SessionTracker
             return $next($request);
         }
 
-        $session = device_session();
+        $session = $this->getSession();
 
         if ($session !== null) {
             if ($session->locked()) {
@@ -138,6 +138,21 @@ final readonly class SessionTracker
         ) {
             Config::set('devices.session_id_response_transport', $parameterString);
         }
+    }
+
+    private function getSession(): ?Session
+    {
+        $session = device_session();
+
+        // This could happen if the user has been soft-deleted
+        if (null === $session->user) {
+            $session->end();
+            $session = null;
+            SessionTransport::cleanRequest();
+            SessionTransport::forget();
+        }
+
+        return $session;
     }
 
     private function manageLogout(Request $request, Session $session): JsonResponse|RedirectResponse
