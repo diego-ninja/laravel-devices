@@ -10,7 +10,7 @@ use Ninja\DeviceTracker\Models\Session;
 
 /**
  * @method static Session|null current()
- * @method static Session start()
+ * @method static Session start(?Authenticatable $user = null)
  * @method static bool end(?StorableId $sessionId = null, ?Authenticatable $user = null)
  * @method static bool renew(Authenticatable $user)
  * @method static bool restart(Request $request)
