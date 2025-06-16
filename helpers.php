@@ -86,6 +86,6 @@ if (! function_exists('guard')) {
 if (! function_exists('user')) {
     function user(): ?Authenticatable
     {
-        return guard()->hasUser() ? guard()->user() : null;
+        return auth()->check() ? auth()->user() : null;
     }
 }
