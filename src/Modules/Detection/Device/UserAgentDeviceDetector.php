@@ -32,17 +32,23 @@ final class UserAgentDeviceDetector implements Contracts\DeviceDetector
 
         $key = UserAgentCache::key($ua);
 
+        $headers = $request instanceof Request ? $request->headers->all() : $_SERVER;
+        $headers = collect($headers)
+            ->map(fn (mixed $header) => is_array($header) && count($header) === 1 ? $header[0] : $header)
+            ->toArray();
+        $clientHints = ClientHints::factory($headers);
+
         $this->dd = new DeviceDetector(
             userAgent: $ua,
-            clientHints: ClientHints::factory($_SERVER)
+            clientHints: $clientHints,
         );
 
         $this->dd->parse();
 
-        return UserAgentCache::remember($key, function () {
+        return UserAgentCache::remember($key, function () use ($clientHints) {
             return Device::from([
                 'browser' => $this->browser(),
-                'platform' => $this->platform(),
+                'platform' => $this->platform($clientHints),
                 'device' => $this->device(),
                 'grade' => null,
                 'source' => $this->dd->getUserAgent(),
@@ -58,18 +64,20 @@ final class UserAgentDeviceDetector implements Contracts\DeviceDetector
         );
     }
 
-    private function platform(): Platform
+    private function platform(?ClientHints $clientHints = null): Platform
     {
-        return Platform::from(
-            $this->dd->getOs()
-        );
+        $os = $this->dd->getOs();
+        $os['version'] = $clientHints?->getOperatingSystemVersion() ?? $os['version'];
+
+        return Platform::from($os);
     }
 
     private function device(): DeviceType
     {
+        $clientHintsModel = $this->clientHints->getModel();
         return DeviceType::from([
             'family' => $this->dd->getBrandName(),
-            'model' => $this->dd->getModel(),
+            'model' => ! empty($clientHintsModel) ? $clientHintsModel : $this->dd->getModel(),
             'type' => $this->dd->getDeviceName(),
         ]);
     }
