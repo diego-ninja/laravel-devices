@@ -49,7 +49,7 @@ final class UserAgentDeviceDetector implements Contracts\DeviceDetector
             return Device::from([
                 'browser' => $this->browser(),
                 'platform' => $this->platform($clientHints),
-                'device' => $this->device(),
+                'device' => $this->device($clientHints),
                 'grade' => null,
                 'source' => $this->dd->getUserAgent(),
                 'bot' => $this->dd->isBot(),
@@ -67,14 +67,14 @@ final class UserAgentDeviceDetector implements Contracts\DeviceDetector
     private function platform(?ClientHints $clientHints = null): Platform
     {
         $os = $this->dd->getOs();
-        $os['version'] = $clientHints?->getOperatingSystemVersion() ?? $os['version'];
+        $os['version'] = ! empty($clientHints?->getOperatingSystemVersion()) ? $clientHints?->getOperatingSystemVersion() : $os['version'];
 
         return Platform::from($os);
     }
 
-    private function device(): DeviceType
+    private function device(?ClientHints $clientHints = null): DeviceType
     {
-        $clientHintsModel = $this->clientHints->getModel();
+        $clientHintsModel = $clientHints?->getModel() ?? null;
         return DeviceType::from([
             'family' => $this->dd->getBrandName(),
             'model' => ! empty($clientHintsModel) ? $clientHintsModel : $this->dd->getModel(),
