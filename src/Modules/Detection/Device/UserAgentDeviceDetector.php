@@ -32,18 +32,24 @@ final class UserAgentDeviceDetector implements Contracts\DeviceDetector
 
         $key = UserAgentCache::key($ua);
 
+        $headers = $request instanceof Request ? $request->headers->all() : $_SERVER;
+        $headers = collect($headers)
+            ->map(fn (mixed $header) => is_array($header) && count($header) === 1 ? $header[0] : $header)
+            ->toArray();
+        $clientHints = ClientHints::factory($headers);
+
         $this->dd = new DeviceDetector(
             userAgent: $ua,
-            clientHints: ClientHints::factory($_SERVER)
+            clientHints: $clientHints,
         );
 
         $this->dd->parse();
 
-        return UserAgentCache::remember($key, function () {
+        return UserAgentCache::remember($key, function () use ($clientHints) {
             return Device::from([
                 'browser' => $this->browser(),
-                'platform' => $this->platform(),
-                'device' => $this->device(),
+                'platform' => $this->platform($clientHints),
+                'device' => $this->device($clientHints),
                 'grade' => null,
                 'source' => $this->dd->getUserAgent(),
                 'bot' => $this->dd->isBot(),
@@ -58,18 +64,20 @@ final class UserAgentDeviceDetector implements Contracts\DeviceDetector
         );
     }
 
-    private function platform(): Platform
+    private function platform(?ClientHints $clientHints = null): Platform
     {
-        return Platform::from(
-            $this->dd->getOs()
-        );
+        $os = $this->dd->getOs();
+        $os['version'] = ! empty($clientHints?->getOperatingSystemVersion()) ? $clientHints?->getOperatingSystemVersion() : $os['version'];
+
+        return Platform::from($os);
     }
 
-    private function device(): DeviceType
+    private function device(?ClientHints $clientHints = null): DeviceType
     {
+        $clientHintsModel = $clientHints?->getModel() ?? null;
         return DeviceType::from([
             'family' => $this->dd->getBrandName(),
-            'model' => $this->dd->getModel(),
+            'model' => ! empty($clientHintsModel) ? $clientHintsModel : $this->dd->getModel(),
             'type' => $this->dd->getDeviceName(),
         ]);
     }
