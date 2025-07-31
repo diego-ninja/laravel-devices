@@ -67,7 +67,7 @@ final class UserAgentDeviceDetector implements Contracts\DeviceDetector
     private function platform(?ClientHints $clientHints = null): Platform
     {
         $os = $this->dd->getOs() ?? [];
-        if (! empty($clientHints?->getOperatingSystemVersion())) {
+        if (! empty($clientHints?->getOperatingSystemVersion()) && is_array($os)) {
             $os['version'] = $clientHints->getOperatingSystemVersion();
         }
 
