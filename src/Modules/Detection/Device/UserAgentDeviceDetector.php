@@ -66,8 +66,10 @@ final class UserAgentDeviceDetector implements Contracts\DeviceDetector
 
     private function platform(?ClientHints $clientHints = null): Platform
     {
-        $os = $this->dd->getOs();
-        $os['version'] = ! empty($clientHints?->getOperatingSystemVersion()) ? $clientHints?->getOperatingSystemVersion() : $os['version'];
+        $os = $this->dd->getOs() ?? [];
+        if (! empty($clientHints?->getOperatingSystemVersion())) {
+            $os['version'] = $clientHints->getOperatingSystemVersion();
+        }
 
         return Platform::from($os);
     }
@@ -75,6 +77,7 @@ final class UserAgentDeviceDetector implements Contracts\DeviceDetector
     private function device(?ClientHints $clientHints = null): DeviceType
     {
         $clientHintsModel = $clientHints?->getModel() ?? null;
+
         return DeviceType::from([
             'family' => $this->dd->getBrandName(),
             'model' => ! empty($clientHintsModel) ? $clientHintsModel : $this->dd->getModel(),
