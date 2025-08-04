@@ -6,3 +6,5 @@ vendor
 /.phpunit.result.cache
 tester.php.dev-environment/
 .dev-environment/
+/CLAUDE.md
+.claude
