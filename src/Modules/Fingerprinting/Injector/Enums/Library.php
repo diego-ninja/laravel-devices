@@ -7,4 +7,5 @@ enum Library: string
     case FingerprintJS = 'fingerprintjs';
     case ClientJS = 'clientjs';
     case CreepJS = 'creepjs';
+    case ThumbmarkJS = 'thumbmarkjs';
 }

@@ -7,6 +7,7 @@ use Ninja\DeviceTracker\Modules\Fingerprinting\Injector\ClientJSInjector;
 use Ninja\DeviceTracker\Modules\Fingerprinting\Injector\Contracts\Injector;
 use Ninja\DeviceTracker\Modules\Fingerprinting\Injector\Enums\Library;
 use Ninja\DeviceTracker\Modules\Fingerprinting\Injector\FingerprintJSInjector;
+use Ninja\DeviceTracker\Modules\Fingerprinting\Injector\ThumbmarkJSInjector;
 
 final class InjectorFactory
 {
@@ -16,6 +17,7 @@ final class InjectorFactory
     private static array $injectors = [
         FingerprintJSInjector::class,
         ClientJSInjector::class,
+        ThumbmarkJSInjector::class,
     ];
 
     public static function make(Library $library): Injector
