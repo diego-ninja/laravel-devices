@@ -14,7 +14,6 @@ class DeviceFactory extends Factory
     {
         return [
             'uuid' => DeviceIdFactory::from($this->faker->uuid),
-            'ip' => $this->faker->ipv4(),
         ];
     }
 }

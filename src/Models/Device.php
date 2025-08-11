@@ -64,7 +64,6 @@ use PDOException;
  * @property string $device_model string
  * @property string $grade string
  * @property string $source string
- * @property string $ip string
  * @property Metadata $metadata json
  * @property Carbon $created_at datetime
  * @property Carbon $updated_at datetime
@@ -104,7 +103,6 @@ class Device extends Model implements Cacheable
         'device_family',
         'device_model',
         'grade',
-        'ip',
         'metadata',
         'source',
     ];
@@ -138,22 +136,17 @@ class Device extends Model implements Cacheable
      */
     public function users(): BelongsToMany
     {
-        $table = sprintf('%s_devices', Str::singular(config('devices.authenticatable_table')));
-        $field = sprintf('%s_id', Str::singular(config('devices.authenticatable_table')));
-
         /** @var class-string<User> $authenticatable */
         $authenticatable = Config::get('devices.authenticatable_class', User::class);
 
         return $this->belongsToMany(
             related: $authenticatable,
-            table: $table,
+            table: 'device_sessions',
             foreignPivotKey: 'device_uuid',
-            relatedPivotKey: $field,
+            relatedPivotKey: 'user_id',
             parentKey: 'uuid',
             relatedKey: 'id'
-        )
-            ->withPivot('status', 'verified_at', 'device_uuid', 'last_activity_at')
-            ->withTimestamps();
+        );
     }
 
     /**
@@ -366,7 +359,6 @@ class Device extends Model implements Cacheable
                 'device_family' => $data->device->family,
                 'device_model' => $data->device->model,
                 'grade' => $data->grade,
-                'ip' => request()->ip(),
                 'metadata' => new Metadata([]),
                 'source' => $data->source,
             ]);
