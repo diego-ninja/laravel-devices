@@ -14,6 +14,8 @@ class DeviceFactory extends Factory
     {
         return [
             'uuid' => DeviceIdFactory::from($this->faker->uuid),
+            'advertising_id' => $this->faker->boolean() ? $this->faker->uuid : null,
+            'device_id' => $this->faker->boolean() ? $this->faker->uuid : null,
         ];
     }
 }
