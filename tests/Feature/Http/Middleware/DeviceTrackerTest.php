@@ -5,7 +5,7 @@ namespace Ninja\DeviceTracker\Tests\Feature\Http\Middleware;
 use Faker\Provider\UserAgent;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Ninja\DeviceTracker\Enums\DeviceTransport;
+use Ninja\DeviceTracker\Enums\Transport;
 use Ninja\DeviceTracker\Exception\UnknownDeviceDetectedException;
 use Ninja\DeviceTracker\Http\Middleware\DeviceTracker;
 use Ninja\DeviceTracker\Models\Device;
@@ -521,7 +521,7 @@ class DeviceTrackerTest extends FeatureTestCase
         };
 
         $middleware = new DeviceTracker;
-        $response = $middleware->handle($request, $next, null, DeviceTransport::Header->value);
+        $response = $middleware->handle($request, $next, null, Transport::Header->value);
 
         $this->assertTrue($response instanceof Response);
         /** @var Response $response */

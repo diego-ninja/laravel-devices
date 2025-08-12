@@ -8,11 +8,11 @@ use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Ninja\DeviceTracker\Contracts\StorableId;
-use Ninja\DeviceTracker\Enums\SessionTransport;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Exception\SessionNotFoundException;
 use Ninja\DeviceTracker\Facades\DeviceManager;
 use Ninja\DeviceTracker\Models\Session;
+use Ninja\DeviceTracker\Transports\SessionTransport;
 
 final readonly class SessionManager
 {

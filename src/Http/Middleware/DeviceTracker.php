@@ -8,13 +8,14 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Ninja\DeviceTracker\DTO\Device;
-use Ninja\DeviceTracker\Enums\DeviceTransport;
+use Ninja\DeviceTracker\Enums\Transport;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Exception\FingerprintNotFoundException;
 use Ninja\DeviceTracker\Exception\InvalidDeviceDetectedException;
 use Ninja\DeviceTracker\Exception\UnknownDeviceDetectedException;
 use Ninja\DeviceTracker\Facades\DeviceManager;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
+use Ninja\DeviceTracker\Transports\DeviceTransport;
 
 final readonly class DeviceTracker
 {
@@ -97,8 +98,8 @@ final readonly class DeviceTracker
     {
         if (
             ! empty($parameterString)
-            && DeviceTransport::tryFrom($parameterString) !== null
-            && $parameterString !== DeviceTransport::Request->value
+            && Transport::tryFrom($parameterString) !== null
+            && $parameterString !== Transport::Request->value
         ) {
             Config::set('devices.device_id_response_transport', $parameterString);
         }

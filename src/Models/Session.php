@@ -21,7 +21,6 @@ use Ninja\DeviceTracker\Contracts\Cacheable;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\DTO\Metadata;
 use Ninja\DeviceTracker\Enums\SessionStatus;
-use Ninja\DeviceTracker\Enums\SessionTransport;
 use Ninja\DeviceTracker\Events\SessionBlockedEvent;
 use Ninja\DeviceTracker\Events\SessionFinishedEvent;
 use Ninja\DeviceTracker\Events\SessionStartedEvent;
@@ -37,6 +36,7 @@ use Ninja\DeviceTracker\Modules\Tracking\Enums\EventType;
 use Ninja\DeviceTracker\Modules\Tracking\Models\Event;
 use Ninja\DeviceTracker\Modules\Tracking\Models\Relations\HasManyEvents;
 use Ninja\DeviceTracker\Traits\PropertyProxy;
+use Ninja\DeviceTracker\Transports\SessionTransport;
 use RuntimeException;
 
 /**
@@ -207,7 +207,7 @@ class Session extends Model implements Cacheable
         $ip = self::getIp();
 
         $this->ip = $ip;
-        $this->location = app(LocationProvider::class)->locate($ip);;
+        $this->location = app(LocationProvider::class)->locate($ip);
 
         return $this;
     }

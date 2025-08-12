@@ -1,6 +1,6 @@
 <?php
 
-namespace Ninja\DeviceTracker\Tests\Feature\Enums;
+namespace Ninja\DeviceTracker\Tests\Feature\Transports;
 
 use Illuminate\Cookie\CookieValuePrefix;
 use Illuminate\Encryption\Encrypter;
@@ -8,11 +8,12 @@ use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 use Ninja\DeviceTracker\Contracts\StorableId;
-use Ninja\DeviceTracker\Enums\DeviceTransport;
+use Ninja\DeviceTracker\Enums\Transport;
 use Ninja\DeviceTracker\Tests\FeatureTestCase;
+use Ninja\DeviceTracker\Transports\SessionTransport;
 use PHPUnit\Framework\Attributes\DataProvider;
 
-class DeviceTransportTest extends FeatureTestCase
+class SessionTransportTest extends FeatureTestCase
 {
     public static function hierarchy_provider(): array
     {
@@ -21,63 +22,63 @@ class DeviceTransportTest extends FeatureTestCase
         return [
             'undefined_hierarchy_unset_id' => [
                 'hierarchy' => [],
-                'expectedTransport' => DeviceTransport::Cookie,
+                'expectedTransport' => Transport::Cookie,
                 'expectedId' => null,
             ],
             'undefined_hierarchy_set_id_cookie' => [
                 'hierarchy' => [],
-                'expectedTransport' => DeviceTransport::Cookie,
+                'expectedTransport' => Transport::Cookie,
                 'expectedId' => $uuid,
                 'cookie' => $uuid,
             ],
             'request_cookie_unset_id' => [
                 'hierarchy' => [
-                    DeviceTransport::Request->value,
-                    DeviceTransport::Cookie->value,
+                    Transport::Request->value,
+                    Transport::Cookie->value,
                 ],
-                'expectedTransport' => DeviceTransport::Request,
+                'expectedTransport' => Transport::Request,
                 'expectedId' => null,
             ],
             'request_cookie_set_id_request' => [
                 'hierarchy' => [
-                    DeviceTransport::Request->value,
-                    DeviceTransport::Cookie->value,
+                    Transport::Request->value,
+                    Transport::Cookie->value,
                 ],
-                'expectedTransport' => DeviceTransport::Request,
+                'expectedTransport' => Transport::Request,
                 'expectedId' => $uuid,
                 'input' => $uuid,
             ],
             'request_cookie_set_id_cookie' => [
                 'hierarchy' => [
-                    DeviceTransport::Request->value,
-                    DeviceTransport::Cookie->value,
+                    Transport::Request->value,
+                    Transport::Cookie->value,
                 ],
-                'expectedTransport' => DeviceTransport::Cookie,
+                'expectedTransport' => Transport::Cookie,
                 'expectedId' => $uuid,
                 'cookie' => $uuid,
             ],
             'request_cookie_set_id_header' => [
                 'hierarchy' => [
-                    DeviceTransport::Request->value,
-                    DeviceTransport::Cookie->value,
+                    Transport::Request->value,
+                    Transport::Cookie->value,
                 ],
-                'expectedTransport' => DeviceTransport::Request,
+                'expectedTransport' => Transport::Request,
                 'expectedId' => null,
                 'header' => $uuid,
             ],
             'header_set_id_header' => [
                 'hierarchy' => [
-                    DeviceTransport::Header->value,
+                    Transport::Header->value,
                 ],
-                'expectedTransport' => DeviceTransport::Header,
+                'expectedTransport' => Transport::Header,
                 'expectedId' => $uuid,
                 'header' => $uuid,
             ],
             'session_set_id_session' => [
                 'hierarchy' => [
-                    DeviceTransport::Session->value,
+                    Transport::Session->value,
                 ],
-                'expectedTransport' => DeviceTransport::Session,
+                'expectedTransport' => Transport::Session,
                 'expectedId' => $uuid,
                 'session' => $uuid,
             ],
@@ -87,17 +88,17 @@ class DeviceTransportTest extends FeatureTestCase
     #[DataProvider('hierarchy_provider')]
     public function test_current_with_hierarchy(
         array $hierarchy,
-        DeviceTransport $expectedTransport,
+        Transport $expectedTransport,
         ?string $expectedId,
         ?string $cookie = null,
         ?string $header = null,
         ?string $input = null,
         ?string $session = null,
     ): void {
-        $parameter = 'device_id';
+        $parameter = 'session_id';
         $this->setConfig([
-            'devices.device_id_transport_hierarchy' => $hierarchy,
-            'devices.device_id_parameter' => $parameter,
+            'devices.session_id_transport_hierarchy' => $hierarchy,
+            'devices.session_id_parameter' => $parameter,
         ]);
 
         if (isset($cookie)) {
@@ -113,11 +114,11 @@ class DeviceTransportTest extends FeatureTestCase
             session()->put($parameter, $session);
         }
 
-        $transport = DeviceTransport::current();
+        $transport = SessionTransport::current();
 
-        $this->assertEquals($expectedTransport, $transport);
+        $this->assertEquals(SessionTransport::make($expectedTransport), $transport);
 
-        $id = DeviceTransport::getIdFromHierarchy();
+        $id = SessionTransport::currentIdFromHierarchy();
 
         if (is_null($expectedId)) {
             $this->assertNull($id);
@@ -130,18 +131,18 @@ class DeviceTransportTest extends FeatureTestCase
     {
         $parameter = 'device_id';
         $this->setConfig([
-            'devices.device_id_transport_hierarchy' => [DeviceTransport::Cookie->value],
-            'devices.device_id_parameter' => $parameter,
+            'devices.session_id_transport_hierarchy' => [Transport::Cookie->value],
+            'devices.session_id_parameter' => $parameter,
         ]);
         $id = 'f765e4d4-a990-4c59-aeed-d16f0aed2665';
 
         request()->cookies->set($parameter, $id);
 
-        $transport = DeviceTransport::current();
+        $transport = SessionTransport::current();
 
-        $this->assertEquals(DeviceTransport::Cookie, $transport);
+        $this->assertEquals(SessionTransport::make(Transport::Cookie), $transport);
 
-        $storableId = DeviceTransport::getIdFromHierarchy();
+        $storableId = SessionTransport::currentIdFromHierarchy();
 
         $this->assertTrue($storableId instanceof StorableId);
         $this->assertEquals($id, $storableId);
@@ -149,11 +150,11 @@ class DeviceTransportTest extends FeatureTestCase
 
     public function test_current_with_encrypted_cookie(): void
     {
-        $parameter = 'device_id';
+        $parameter = 'session_id';
         $key = 'base64:Lzrm+AkE+RrRJWDHON58e8unP7LBK6PlyyLo5k4i6Q0=';
         $this->setConfig([
-            'devices.device_id_transport_hierarchy' => [DeviceTransport::Cookie->value],
-            'devices.device_id_parameter' => $parameter,
+            'devices.session_id_transport_hierarchy' => [Transport::Cookie->value],
+            'devices.session_id_parameter' => $parameter,
             'app.key' => $key,
         ]);
         $id = 'f765e4d4-a990-4c59-aeed-d16f0aed2665';
@@ -165,11 +166,11 @@ class DeviceTransportTest extends FeatureTestCase
 
         request()->cookies->set($parameter, $encryptedCookie);
 
-        $transport = DeviceTransport::current();
+        $transport = SessionTransport::current();
 
-        $this->assertEquals(DeviceTransport::Cookie, $transport);
+        $this->assertEquals(SessionTransport::make(Transport::Cookie), $transport);
 
-        $storableId = DeviceTransport::getIdFromHierarchy();
+        $storableId = SessionTransport::currentIdFromHierarchy();
 
         $this->assertTrue($storableId instanceof StorableId);
         $this->assertEquals($id, $storableId);
@@ -177,49 +178,49 @@ class DeviceTransportTest extends FeatureTestCase
 
     public function test_current_from_alternative_parameter(): void
     {
-        $parameter = 'device_id';
+        $parameter = 'session_id';
         $this->setConfig([
-            'devices.device_id_transport_hierarchy' => [DeviceTransport::Cookie->value],
-            'devices.device_id_parameter' => 'invalid_parameter',
-            'devices.device_id_alternative_parameter' => $parameter,
+            'devices.session_id_transport_hierarchy' => [Transport::Cookie->value],
+            'devices.session_id_parameter' => 'invalid_parameter',
+            'devices.session_id_alternative_parameter' => $parameter,
         ]);
         $id = 'f765e4d4-a990-4c59-aeed-d16f0aed2665';
 
         request()->cookies->set($parameter, $id);
 
-        $transport = DeviceTransport::current();
+        $transport = SessionTransport::current();
 
-        $this->assertEquals(DeviceTransport::Cookie, $transport);
+        $this->assertEquals(SessionTransport::make(Transport::Cookie), $transport);
 
-        $storableId = DeviceTransport::getIdFromHierarchy();
+        $storableId = SessionTransport::currentIdFromHierarchy();
 
         $this->assertTrue($storableId instanceof StorableId);
         $this->assertEquals($id, $storableId);
     }
 
-    public function test_forget_device_from_session(): void
+    public function test_forget_session_from_session(): void
     {
-        $parameter = 'device_id';
+        $parameter = 'session_id';
         $this->setConfig([
-            'devices.device_id_response_transport' => DeviceTransport::Session->value,
-            'devices.device_id_parameter' => $parameter,
+            'devices.session_id_response_transport' => Transport::Session->value,
+            'devices.session_id_parameter' => $parameter,
         ]);
         $id = 'f765e4d4-a990-4c59-aeed-d16f0aed2665';
 
         Session::start();
         Session::put($parameter, $id);
 
-        DeviceTransport::forget();
+        SessionTransport::forget();
 
         $this->assertNull(Session::get($parameter));
     }
 
-    public function test_forget_device_from_cookie(): void
+    public function test_forget_session_from_cookie(): void
     {
-        $parameter = 'device_id';
+        $parameter = 'session_id';
         $this->setConfig([
-            'devices.device_id_response_transport' => DeviceTransport::Cookie->value,
-            'devices.device_id_parameter' => $parameter,
+            'devices.session_id_response_transport' => Transport::Cookie->value,
+            'devices.session_id_parameter' => $parameter,
         ]);
         $id = 'f765e4d4-a990-4c59-aeed-d16f0aed2665';
 
@@ -237,7 +238,7 @@ class DeviceTransportTest extends FeatureTestCase
             }
         }
 
-        DeviceTransport::forget();
+        SessionTransport::forget();
 
         $cookies = Cookie::getQueuedCookies();
         foreach ($cookies as $cookie) {

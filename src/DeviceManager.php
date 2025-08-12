@@ -7,7 +7,6 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Collection;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\DTO\Device as DeviceDTO;
-use Ninja\DeviceTracker\Enums\DeviceTransport;
 use Ninja\DeviceTracker\Events\DeviceAttachedEvent;
 use Ninja\DeviceTracker\Events\DeviceTrackedEvent;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
@@ -15,6 +14,7 @@ use Ninja\DeviceTracker\Exception\UnknownDeviceDetectedException;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Modules\Detection\Contracts\DeviceDetector;
+use Ninja\DeviceTracker\Transports\DeviceTransport;
 use Throwable;
 
 use function request;

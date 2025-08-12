@@ -6,7 +6,6 @@ use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Support\Facades\Log;
-use Ninja\DeviceTracker\Enums\SessionTransport;
 use Ninja\DeviceTracker\Events\DeviceTrackedEvent;
 use Ninja\DeviceTracker\Events\Google2FASuccess;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
@@ -14,6 +13,7 @@ use Ninja\DeviceTracker\Facades\DeviceManager;
 use Ninja\DeviceTracker\Facades\SessionManager;
 use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Models\Session;
+use Ninja\DeviceTracker\Transports\SessionTransport;
 
 final readonly class EventSubscriber
 {

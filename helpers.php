@@ -5,10 +5,10 @@ use Illuminate\Contracts\Auth\Guard;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cookie;
 use Ninja\DeviceTracker\Contracts\StorableId;
-use Ninja\DeviceTracker\Enums\DeviceTransport;
-use Ninja\DeviceTracker\Enums\SessionTransport;
 use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Models\Session;
+use Ninja\DeviceTracker\Transports\DeviceTransport;
+use Ninja\DeviceTracker\Transports\SessionTransport;
 
 if (! function_exists('fingerprint')) {
     function fingerprint(): ?string
@@ -29,14 +29,14 @@ if (! function_exists('fingerprint')) {
 if (! function_exists('device_uuid')) {
     function device_uuid(): ?StorableId
     {
-        return DeviceTransport::getIdFromHierarchy();
+        return DeviceTransport::currentIdFromHierarchy();
     }
 }
 
 if (! function_exists('session_uuid')) {
     function session_uuid(): ?StorableId
     {
-        return SessionTransport::getIdFromHierarchy();
+        return SessionTransport::currentIdFromHierarchy();
     }
 }
 
