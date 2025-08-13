@@ -114,11 +114,11 @@ class DeviceTransportTest extends FeatureTestCase
             session()->put($parameter, $session);
         }
 
-        $transport = DeviceTransport::current();
+        $currentTransport = DeviceTransport::current();
 
-        $this->assertEquals(DeviceTransport::make($expectedTransport), $transport);
+        $this->assertEquals($expectedTransport, $currentTransport->transport);
 
-        $id = DeviceTransport::currentIdFromHierarchy();
+        $id = DeviceTransport::currentId();
 
         if (is_null($expectedId)) {
             $this->assertNull($id);
@@ -142,7 +142,7 @@ class DeviceTransportTest extends FeatureTestCase
 
         $this->assertEquals(DeviceTransport::make(Transport::Cookie), $transport);
 
-        $storableId = DeviceTransport::currentIdFromHierarchy();
+        $storableId = DeviceTransport::currentId();
 
         $this->assertTrue($storableId instanceof StorableId);
         $this->assertEquals($id, $storableId);
@@ -170,7 +170,7 @@ class DeviceTransportTest extends FeatureTestCase
 
         $this->assertEquals(DeviceTransport::make(Transport::Cookie), $transport);
 
-        $storableId = DeviceTransport::currentIdFromHierarchy();
+        $storableId = DeviceTransport::currentId();
 
         $this->assertTrue($storableId instanceof StorableId);
         $this->assertEquals($id, $storableId);
@@ -192,7 +192,7 @@ class DeviceTransportTest extends FeatureTestCase
 
         $this->assertEquals(DeviceTransport::make(Transport::Cookie), $transport);
 
-        $storableId = DeviceTransport::currentIdFromHierarchy();
+        $storableId = DeviceTransport::currentId();
 
         $this->assertTrue($storableId instanceof StorableId);
         $this->assertEquals($id, $storableId);

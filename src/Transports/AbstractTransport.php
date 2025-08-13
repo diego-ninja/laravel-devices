@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Session;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Enums\Transport;
+use Stringable;
 use Throwable;
 
 abstract class AbstractTransport
@@ -19,14 +20,11 @@ abstract class AbstractTransport
     protected const CONFIG_PARAMETER = 'device_id_parameter';
     protected const CONFIG_ALTERNATIVE_PARAMETER = 'device_id_parameter';
     protected const CONFIG_TRANSPORT_HIERARCHY_KEY = 'device_id_transport_hierarchy';
-
     protected const CONFIG_RESPONSE_TRANSPORT_KEY = 'device_id_response_transport';
-
     protected const DEFAULT_TRANSPORT = Transport::Cookie;
-
     protected const DEFAULT_RESPONSE_TRANSPORT = Transport::Cookie;
 
-    public function __construct(protected Transport $transport) {}
+    public function __construct(public Transport $transport) {}
 
     abstract public static function make(Transport $transport): static;
 
@@ -156,6 +154,14 @@ abstract class AbstractTransport
         array $hierarchy,
     ): ?StorableId {
         $parameter = static::parameter();
+
+        // First of all check propagated value in request
+        $id = static::make(Transport::Request)->get($parameter);
+        if (! is_null($id)) {
+            return $id;
+        }
+
+        // Then check all hierarchy
         foreach ($hierarchy as $transport) {
             $id = static::make($transport)->get($parameter);
             if (! is_null($id)) {
@@ -221,19 +227,17 @@ abstract class AbstractTransport
         return $callable();
     }
 
-    public static function propagate(?string $id = null): Request
+    public static function propagate(?StorableId $id = null, ?Request $request = null): Request
     {
-        $id = static::currentId();
-        $current = static::current();
+        $id ??= static::currentId();
+        $request ??= request();
 
-        $transportId = $id ?? $current->get();
-        if ($transportId === null) {
-            return request();
+        if ($id === null) {
+            return $request;
         }
 
-        $requestParameter = static::parameter();
-
-        return request()->merge([$requestParameter => $transportId]);
+        $parameter = static::parameter();
+        return $request->merge([$parameter => $id]);
     }
 
     private static function isValidResponse(mixed $response): bool
@@ -291,9 +295,15 @@ abstract class AbstractTransport
             return null;
         }
 
-        if (! is_string($value)) {
+        if ($value instanceof StorableId) {
+            return $value;
+        }
+
+        if (! is_string($value) && ! ($value instanceof Stringable)) {
             return null;
         }
+
+        $value = (string) $value;
 
         $id = null;
         try {

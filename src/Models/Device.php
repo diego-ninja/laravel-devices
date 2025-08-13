@@ -51,22 +51,22 @@ use PDOException;
  * @property StorableId $uuid string
  * @property string $fingerprint string
  * @property DeviceStatus $status string
- * @property string $browser string
- * @property string $browser_version string
- * @property string $browser_family string
- * @property string $browser_engine string
- * @property string $platform string
- * @property string $platform_version string
- * @property string $platform_family string
- * @property string $device_type string
- * @property string $device_family string
- * @property string $device_model string
- * @property string $grade string
- * @property string $source string
+ * @property string|null $browser string|null
+ * @property string|null $browser_version string|null
+ * @property string|null $browser_family string|null
+ * @property string|null $browser_engine string|null
+ * @property string|null $platform string|null
+ * @property string|null $platform_version string|null
+ * @property string|null $platform_family string|null
+ * @property string|null $device_type string|null
+ * @property string|null $device_family string|null
+ * @property string|null $device_model string|null
+ * @property string|null $grade string|null
+ * @property string|null $source string|null
  * @property string|null $device_id string|null
  * @property string|null $advertising_id string|null
  * @property string|null $client_fingerprint string|null
- * @property Metadata $metadata json
+ * @property Metadata|null $metadata json|null
  * @property Carbon $created_at datetime
  * @property Carbon $updated_at datetime
  * @property Carbon $verified_at datetime
@@ -351,6 +351,7 @@ class Device extends Model implements Cacheable
     public static function register(
         StorableId $deviceUuid,
         DeviceDTO $data,
+        ?string $fingerprint = null,
     ): ?self {
         $device = self::byUuid($deviceUuid, false);
         if ($device !== null) {
@@ -362,7 +363,7 @@ class Device extends Model implements Cacheable
                 'uuid' => $deviceUuid,
             ], [
                 'uuid' => $deviceUuid,
-                'fingerprint' => fingerprint(),
+                'fingerprint' => $fingerprint ?? fingerprint(),
                 'browser' => $data->browser->name,
                 'browser_version' => $data->browser->version,
                 'browser_family' => $data->browser->family,
@@ -472,7 +473,7 @@ class Device extends Model implements Cacheable
 
         if ($deviceDto->advertisingId !== null) {
             $device = Device::query()
-                ->where('advertising_id', $deviceDto->deviceId)
+                ->where('advertising_id', $deviceDto->advertisingId)
                 ->where('platform', $deviceDto->platform->name)
                 ->first();
             if ($device !== null) {

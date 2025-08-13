@@ -118,7 +118,7 @@ class SessionTransportTest extends FeatureTestCase
 
         $this->assertEquals(SessionTransport::make($expectedTransport), $transport);
 
-        $id = SessionTransport::currentIdFromHierarchy();
+        $id = SessionTransport::currentId();
 
         if (is_null($expectedId)) {
             $this->assertNull($id);
@@ -142,7 +142,7 @@ class SessionTransportTest extends FeatureTestCase
 
         $this->assertEquals(SessionTransport::make(Transport::Cookie), $transport);
 
-        $storableId = SessionTransport::currentIdFromHierarchy();
+        $storableId = SessionTransport::currentId();
 
         $this->assertTrue($storableId instanceof StorableId);
         $this->assertEquals($id, $storableId);
@@ -170,7 +170,7 @@ class SessionTransportTest extends FeatureTestCase
 
         $this->assertEquals(SessionTransport::make(Transport::Cookie), $transport);
 
-        $storableId = SessionTransport::currentIdFromHierarchy();
+        $storableId = SessionTransport::currentId();
 
         $this->assertTrue($storableId instanceof StorableId);
         $this->assertEquals($id, $storableId);
@@ -192,7 +192,7 @@ class SessionTransportTest extends FeatureTestCase
 
         $this->assertEquals(SessionTransport::make(Transport::Cookie), $transport);
 
-        $storableId = SessionTransport::currentIdFromHierarchy();
+        $storableId = SessionTransport::currentId();
 
         $this->assertTrue($storableId instanceof StorableId);
         $this->assertEquals($id, $storableId);
