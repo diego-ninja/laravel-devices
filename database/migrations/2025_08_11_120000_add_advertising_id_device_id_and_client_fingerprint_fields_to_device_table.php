@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::table('devices', function (Blueprint $table) {
             $table->string('advertising_id')->nullable()->unique('idx_advertising_id_unique');
             $table->string('device_id')->nullable()->unique('idx_device_id_unique');
+            $table->string('client_fingerprint')->nullable()->unique('idx_client_fingerprint_unique');
         });
     }
 
@@ -19,6 +20,7 @@ return new class extends Migration
         Schema::table('devices', function (Blueprint $table) {
             $table->dropColumn('advertising_id');
             $table->dropColumn('device_id');
+            $table->dropColumn('client_fingerprint');
         });
     }
 };
