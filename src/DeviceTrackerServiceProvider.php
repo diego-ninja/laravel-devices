@@ -17,7 +17,9 @@ use Ninja\DeviceTracker\Generators\Google2FACodeGenerator;
 use Ninja\DeviceTracker\Http\Middleware\DeviceChecker;
 use Ninja\DeviceTracker\Http\Middleware\DeviceTracker;
 use Ninja\DeviceTracker\Http\Middleware\SessionTracker;
-use Ninja\DeviceTracker\Modules\Detection\Contracts\DeviceDetector;
+use Ninja\DeviceTracker\Modules\Detection\Contracts\DeviceDetectorInterface;
+use Ninja\DeviceTracker\Modules\Detection\Device\LayeredDeviceDetector;
+use Ninja\DeviceTracker\Modules\Detection\Device\RequestDeviceDetector;
 use Ninja\DeviceTracker\Modules\Detection\Device\UserAgentDeviceDetector;
 use Ninja\DeviceTracker\Modules\Fingerprinting\Http\Middleware\FingerprintTracker;
 use Ninja\DeviceTracker\Modules\Location\Contracts\LocationProvider;
@@ -55,8 +57,11 @@ class DeviceTrackerServiceProvider extends ServiceProvider
 
         $this->registerLocationProviders();
 
-        $this->app->singleton(DeviceDetector::class, function () {
-            return new UserAgentDeviceDetector;
+        $this->app->singleton(DeviceDetectorInterface::class, function () {
+            return new LayeredDeviceDetector([
+                new UserAgentDeviceDetector,
+                new RequestDeviceDetector,
+            ]);
         });
 
         $this->app->singleton(CodeGenerator::class, function () {

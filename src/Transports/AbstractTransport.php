@@ -69,6 +69,11 @@ abstract class AbstractTransport
         );
     }
 
+    final public static function currentId(): ?StorableId
+    {
+        return self::currentIdFromHierarchy(static::transportsHierarchy());
+    }
+
     public static function responseTransport(): Transport
     {
         $responseTransportString = config(
@@ -144,15 +149,10 @@ abstract class AbstractTransport
         return config(sprintf('devices.%s', static::CONFIG_ALTERNATIVE_PARAMETER));
     }
 
-    final public static function currentIdFromHierarchy(): ?StorableId
-    {
-        return self::idFromHierarchy(static::transportsHierarchy());
-    }
-
     /**
      * @param  array<Transport>  $hierarchy
      */
-    protected static function idFromHierarchy(
+    protected static function currentIdFromHierarchy(
         array $hierarchy,
     ): ?StorableId {
         $parameter = static::parameter();
@@ -223,6 +223,7 @@ abstract class AbstractTransport
 
     public static function propagate(?string $id = null): Request
     {
+        $id = static::currentId();
         $current = static::current();
 
         $transportId = $id ?? $current->get();

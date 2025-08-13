@@ -8,6 +8,7 @@ use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Models\Session;
 use Ninja\DeviceTracker\Transports\DeviceTransport;
+use Ninja\DeviceTracker\Transports\ClientFingerprintTransport;
 use Ninja\DeviceTracker\Transports\SessionTransport;
 
 if (! function_exists('fingerprint')) {
@@ -26,17 +27,24 @@ if (! function_exists('fingerprint')) {
     }
 }
 
+if (! function_exists('client_fingerprint')) {
+    function client_fingerprint(): ?StorableId
+    {
+        return ClientFingerprintTransport::currentId();
+    }
+}
+
 if (! function_exists('device_uuid')) {
     function device_uuid(): ?StorableId
     {
-        return DeviceTransport::currentIdFromHierarchy();
+        return DeviceTransport::currentId();
     }
 }
 
 if (! function_exists('session_uuid')) {
     function session_uuid(): ?StorableId
     {
-        return SessionTransport::currentIdFromHierarchy();
+        return SessionTransport::currentId();
     }
 }
 

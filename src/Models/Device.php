@@ -16,7 +16,6 @@ use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 use Ninja\DeviceTracker\Cache\DeviceCache;
 use Ninja\DeviceTracker\Contracts\Cacheable;
 use Ninja\DeviceTracker\Contracts\StorableId;
@@ -64,6 +63,9 @@ use PDOException;
  * @property string $device_model string
  * @property string $grade string
  * @property string $source string
+ * @property string|null $device_id string|null
+ * @property string|null $advertising_id string|null
+ * @property string|null $client_fingerprint string|null
  * @property Metadata $metadata json
  * @property Carbon $created_at datetime
  * @property Carbon $updated_at datetime
@@ -105,6 +107,9 @@ class Device extends Model implements Cacheable
         'grade',
         'metadata',
         'source',
+        'device_id',
+        'advertising_id',
+        'client_fingerprint',
     ];
 
     public function sessions(): HasManySessions
@@ -313,14 +318,24 @@ class Device extends Model implements Cacheable
 
     public function equals(DeviceDTO $dto): bool
     {
-        return $this->browser === $dto->browser->name
-            && $this->browser_family === $dto->browser->family
-            && $this->browser_engine === $dto->browser->engine
-            && $this->platform === $dto->platform->name
-            && $this->platform_family === $dto->platform->family
-            && $this->device_type === $dto->device->type
-            && $this->device_family === $dto->device->family
-            && $this->device_model === $dto->device->model;
+        // Platform version should not be important
+        $matchPlatform = $dto->platform->name === $this->platform
+            && $dto->platform->family === $this->platform_family;
+
+        // Browser version should not be important
+        $matchBrowser = $dto->browser->name === $this->browser
+            && $dto->browser->family === $this->browser_family
+            && $dto->browser->engine === $this->browser_engine;
+
+        $matchDevice = $dto->device->family === $this->device_family
+            && $dto->device->model === $this->device_model
+            && $dto->device->type === $this->device_type;
+
+        $matchIds = $dto->advertisingId === $this->advertising_id
+            && $dto->deviceId === $this->device_id
+            && $dto->clientFingerprint === $this->client_fingerprint;
+
+        return $matchPlatform && $matchBrowser && $matchDevice && $matchIds;
     }
 
     public function key(): string
@@ -335,7 +350,7 @@ class Device extends Model implements Cacheable
 
     public static function register(
         StorableId $deviceUuid,
-        DeviceDTO $data
+        DeviceDTO $data,
     ): ?self {
         $device = self::byUuid($deviceUuid, false);
         if ($device !== null) {
@@ -361,6 +376,7 @@ class Device extends Model implements Cacheable
                 'grade' => $data->grade,
                 'metadata' => new Metadata([]),
                 'source' => $data->source,
+                'client_fingerprint' => $data->clientFingerprint,
             ]);
 
             /** @var Device $device */
@@ -418,6 +434,55 @@ class Device extends Model implements Cacheable
         );
     }
 
+    public static function byClientFingerprint(StorableId $clientFingerprint, bool $cached = true): ?self
+    {
+        if (! $cached) {
+            /** @var Device|null $device */
+            $device = self::where('client_fingerprint', $clientFingerprint)->first();
+
+            return $device;
+        }
+
+        return DeviceCache::remember(
+            key: DeviceCache::key($clientFingerprint),
+            callback: fn () => self::where('client_fingerprint', $clientFingerprint)->first()
+        );
+    }
+
+    public static function byDeviceDtoUniqueInfo(DeviceDto $deviceDto): ?self
+    {
+        if ($deviceDto->deviceId !== null) {
+            $device = Device::query()
+                ->where('device_id', $deviceDto->deviceId)
+                ->where('platform', $deviceDto->platform->name)
+                ->first();
+            if ($device !== null) {
+                return $device;
+            }
+        }
+
+        if ($deviceDto->clientFingerprint !== null) {
+            $device = Device::query()
+                ->where('client_fingerprint', $deviceDto->clientFingerprint)
+                ->first();
+            if ($device !== null) {
+                return $device;
+            }
+        }
+
+        if ($deviceDto->advertisingId !== null) {
+            $device = Device::query()
+                ->where('advertising_id', $deviceDto->deviceId)
+                ->where('platform', $deviceDto->platform->name)
+                ->first();
+            if ($device !== null) {
+                return $device;
+            }
+        }
+
+        return null;
+    }
+
     public static function current(): ?self
     {
         if (config('devices.fingerprinting_enabled') === true) {
@@ -426,8 +491,14 @@ class Device extends Model implements Cacheable
             }
         }
 
-        if (device_uuid() !== null) {
-            return self::byUuid(device_uuid());
+        $clientFingerprint = client_fingerprint();
+        if ($clientFingerprint !== null) {
+            return self::byClientFingerprint($clientFingerprint);
+        }
+
+        $deviceUuid = device_uuid();
+        if ($deviceUuid !== null) {
+            return self::byUuid($deviceUuid);
         }
 
         return null;

@@ -108,6 +108,59 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Parameter name for client fingerprint
+    |--------------------------------------------------------------------------
+    | This option specifies the name of the parameter that will be used to read
+    | the client fingerprint of the current device.
+    |
+    */
+    'client_fingerprint_parameter' => 'laravel_client_fingerprint',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Alternative parameter name for client fingerprint
+    |--------------------------------------------------------------------------
+    | This option is used as a backup key to search for the client_fingerprint. If the
+    | 'client_fingerprint_parameter' is not set then this parameter is searched.
+    | This option is also useful when migrating the parameter name, making sure
+    | that devices still using the old parameter can still be identified
+    | through it.
+    |
+    */
+    'client_fingerprint_alternative_parameter' => null,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Hierarchy of transports for client_fingerprint
+    |--------------------------------------------------------------------------
+    | This option specifies the transport method for the client fingerprint in
+    | order of priority.
+    | When searching for a client fingerprint, the first transport method that
+    | have a value set will determine the client fingerprint.
+    | By default only 'cookie' transport is used.
+    |
+    | Possible array values: 'cookie', 'header', 'session', 'request'
+    |
+    */
+    'client_fingerprint_transport_hierarchy' => [
+        'cookie',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Transport for client fingerprint in the response
+    |--------------------------------------------------------------------------
+    | This option specifies the transport method for the client fingerprint
+    | when sending the response.
+    | By default the 'cookie' transport is used.
+    |
+    | Possible values: 'cookie', 'header', 'session'
+    |
+    */
+    'client_fingerprint_response_transport' => 'cookie',
+
+    /*
+    |--------------------------------------------------------------------------
     | Device ID class
     |--------------------------------------------------------------------------
     | This option specifies the class that will be used to store
@@ -135,6 +188,16 @@ return [
     |
     */
     'event_id_storable_class' => \Ninja\DeviceTracker\ValueObject\EventId::class,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Client fingerprint class
+    |--------------------------------------------------------------------------
+    | This option specifies the class that will be used to store and serialize
+    | the client fingerprint. Must implement the StorableId interface.
+    |
+    */
+    'client_fingerprint_storable_class' => \Ninja\DeviceTracker\ValueObject\ClientFingerprint::class,
 
     /*
     |--------------------------------------------------------------------------
