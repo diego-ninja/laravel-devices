@@ -2,7 +2,6 @@
 
 namespace Ninja\DeviceTracker;
 
-use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
@@ -37,10 +36,6 @@ class DeviceTrackerServiceProvider extends ServiceProvider
         $this->registerCommands();
 
         $this->loadViewsFrom(resource_path('views/vendor/laravel-devices'), 'laravel-devices');
-
-        $this->app->resolving(EncryptCookies::class, function (EncryptCookies $encrypter) {
-            $encrypter->disableFor(config('devices.client_fingerprint_key'));
-        });
 
         if (config('devices.load_routes') === true) {
             $this->loadRoutesFrom(__DIR__.'/../routes/devices.php');
@@ -120,10 +115,7 @@ class DeviceTrackerServiceProvider extends ServiceProvider
             $router->aliasMiddleware('device-tracker', DeviceTracker::class);
             $router->aliasMiddleware('device-checker', DeviceChecker::class);
             $router->aliasMiddleware('session-tracker', SessionTracker::class);
-
-            if (config('devices.fingerprinting_enabled') === true) {
-                $router->aliasMiddleware('fingerprint-tracker', FingerprintTracker::class);
-            }
+            $router->aliasMiddleware('fingerprint-tracker', FingerprintTracker::class);
 
             if (config('devices.event_tracking_enabled') === true) {
                 $router->aliasMiddleware('event-tracker', EventTracker::class);

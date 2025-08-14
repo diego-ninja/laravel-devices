@@ -8,7 +8,7 @@ use Illuminate\Http\Response;
 use Ninja\DeviceTracker\DTO\Metadata;
 use Ninja\DeviceTracker\Enums\Transport;
 use Ninja\DeviceTracker\Exception\UnknownDeviceDetectedException;
-use Ninja\DeviceTracker\Factories\ClientFingerprintIdFactory;
+use Ninja\DeviceTracker\Factories\FingerprintFactory;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Http\Middleware\DeviceTracker;
 use Ninja\DeviceTracker\Models\Device;

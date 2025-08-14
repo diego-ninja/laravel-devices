@@ -19,7 +19,6 @@ final class Device implements JsonSerializable, Stringable
     public DeviceType $device;
     public ?string $advertisingId = null;
     public ?string $deviceId = null;
-    public ?string $clientFingerprint = null;
     public ?bool $bot = false;
     public ?string $grade = self::UNKNOWN;
     public ?string $source;
@@ -45,7 +44,6 @@ final class Device implements JsonSerializable, Stringable
             'device' => $this->device->array(),
             'advertising_id' => $this->advertisingId,
             'device_id' => $this->deviceId,
-            'client_fingerprint' => $this->clientFingerprint,
             'grade' => $this->grade,
             'source' => $this->source,
             'label' => (string) $this,

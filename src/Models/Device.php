@@ -49,7 +49,7 @@ use PDOException;
  *
  * @property int $id unsigned int
  * @property StorableId $uuid string
- * @property string $fingerprint string
+ * @property StorableId|null $fingerprint string|null
  * @property DeviceStatus $status string
  * @property string|null $browser string|null
  * @property string|null $browser_version string|null
@@ -65,7 +65,6 @@ use PDOException;
  * @property string|null $source string|null
  * @property string|null $device_id string|null
  * @property string|null $advertising_id string|null
- * @property string|null $client_fingerprint string|null
  * @property Metadata|null $metadata json|null
  * @property Carbon $created_at datetime
  * @property Carbon $updated_at datetime
@@ -109,7 +108,6 @@ class Device extends Model implements Cacheable
         'source',
         'device_id',
         'advertising_id',
-        'client_fingerprint',
     ];
 
     public function sessions(): HasManySessions
@@ -150,7 +148,7 @@ class Device extends Model implements Cacheable
             foreignPivotKey: 'device_uuid',
             relatedPivotKey: 'user_id',
             parentKey: 'uuid',
-            relatedKey: 'id'
+            relatedKey: 'id',
         );
     }
 
@@ -190,33 +188,6 @@ class Device extends Model implements Cacheable
     public function isCurrent(): bool
     {
         return (string) $this->uuid === (string) device_uuid();
-    }
-
-    public function fingerprint(string $fingerprint, ?string $cookie = null): void
-    {
-        DB::transaction(function () use ($fingerprint, $cookie) {
-            try {
-                $this->fingerprint = $fingerprint;
-                if ($this->save()) {
-                    if ($cookie !== null) {
-                        Cookie::queue(Cookie::forever(
-                            name: $cookie,
-                            value: $fingerprint,
-                            secure: Config::get('session.secure', false),
-                            httpOnly: Config::get('session.http_only', true)
-                        ));
-                    }
-                    event(new DeviceFingerprintedEvent($this));
-                }
-            } catch (PDOException) {
-                throw FingerprintDuplicatedException::forFingerprint($fingerprint, Device::byFingerprint($fingerprint));
-            }
-        });
-    }
-
-    public function fingerprinted(): bool
-    {
-        return $this->fingerprint !== null;
     }
 
     public function verify(?Authenticatable $user = null): void
@@ -316,28 +287,6 @@ class Device extends Model implements Cacheable
         return $this->device_family.' '.$this->device_model;
     }
 
-    public function equals(DeviceDTO $dto): bool
-    {
-        // Platform version should not be important
-        $matchPlatform = $dto->platform->name === $this->platform
-            && $dto->platform->family === $this->platform_family;
-
-        // Browser version should not be important
-        $matchBrowser = $dto->browser->name === $this->browser
-            && $dto->browser->family === $this->browser_family
-            && $dto->browser->engine === $this->browser_engine;
-
-        $matchDevice = $dto->device->family === $this->device_family
-            && $dto->device->model === $this->device_model
-            && $dto->device->type === $this->device_type;
-
-        $matchIds = $dto->advertisingId === $this->advertising_id
-            && $dto->deviceId === $this->device_id
-            && $dto->clientFingerprint === $this->client_fingerprint;
-
-        return $matchPlatform && $matchBrowser && $matchDevice && $matchIds;
-    }
-
     public function key(): string
     {
         return DeviceCache::key($this->uuid);
@@ -377,7 +326,6 @@ class Device extends Model implements Cacheable
                 'grade' => $data->grade,
                 'metadata' => new Metadata([]),
                 'source' => $data->source,
-                'client_fingerprint' => $data->clientFingerprint,
             ]);
 
             /** @var Device $device */
@@ -420,7 +368,7 @@ class Device extends Model implements Cacheable
         return self::byUuid($uuid) ?? throw DeviceNotFoundException::withDevice($uuid);
     }
 
-    public static function byFingerprint(string $fingerprint, bool $cached = true): ?self
+    public static function byFingerprint(StorableId $fingerprint, bool $cached = true): ?self
     {
         if (! $cached) {
             /** @var Device|null $device */
@@ -435,36 +383,12 @@ class Device extends Model implements Cacheable
         );
     }
 
-    public static function byClientFingerprint(StorableId $clientFingerprint, bool $cached = true): ?self
-    {
-        if (! $cached) {
-            /** @var Device|null $device */
-            $device = self::where('client_fingerprint', $clientFingerprint)->first();
-
-            return $device;
-        }
-
-        return DeviceCache::remember(
-            key: DeviceCache::key($clientFingerprint),
-            callback: fn () => self::where('client_fingerprint', $clientFingerprint)->first()
-        );
-    }
-
     public static function byDeviceDtoUniqueInfo(DeviceDto $deviceDto): ?self
     {
         if ($deviceDto->deviceId !== null) {
             $device = Device::query()
                 ->where('device_id', $deviceDto->deviceId)
                 ->where('platform', $deviceDto->platform->name)
-                ->first();
-            if ($device !== null) {
-                return $device;
-            }
-        }
-
-        if ($deviceDto->clientFingerprint !== null) {
-            $device = Device::query()
-                ->where('client_fingerprint', $deviceDto->clientFingerprint)
                 ->first();
             if ($device !== null) {
                 return $device;
@@ -486,15 +410,9 @@ class Device extends Model implements Cacheable
 
     public static function current(): ?self
     {
-        if (config('devices.fingerprinting_enabled') === true) {
-            if (fingerprint() !== null) {
-                return self::byFingerprint(fingerprint());
-            }
-        }
-
-        $clientFingerprint = client_fingerprint();
-        if ($clientFingerprint !== null) {
-            return self::byClientFingerprint($clientFingerprint);
+        $fingerprint = fingerprint();
+        if ($fingerprint !== null) {
+            return self::byFingerprint($fingerprint);
         }
 
         $deviceUuid = device_uuid();
@@ -557,5 +475,46 @@ class Device extends Model implements Cacheable
     protected static function newFactory()
     {
         return new DeviceFactory;
+    }
+
+    public function equals(DeviceDTO $dto, bool $strict = true): bool
+    {
+        return $this->matchPlatform($dto, $strict)
+            && $this->matchBrowser($dto, $strict)
+            && $this->matchDevice($dto, $strict)
+            && $this->matchDeviceUniqueInfo($dto, $strict);
+    }
+
+    protected function matchPlatform(DeviceDTO $dto, bool $strict = true): bool
+    {
+        return $dto->platform->name === $this->platform
+            && $dto->platform->family === $this->platform_family
+            && (! $strict || $dto->platform->version === $this->platform_version);
+    }
+
+    protected function matchBrowser(DeviceDTO $dto, bool $strict = true): bool
+    {
+        return $dto->browser->name === $this->browser
+            && $dto->browser->family === $this->browser_family
+            && $dto->browser->engine === $this->browser_engine
+            && (! $strict || $dto->browser->version === $this->browser_version);
+    }
+
+    protected function matchDevice(DeviceDTO $dto, bool $strict = true): bool
+    {
+        return $dto->device->family === $this->device_family
+            && $dto->device->model === $this->device_model
+            && $dto->device->type === $this->device_type;
+    }
+
+    protected function matchDeviceUniqueInfo(DeviceDto $dto, bool $strict = true): bool
+    {
+        if ($strict) {
+            return $dto->advertisingId === $this->advertising_id
+                && $dto->deviceId === $this->device_id;
+        }
+
+        return ($dto->advertisingId === null || $this->advertising_id === null || $dto->advertisingId === $this->advertising_id)
+            && ($dto->advertisingId === null || $this->device_id === null || $dto->deviceId === $this->device_id);
     }
 }

@@ -137,7 +137,7 @@ abstract class AbstractTransport
         return $defaultTransport ?? $default;
     }
 
-    protected static function parameter(): string
+    public static function parameter(): string
     {
         return config(sprintf('devices.%s', static::CONFIG_PARAMETER));
     }

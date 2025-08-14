@@ -2,35 +2,17 @@
 
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Auth\Guard;
-use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Cookie;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Models\Session;
 use Ninja\DeviceTracker\Transports\DeviceTransport;
-use Ninja\DeviceTracker\Transports\ClientFingerprintTransport;
+use Ninja\DeviceTracker\Transports\FingerprintTransport;
 use Ninja\DeviceTracker\Transports\SessionTransport;
 
 if (! function_exists('fingerprint')) {
-    function fingerprint(): ?string
+    function fingerprint(): ?StorableId
     {
-        if (config('devices.fingerprinting_enabled') === true) {
-            $cookie = Config::get('devices.fingerprint_id_cookie_name');
-
-            $fingerprint = Cookie::get($cookie);
-            if (is_string($fingerprint)) {
-                return $fingerprint;
-            }
-        }
-
-        return null;
-    }
-}
-
-if (! function_exists('client_fingerprint')) {
-    function client_fingerprint(): ?StorableId
-    {
-        return ClientFingerprintTransport::currentId();
+        return FingerprintTransport::currentId();
     }
 }
 

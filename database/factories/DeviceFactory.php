@@ -5,7 +5,7 @@ namespace Ninja\DeviceTracker\Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Ninja\DeviceTracker\DTO\Metadata;
 use Ninja\DeviceTracker\Enums\DeviceStatus;
-use Ninja\DeviceTracker\Factories\ClientFingerprintIdFactory;
+use Ninja\DeviceTracker\Factories\FingerprintFactory;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Models\Device;
 
@@ -18,7 +18,7 @@ class DeviceFactory extends Factory
         return [
             'uuid' => DeviceIdFactory::from($this->faker->uuid),
             'status' => DeviceStatus::Verified,
-            'fingerprint' => $this->faker->boolean ? $this->faker->uuid : null,
+            'fingerprint' => $this->faker->boolean ? FingerprintFactory::from($this->faker->uuid) : null,
             'browser' => $this->faker->boolean ? $this->faker->word : null,
             'browser_version' => $this->faker->boolean ? $this->faker->semver() : null,
             'browser_family' => $this->faker->boolean ? $this->faker->word : null,
@@ -34,7 +34,6 @@ class DeviceFactory extends Factory
             'source' => $this->faker->userAgent,
             'device_id' => $this->faker->boolean ? $this->faker->uuid : null,
             'advertising_id' => $this->faker->boolean ? $this->faker->uuid : null,
-            'client_fingerprint' => $this->faker->boolean ? ClientFingerprintIdFactory::from($this->faker->uuid) : null,
         ];
     }
 }

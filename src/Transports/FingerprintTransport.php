@@ -4,14 +4,14 @@ namespace Ninja\DeviceTracker\Transports;
 
 use Ninja\DeviceTracker\Enums\Transport;
 use Ninja\DeviceTracker\Factories\AbstractStorableIdFactory;
-use Ninja\DeviceTracker\Factories\ClientFingerprintIdFactory;
+use Ninja\DeviceTracker\Factories\FingerprintFactory;
 
-class ClientFingerprintTransport extends AbstractTransport
+class FingerprintTransport extends AbstractTransport
 {
-    protected const CONFIG_PARAMETER = 'client_fingerprint_parameter';
-    protected const CONFIG_ALTERNATIVE_PARAMETER = 'client_fingerprint_alternative_parameter';
-    protected const CONFIG_TRANSPORT_HIERARCHY_KEY = 'client_fingerprint_transport_hierarchy';
-    protected const CONFIG_RESPONSE_TRANSPORT_KEY = 'client_fingerprint_response_transport';
+    protected const CONFIG_PARAMETER = 'fingerprint_parameter';
+    protected const CONFIG_ALTERNATIVE_PARAMETER = 'fingerprint_alternative_parameter';
+    protected const CONFIG_TRANSPORT_HIERARCHY_KEY = 'fingerprint_transport_hierarchy';
+    protected const CONFIG_RESPONSE_TRANSPORT_KEY = 'fingerprint_response_transport';
     protected const DEFAULT_TRANSPORT = Transport::Cookie;
     protected const DEFAULT_RESPONSE_TRANSPORT = Transport::Cookie;
 
@@ -25,6 +25,6 @@ class ClientFingerprintTransport extends AbstractTransport
      */
     protected static function storableIdFactory(): string
     {
-        return ClientFingerprintIdFactory::class;
+        return FingerprintFactory::class;
     }
 }

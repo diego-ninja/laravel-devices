@@ -16,14 +16,15 @@ final class RequestDeviceDetector implements DeviceDetectorInterface
             return null;
         }
 
-        // TODO: Define custom parameters for both advertisingId and deviceId
-        $advertisingId = $request->input('advertising_id');
-        $deviceId = $request->input('device_id');
-        $clientFingerprint = $request->input('client_fingerprint');
+        $advertisingId = $request->input(
+            config('devices.device_identifiers_parameters.advertising_id', 'advertising_id'),
+        );
+        $deviceId = $request->input(
+            config('devices.device_identifiers_parameters.device_id', 'device_id'),
+        );
 
         $base->advertisingId ??= $advertisingId;
         $base->deviceId ??= $deviceId;
-        $base->clientFingerprint ??= $clientFingerprint;
 
         return $base;
     }

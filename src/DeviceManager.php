@@ -118,13 +118,20 @@ final class DeviceManager
 
     public function current(): ?Device
     {
-        if (config('devices.fingerprinting_enabled') === true && fingerprint() !== null) {
-            return Device::byFingerprint(fingerprint());
+        $fingerprint = fingerprint();
+        if ($fingerprint !== null) {
+            $device = Device::byFingerprint($fingerprint, false);
+            if ($device !== null) {
+                return $device;
+            }
         }
 
         $device_uuid = device_uuid();
         if ($device_uuid !== null) {
-            return Device::byUuid($device_uuid, false);
+            $device = Device::byUuid($device_uuid, false);
+            if ($device !== null) {
+                return $device;
+            }
         }
 
         return null;
@@ -142,7 +149,7 @@ final class DeviceManager
         // Device by uuid and matching info
         if ($deviceUuid !== null) {
             $device = Device::byUuid($deviceUuid);
-            if ($device !== null && $device->equals($deviceDto)) {
+            if ($device !== null && $device->equals($deviceDto, false)) {
                 return $device;
             }
         }
@@ -150,14 +157,14 @@ final class DeviceManager
         // Device by fingerprint and matching info
         if ($fingerprint !== null) {
             $device = Device::byFingerprint($fingerprint);
-            if ($device !== null && $device->equals($deviceDto)) {
+            if ($device !== null && $device->equals($deviceDto, false)) {
                 return $device;
             }
         }
 
         // Device matching dto unique info
         $device = Device::byDeviceDtoUniqueInfo($deviceDto);
-        if ($device !== null && $device->equals($deviceDto)) {
+        if ($device !== null && $device->equals($deviceDto, false)) {
             return $device;
         }
 
