@@ -84,7 +84,7 @@ final readonly class DeviceTracker
                 fn (string $value) => Transport::tryFrom($value) !== null,
             );
             if (! empty($hierarchy)) {
-                Config::set('devices.device_id_transport_hierarchy', $hierarchy);
+                Config::set('devices.transports.device_id.transport_hierarchy', $hierarchy);
             }
         }
     }
@@ -96,7 +96,7 @@ final readonly class DeviceTracker
             && Transport::tryFrom($parameterString) !== null
             && $parameterString !== Transport::Request->value
         ) {
-            Config::set('devices.device_id_response_transport', $parameterString);
+            Config::set('devices.transports.device_id.response_transport', $parameterString);
         }
     }
 

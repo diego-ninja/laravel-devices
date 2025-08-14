@@ -10,10 +10,10 @@ use Illuminate\Support\Str;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Enums\Transport;
 use Ninja\DeviceTracker\Tests\FeatureTestCase;
-use Ninja\DeviceTracker\Transports\DeviceTransport;
+use Ninja\DeviceTracker\Transports\FingerprintTransport;
 use PHPUnit\Framework\Attributes\DataProvider;
 
-class DeviceTransportTest extends FeatureTestCase
+class FingerprintTransportTest extends FeatureTestCase
 {
     public static function hierarchy_provider(): array
     {
@@ -95,10 +95,10 @@ class DeviceTransportTest extends FeatureTestCase
         ?string $input = null,
         ?string $session = null,
     ): void {
-        $parameter = 'device_id';
+        $parameter = 'fingerprint';
         $this->setConfig([
-            'devices.transports.device_id.transport_hierarchy' => $hierarchy,
-            'devices.transports.device_id.parameter' => $parameter,
+            'devices.transports.fingerprint.transport_hierarchy' => $hierarchy,
+            'devices.transports.fingerprint.parameter' => $parameter,
         ]);
 
         if (isset($cookie)) {
@@ -114,11 +114,11 @@ class DeviceTransportTest extends FeatureTestCase
             session()->put($parameter, $session);
         }
 
-        $currentTransport = DeviceTransport::current();
+        $transport = FingerprintTransport::current();
 
-        $this->assertEquals($expectedTransport, $currentTransport->transport);
+        $this->assertEquals(FingerprintTransport::make($expectedTransport), $transport);
 
-        $id = DeviceTransport::currentId();
+        $id = FingerprintTransport::currentId();
 
         if (is_null($expectedId)) {
             $this->assertNull($id);
@@ -131,18 +131,18 @@ class DeviceTransportTest extends FeatureTestCase
     {
         $parameter = 'device_id';
         $this->setConfig([
-            'devices.transports.device_id.transport_hierarchy' => [Transport::Cookie->value],
-            'devices.transports.device_id.parameter' => $parameter,
+            'devices.transports.fingerprint.transport_hierarchy' => [Transport::Cookie->value],
+            'devices.transports.fingerprint.parameter' => $parameter,
         ]);
         $id = 'f765e4d4-a990-4c59-aeed-d16f0aed2665';
 
         request()->cookies->set($parameter, $id);
 
-        $transport = DeviceTransport::current();
+        $transport = FingerprintTransport::current();
 
-        $this->assertEquals(DeviceTransport::make(Transport::Cookie), $transport);
+        $this->assertEquals(FingerprintTransport::make(Transport::Cookie), $transport);
 
-        $storableId = DeviceTransport::currentId();
+        $storableId = FingerprintTransport::currentId();
 
         $this->assertTrue($storableId instanceof StorableId);
         $this->assertEquals($id, $storableId);
@@ -150,11 +150,11 @@ class DeviceTransportTest extends FeatureTestCase
 
     public function test_current_with_encrypted_cookie(): void
     {
-        $parameter = 'device_id';
+        $parameter = 'fingerprint';
         $key = 'base64:Lzrm+AkE+RrRJWDHON58e8unP7LBK6PlyyLo5k4i6Q0=';
         $this->setConfig([
-            'devices.transports.device_id.transport_hierarchy' => [Transport::Cookie->value],
-            'devices.transports.device_id.parameter' => $parameter,
+            'devices.transports.fingerprint.transport_hierarchy' => [Transport::Cookie->value],
+            'devices.transports.fingerprint.parameter' => $parameter,
             'app.key' => $key,
         ]);
         $id = 'f765e4d4-a990-4c59-aeed-d16f0aed2665';
@@ -166,11 +166,11 @@ class DeviceTransportTest extends FeatureTestCase
 
         request()->cookies->set($parameter, $encryptedCookie);
 
-        $transport = DeviceTransport::current();
+        $transport = FingerprintTransport::current();
 
-        $this->assertEquals(DeviceTransport::make(Transport::Cookie), $transport);
+        $this->assertEquals(FingerprintTransport::make(Transport::Cookie), $transport);
 
-        $storableId = DeviceTransport::currentId();
+        $storableId = FingerprintTransport::currentId();
 
         $this->assertTrue($storableId instanceof StorableId);
         $this->assertEquals($id, $storableId);
@@ -178,49 +178,49 @@ class DeviceTransportTest extends FeatureTestCase
 
     public function test_current_from_alternative_parameter(): void
     {
-        $parameter = 'device_id';
+        $parameter = 'fingerprint';
         $this->setConfig([
-            'devices.transports.device_id.transport_hierarchy' => [Transport::Cookie->value],
-            'devices.transports.device_id.parameter' => 'invalid_parameter',
-            'devices.transports.device_id.alternative_parameter' => $parameter,
+            'devices.transports.fingerprint.transport_hierarchy' => [Transport::Cookie->value],
+            'devices.transports.fingerprint.parameter' => 'invalid_parameter',
+            'devices.transports.fingerprint.alternative_parameter' => $parameter,
         ]);
         $id = 'f765e4d4-a990-4c59-aeed-d16f0aed2665';
 
         request()->cookies->set($parameter, $id);
 
-        $transport = DeviceTransport::current();
+        $transport = FingerprintTransport::current();
 
-        $this->assertEquals(DeviceTransport::make(Transport::Cookie), $transport);
+        $this->assertEquals(FingerprintTransport::make(Transport::Cookie), $transport);
 
-        $storableId = DeviceTransport::currentId();
+        $storableId = FingerprintTransport::currentId();
 
         $this->assertTrue($storableId instanceof StorableId);
         $this->assertEquals($id, $storableId);
     }
 
-    public function test_forget_device_from_session(): void
+    public function test_forget_session_from_session(): void
     {
-        $parameter = 'device_id';
+        $parameter = 'fingerprint';
         $this->setConfig([
-            'devices.transports.device_id.response_transport' => Transport::Session->value,
-            'devices.transports.device_id.parameter' => $parameter,
+            'devices.transports.fingerprint.response_transport' => Transport::Session->value,
+            'devices.transports.fingerprint.parameter' => $parameter,
         ]);
         $id = 'f765e4d4-a990-4c59-aeed-d16f0aed2665';
 
         Session::start();
         Session::put($parameter, $id);
 
-        DeviceTransport::forget();
+        FingerprintTransport::forget();
 
         $this->assertNull(Session::get($parameter));
     }
 
-    public function test_forget_device_from_cookie(): void
+    public function test_forget_session_from_cookie(): void
     {
-        $parameter = 'device_id';
+        $parameter = 'fingerprint';
         $this->setConfig([
-            'devices.transports.device_id.response_transport' => Transport::Cookie->value,
-            'devices.transports.device_id.parameter' => $parameter,
+            'devices.transports.fingerprint.response_transport' => Transport::Cookie->value,
+            'devices.transports.fingerprint.parameter' => $parameter,
         ]);
         $id = 'f765e4d4-a990-4c59-aeed-d16f0aed2665';
 
@@ -238,7 +238,7 @@ class DeviceTransportTest extends FeatureTestCase
             }
         }
 
-        DeviceTransport::forget();
+        FingerprintTransport::forget();
 
         $cookies = Cookie::getQueuedCookies();
         foreach ($cookies as $cookie) {

@@ -27,38 +27,17 @@ class DeviceTrackerTest extends FeatureTestCase
         $prefix = 'null_ua_';
 
         return [
-            // Unknown Devices not allowed, No regeneration
-            $prefix.'unknown devices not allowed, no regeneration, 403' => [
+            // Unknown Devices not allowed
+            $prefix.'unknown devices not allowed, 403' => [
                 'config' => [
-                    'devices.regenerate_devices' => false,
                     'devices.middlewares.device-tracker.exception_on_invalid_devices' => false,
                     'devices.allow_unknown_devices' => false,
                 ],
                 'userAgent' => null,
                 'exceptionClass' => HttpException::class,
             ],
-            $prefix.'unknown devices not allowed, no regeneration, exception' => [
+            $prefix.'unknown devices not allowed, exception' => [
                 'config' => [
-                    'devices.regenerate_devices' => false,
-                    'devices.middlewares.device-tracker.exception_on_invalid_devices' => true,
-                    'devices.allow_unknown_devices' => false,
-                ],
-                'userAgent' => null,
-                'exceptionClass' => UnknownDeviceDetectedException::class,
-            ],
-            // Unknown Devices not allowed, Regeneration
-            $prefix.'unknown devices not allowed, regeneration, 403' => [
-                'config' => [
-                    'devices.regenerate_devices' => true,
-                    'devices.middlewares.device-tracker.exception_on_invalid_devices' => false,
-                    'devices.allow_unknown_devices' => false,
-                ],
-                'userAgent' => null,
-                'exceptionClass' => HttpException::class,
-            ],
-            $prefix.'unknown devices not allowed, regeneration, exception' => [
-                'config' => [
-                    'devices.regenerate_devices' => true,
                     'devices.middlewares.device-tracker.exception_on_invalid_devices' => true,
                     'devices.allow_unknown_devices' => false,
                 ],
@@ -66,38 +45,17 @@ class DeviceTrackerTest extends FeatureTestCase
                 'exceptionClass' => UnknownDeviceDetectedException::class,
             ],
 
-            // Unknown Devices allowed, No regeneration
-            $prefix.'unknown devices allowed, no regeneration, 403' => [
+            // Unknown Devices allowed
+            $prefix.'unknown devices allowed, 403' => [
                 'config' => [
-                    'devices.regenerate_devices' => false,
                     'devices.middlewares.device-tracker.exception_on_invalid_devices' => false,
                     'devices.allow_unknown_devices' => true,
                 ],
                 'userAgent' => null,
                 'exceptionClass' => null,
             ],
-            $prefix.'unknown devices allowed, no regeneration, exception' => [
+            $prefix.'unknown devices allowed, exception' => [
                 'config' => [
-                    'devices.regenerate_devices' => false,
-                    'devices.middlewares.device-tracker.exception_on_invalid_devices' => true,
-                    'devices.allow_unknown_devices' => true,
-                ],
-                'userAgent' => null,
-                'exceptionClass' => null,
-            ],
-            // Unknown Devices allowed, Regeneration
-            $prefix.'unknown devices allowed, regeneration, 403' => [
-                'config' => [
-                    'devices.regenerate_devices' => true,
-                    'devices.middlewares.device-tracker.exception_on_invalid_devices' => false,
-                    'devices.allow_unknown_devices' => true,
-                ],
-                'userAgent' => null,
-                'exceptionClass' => null,
-            ],
-            $prefix.'unknown devices allowed, regeneration, exception' => [
-                'config' => [
-                    'devices.regenerate_devices' => true,
                     'devices.middlewares.device-tracker.exception_on_invalid_devices' => true,
                     'devices.allow_unknown_devices' => true,
                 ],
@@ -113,38 +71,17 @@ class DeviceTrackerTest extends FeatureTestCase
         $prefix = 'invalid_ua_';
 
         return [
-            // Unknown Devices not allowed, No regeneration
-            $prefix.'unknown devices not allowed, no regeneration, 403' => [
+            // Unknown Devices not allowed
+            $prefix.'unknown devices not allowed, 403' => [
                 'config' => [
-                    'devices.regenerate_devices' => false,
                     'devices.middlewares.device-tracker.exception_on_invalid_devices' => false,
                     'devices.allow_unknown_devices' => false,
                 ],
                 'userAgent' => $invalidUserAgent,
                 'exceptionClass' => HttpException::class,
             ],
-            $prefix.'unknown devices not allowed, no regeneration, exception' => [
+            $prefix.'unknown devices not allowed, exception' => [
                 'config' => [
-                    'devices.regenerate_devices' => false,
-                    'devices.middlewares.device-tracker.exception_on_invalid_devices' => true,
-                    'devices.allow_unknown_devices' => false,
-                ],
-                'userAgent' => $invalidUserAgent,
-                'exceptionClass' => UnknownDeviceDetectedException::class,
-            ],
-            // Unknown Devices not allowed, Regeneration
-            $prefix.'unknown devices not allowed, regeneration, 403' => [
-                'config' => [
-                    'devices.regenerate_devices' => true,
-                    'devices.middlewares.device-tracker.exception_on_invalid_devices' => false,
-                    'devices.allow_unknown_devices' => false,
-                ],
-                'userAgent' => $invalidUserAgent,
-                'exceptionClass' => HttpException::class,
-            ],
-            $prefix.'unknown devices not allowed, regeneration, exception' => [
-                'config' => [
-                    'devices.regenerate_devices' => true,
                     'devices.middlewares.device-tracker.exception_on_invalid_devices' => true,
                     'devices.allow_unknown_devices' => false,
                 ],
@@ -152,38 +89,17 @@ class DeviceTrackerTest extends FeatureTestCase
                 'exceptionClass' => UnknownDeviceDetectedException::class,
             ],
 
-            // Unknown Devices allowed, No regeneration
-            $prefix.'unknown devices allowed, no regeneration, 403' => [
+            // Unknown Devices allowed
+            $prefix.'unknown devices allowed, 403' => [
                 'config' => [
-                    'devices.regenerate_devices' => false,
                     'devices.middlewares.device-tracker.exception_on_invalid_devices' => false,
                     'devices.allow_unknown_devices' => true,
                 ],
                 'userAgent' => $invalidUserAgent,
                 'exceptionClass' => null,
             ],
-            $prefix.'unknown devices allowed, no regeneration, exception' => [
+            $prefix.'unknown devices allowed, exception' => [
                 'config' => [
-                    'devices.regenerate_devices' => false,
-                    'devices.middlewares.device-tracker.exception_on_invalid_devices' => true,
-                    'devices.allow_unknown_devices' => true,
-                ],
-                'userAgent' => $invalidUserAgent,
-                'exceptionClass' => null,
-            ],
-            // Unknown Devices allowed, Regeneration
-            $prefix.'unknown devices allowed, regeneration, 403' => [
-                'config' => [
-                    'devices.regenerate_devices' => true,
-                    'devices.middlewares.device-tracker.exception_on_invalid_devices' => false,
-                    'devices.allow_unknown_devices' => true,
-                ],
-                'userAgent' => $invalidUserAgent,
-                'exceptionClass' => null,
-            ],
-            $prefix.'unknown devices allowed, regeneration, exception' => [
-                'config' => [
-                    'devices.regenerate_devices' => true,
                     'devices.middlewares.device-tracker.exception_on_invalid_devices' => true,
                     'devices.allow_unknown_devices' => true,
                 ],
@@ -199,38 +115,17 @@ class DeviceTrackerTest extends FeatureTestCase
         $prefix = 'valid ua, ';
 
         return [
-            // Unknown Devices not allowed, No regeneration
-            $prefix.'unknown devices not allowed, no regeneration, 403' => [
+            // Unknown Devices not allowed
+            $prefix.'unknown devices not allowed, 403' => [
                 'config' => [
-                    'devices.regenerate_devices' => false,
                     'devices.middlewares.device-tracker.exception_on_invalid_devices' => false,
                     'devices.allow_unknown_devices' => false,
                 ],
                 'userAgent' => $userAgent,
                 'exceptionClass' => null,
             ],
-            $prefix.'unknown devices not allowed, no regeneration, exception' => [
+            $prefix.'unknown devices not allowed, exception' => [
                 'config' => [
-                    'devices.regenerate_devices' => false,
-                    'devices.middlewares.device-tracker.exception_on_invalid_devices' => true,
-                    'devices.allow_unknown_devices' => false,
-                ],
-                'userAgent' => $userAgent,
-                'exceptionClass' => null,
-            ],
-            // Unknown Devices not allowed, Regeneration
-            $prefix.'unknown devices not allowed, regeneration, 403' => [
-                'config' => [
-                    'devices.regenerate_devices' => true,
-                    'devices.middlewares.device-tracker.exception_on_invalid_devices' => false,
-                    'devices.allow_unknown_devices' => false,
-                ],
-                'userAgent' => $userAgent,
-                'exceptionClass' => null,
-            ],
-            $prefix.'unknown devices not allowed, regeneration, exception' => [
-                'config' => [
-                    'devices.regenerate_devices' => true,
                     'devices.middlewares.device-tracker.exception_on_invalid_devices' => true,
                     'devices.allow_unknown_devices' => false,
                 ],
@@ -238,38 +133,17 @@ class DeviceTrackerTest extends FeatureTestCase
                 'exceptionClass' => null,
             ],
 
-            // Unknown Devices allowed, No regeneration
-            $prefix.'unknown devices allowed, no regeneration, 403' => [
+            // Unknown Devices allowed
+            $prefix.'unknown devices allowed, 403' => [
                 'config' => [
-                    'devices.regenerate_devices' => false,
                     'devices.middlewares.device-tracker.exception_on_invalid_devices' => false,
                     'devices.allow_unknown_devices' => true,
                 ],
                 'userAgent' => $userAgent,
                 'exceptionClass' => null,
             ],
-            $prefix.'unknown devices allowed, no regeneration, exception' => [
+            $prefix.'unknown devices allowed, exception' => [
                 'config' => [
-                    'devices.regenerate_devices' => false,
-                    'devices.middlewares.device-tracker.exception_on_invalid_devices' => true,
-                    'devices.allow_unknown_devices' => true,
-                ],
-                'userAgent' => $userAgent,
-                'exceptionClass' => null,
-            ],
-            // Unknown Devices allowed, Regeneration
-            $prefix.'unknown devices allowed, regeneration, 403' => [
-                'config' => [
-                    'devices.regenerate_devices' => true,
-                    'devices.middlewares.device-tracker.exception_on_invalid_devices' => false,
-                    'devices.allow_unknown_devices' => true,
-                ],
-                'userAgent' => $userAgent,
-                'exceptionClass' => null,
-            ],
-            $prefix.'unknown devices allowed, regeneration, exception' => [
-                'config' => [
-                    'devices.regenerate_devices' => true,
                     'devices.middlewares.device-tracker.exception_on_invalid_devices' => true,
                     'devices.allow_unknown_devices' => true,
                 ],
@@ -285,10 +159,9 @@ class DeviceTrackerTest extends FeatureTestCase
         $prefix = 'invalid_whitelisted_ua_';
 
         return [
-            // Unknown Devices not allowed, No regeneration
-            $prefix.'unknown devices not allowed, no regeneration, 403' => [
+            // Unknown Devices not allowed
+            $prefix.'unknown devices not allowed, 403' => [
                 'config' => [
-                    'devices.regenerate_devices' => false,
                     'devices.middlewares.device-tracker.exception_on_invalid_devices' => false,
                     'devices.allow_unknown_devices' => false,
                     'devices.user_agent_whitelist' => [$invalidUserAgent],
@@ -296,30 +169,8 @@ class DeviceTrackerTest extends FeatureTestCase
                 'userAgent' => $invalidUserAgent,
                 'exceptionClass' => null,
             ],
-            $prefix.'unknown devices not allowed, no regeneration, exception' => [
+            $prefix.'unknown devices not allowed, exception' => [
                 'config' => [
-                    'devices.regenerate_devices' => false,
-                    'devices.middlewares.device-tracker.exception_on_invalid_devices' => true,
-                    'devices.allow_unknown_devices' => false,
-                    'devices.user_agent_whitelist' => [$invalidUserAgent],
-                ],
-                'userAgent' => $invalidUserAgent,
-                'exceptionClass' => null,
-            ],
-            // Unknown Devices not allowed, Regeneration
-            $prefix.'unknown devices not allowed, regeneration, 403' => [
-                'config' => [
-                    'devices.regenerate_devices' => true,
-                    'devices.middlewares.device-tracker.exception_on_invalid_devices' => false,
-                    'devices.allow_unknown_devices' => false,
-                    'devices.user_agent_whitelist' => [$invalidUserAgent],
-                ],
-                'userAgent' => $invalidUserAgent,
-                'exceptionClass' => null,
-            ],
-            $prefix.'unknown devices not allowed, regeneration, exception' => [
-                'config' => [
-                    'devices.regenerate_devices' => true,
                     'devices.middlewares.device-tracker.exception_on_invalid_devices' => true,
                     'devices.allow_unknown_devices' => false,
                     'devices.user_agent_whitelist' => [$invalidUserAgent],
@@ -328,10 +179,9 @@ class DeviceTrackerTest extends FeatureTestCase
                 'exceptionClass' => null,
             ],
 
-            // Unknown Devices allowed, No regeneration
-            $prefix.'unknown devices allowed, no regeneration, 403' => [
+            // Unknown Devices allowed
+            $prefix.'unknown devices allowed, 403' => [
                 'config' => [
-                    'devices.regenerate_devices' => false,
                     'devices.middlewares.device-tracker.exception_on_invalid_devices' => false,
                     'devices.allow_unknown_devices' => true,
                     'devices.user_agent_whitelist' => [$invalidUserAgent],
@@ -339,30 +189,8 @@ class DeviceTrackerTest extends FeatureTestCase
                 'userAgent' => $invalidUserAgent,
                 'exceptionClass' => null,
             ],
-            $prefix.'unknown devices allowed, no regeneration, exception' => [
+            $prefix.'unknown devices allowed, exception' => [
                 'config' => [
-                    'devices.regenerate_devices' => false,
-                    'devices.middlewares.device-tracker.exception_on_invalid_devices' => true,
-                    'devices.allow_unknown_devices' => true,
-                    'devices.user_agent_whitelist' => [$invalidUserAgent],
-                ],
-                'userAgent' => $invalidUserAgent,
-                'exceptionClass' => null,
-            ],
-            // Unknown Devices allowed, Regeneration
-            $prefix.'unknown devices allowed, regeneration, 403' => [
-                'config' => [
-                    'devices.regenerate_devices' => true,
-                    'devices.middlewares.device-tracker.exception_on_invalid_devices' => false,
-                    'devices.allow_unknown_devices' => true,
-                    'devices.user_agent_whitelist' => [$invalidUserAgent],
-                ],
-                'userAgent' => $invalidUserAgent,
-                'exceptionClass' => null,
-            ],
-            $prefix.'unknown devices allowed, regeneration, exception' => [
-                'config' => [
-                    'devices.regenerate_devices' => true,
                     'devices.middlewares.device-tracker.exception_on_invalid_devices' => true,
                     'devices.allow_unknown_devices' => true,
                     'devices.user_agent_whitelist' => [$invalidUserAgent],
@@ -383,8 +211,8 @@ class DeviceTrackerTest extends FeatureTestCase
         ?string $exceptionClass = null
     ): void {
         $config = array_merge($config, [
-            'devices.device_id_transport_hierarchy' => ['cookie'],
-            'devices.device_id_parameter' => self::DEVICE_ID_PARAMETER,
+            'devices.transports.device_id.transport_hierarchy' => ['cookie'],
+            'devices.transports.device_id.parameter' => self::DEVICE_ID_PARAMETER,
         ]);
         $this->setConfig($config);
 
@@ -480,8 +308,9 @@ class DeviceTrackerTest extends FeatureTestCase
         $config = [
             'devices.middlewares.device-tracker.exception_on_invalid_devices' => false,
             'devices.allow_unknown_devices' => true,
-            'devices.device_id_transport_hierarchy' => ['cookie'],
-            'devices.device_id_parameter' => self::DEVICE_ID_PARAMETER,
+            'devices.transports.device_id.transport_hierarchy' => ['cookie'],
+            'devices.transports.device_id.response_transport' => 'cookie',
+            'devices.transports.device_id.parameter' => self::DEVICE_ID_PARAMETER,
             'devices.user_agent_whitelist' => [],
         ];
         $this->setConfig($config);
@@ -497,7 +326,6 @@ class DeviceTrackerTest extends FeatureTestCase
         $response = $middleware->handle($request, $next);
 
         $this->assertTrue($response instanceof Response);
-        /** @var Response $response */
         $this->assertNotEmpty($response->headers->getCookies());
 
         $cookieNames = array_map(fn (Cookie $cookie) => $cookie->getName(), $response->headers->getCookies());
@@ -511,8 +339,9 @@ class DeviceTrackerTest extends FeatureTestCase
         $config = [
             'devices.middlewares.device-tracker.exception_on_invalid_devices' => false,
             'devices.allow_unknown_devices' => true,
-            'devices.device_id_transport_hierarchy' => ['cookie'],
-            'devices.device_id_parameter' => self::DEVICE_ID_PARAMETER,
+            'devices.transports.device_id.transport_hierarchy' => ['cookie'],
+            'devices.transports.device_id.response_transport' => 'cookie',
+            'devices.transports.device_id.parameter' => self::DEVICE_ID_PARAMETER,
             'devices.user_agent_whitelist' => [],
         ];
         $this->setConfig($config);
@@ -528,7 +357,6 @@ class DeviceTrackerTest extends FeatureTestCase
         $response = $middleware->handle($request, $next, null, Transport::Header->value);
 
         $this->assertTrue($response instanceof Response);
-        /** @var Response $response */
         $this->assertEmpty($response->headers->getCookies());
 
         $this->assertTrue($response->headers->has(self::DEVICE_ID_PARAMETER));

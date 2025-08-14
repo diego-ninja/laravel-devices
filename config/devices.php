@@ -1,183 +1,83 @@
 <?php
 
+use Ninja\DeviceTracker\Enums\Transport;
+use Ninja\DeviceTracker\ValueObject\DeviceId;
+use Ninja\DeviceTracker\ValueObject\Fingerprint;
+use Ninja\DeviceTracker\ValueObject\SessionId;
+
 return [
 
-    /*
-    |--------------------------------------------------------------------------
-    | Parameter name for current user device tracking
-    |--------------------------------------------------------------------------
-    | This option specifies the name of the cookie that will be used to transport
-    | the device id of the current user.
-    |
-    */
-    'device_id_parameter' => 'laravel_device_id',
-
-    /*
-    |--------------------------------------------------------------------------
-    | Alternative parameter name for user device tracking
-    |--------------------------------------------------------------------------
-    | This option is used as a backup key to search for the device id. If the
-    | 'device_id_parameter' is not set then this parameter is searched.
-    | This option is also useful when migrating the parameter name, making sure
-    | that devices still using the old parameter can still be identified
-    | through it.
-    |
-    */
-    'device_id_alternative_parameter' => null,
-
-    /*
-    |--------------------------------------------------------------------------
-    | Hierarchy of transports for device id
-    |--------------------------------------------------------------------------
-    | This option specifies the transport method for the device id in order of priority.
-    | When searching for a device id, the first transport method that have the device id set will determine
-    | the device id.
-    | By default only 'cookie' transport is used.
-    |
-    | Possible array values: 'cookie', 'header', 'session', 'request'
-    |
-    */
-    'device_id_transport_hierarchy' => [
-        'cookie',
+    /**
+     *--------------------------------------------------------------------------
+     * Transports configuration
+     *--------------------------------------------------------------------------
+     * Defines how and where each transportable info (the device uuid, session uuid and
+     * fingerprint) should be transported.
+     *
+     * Each value consists of:
+     * `parameter`: the default parameter where to search for the info (represents a
+     *     cookie name or a key in the session)
+     * `alternative_parameter`: the fallback parameter where to search for the info
+     *     when parameter is not available. Useful for parameter name
+     *     migrations.
+     * `transport_hierarchy`: the fallback parameter where to search for the info
+     *     when parameter is not available. Useful for parameter name
+     *     migrations.
+     *     By default, only the 'cookie' transport is used.
+     *     Possible array values: 'cookie', 'header', 'session', 'request'
+     * `response_transport`: the transport to use to communicate the info in the
+     *     response.
+     *     By default, the 'cookie' transport is used.
+     *     Possible values: 'cookie', 'header', 'session'
+     * `storable_class`: the class that manage the id validation/creation.
+     *     Must implement the \Ninja\DeviceTracker\Contracts\StorableId interface
+     *
+     * This new configuration deprecates all the old configuration options (that will still be supported):
+     * `device_id_parameter`
+     * `device_id_alternative_parameter`
+     * `device_id_transport_hierarchy`
+     * `device_id_response_transport`
+     * `session_id_parameter`
+     * `session_id_alternative_parameter`
+     * `session_id_transport_hierarchy`
+     * `session_id_response_transport`
+     * `fingerprint_parameter`
+     * `fingerprint_alternative_parameter`
+     * `fingerprint_transport_hierarchy`
+     * `fingerprint_response_transport`
+     * `device_id_storable_class`
+     * `session_id_storable_class`
+     * `fingerprint_storable_class`
+     */
+    'transports' => [
+        'device_id' => [
+            'parameter' => 'laravel_device_id',
+            'alternative_parameter' => null,
+            'transport_hierarchy' => [
+                Transport::Cookie->value,
+            ],
+            'response_transport' => Transport::Cookie->value,
+            'storable_class' => DeviceId::class,
+        ],
+        'session_id' => [
+            'parameter' => 'laravel_session_id',
+            'alternative_parameter' => null,
+            'transport_hierarchy' => [
+                Transport::Cookie->value,
+            ],
+            'response_transport' => Transport::Cookie->value,
+            'storable_class' => SessionId::class,
+        ],
+        'fingerprint' => [
+            'parameter' => 'laravel_fingerprint',
+            'alternative_parameter' => null,
+            'transport_hierarchy' => [
+                Transport::Cookie->value,
+            ],
+            'response_transport' => Transport::Cookie->value,
+            'storable_class' => Fingerprint::class,
+        ],
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Transport for device id in the response
-    |--------------------------------------------------------------------------
-    | This option specifies the transport method for the device id when sending
-    | the response.
-    | By default the 'cookie' transport is used.
-    |
-    | Possible values: 'cookie', 'header', 'session'
-    |
-    */
-    'device_id_response_transport' => 'cookie',
-
-    /*
-    |--------------------------------------------------------------------------
-    | Parameter name for current user session tracking
-    |--------------------------------------------------------------------------
-    | This option specifies the name of the parameter that will be used to transport
-    | the session id for the current user.
-    |
-    */
-    'session_id_parameter' => 'laravel_session_id',
-
-    /*
-    |--------------------------------------------------------------------------
-    | Alternative parameter name for user session tracking
-    |--------------------------------------------------------------------------
-    | This option is used as a backup key to search for the session id. If the
-    | 'session_id_parameter' is not set then this parameter is searched.
-    | This option is also useful when migrating the parameter name, making sure
-    | that devices still using the old parameter can still be identified
-    | through it.
-    |
-    */
-    'session_id_alternative_parameter' => null,
-
-    /*
-    |--------------------------------------------------------------------------
-    | Hierarchy of transports for session id
-    |--------------------------------------------------------------------------
-    | This option specifies the transport method for the session id in order of priority.
-    | When searching for a session id, the first transport method that have the session id set will determine
-    | the session id.
-    | By default only 'cookie' transport is used
-    |
-    | Possible array values: 'cookie', 'header', 'session', 'request'
-    |
-    */
-    'session_id_transport_hierarchy' => [
-        'cookie',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Transport for session id in the response
-    |--------------------------------------------------------------------------
-    | This option specifies the transport method for the session id when sending
-    | the response.
-    | By default the 'cookie' transport is used.
-    |
-    | Possible values: 'cookie', 'header', 'session'
-    |
-    */
-    'session_id_response_transport' => 'cookie',
-
-    /*
-    |--------------------------------------------------------------------------
-    | Parameter name for client fingerprint
-    |--------------------------------------------------------------------------
-    | This option specifies the name of the parameter that will be used to read
-    | the client fingerprint of the current device.
-    |
-    */
-    'fingerprint_parameter' => 'laravel_client_fingerprint',
-
-    /*
-    |--------------------------------------------------------------------------
-    | Alternative parameter name for client fingerprint
-    |--------------------------------------------------------------------------
-    | This option is used as a backup key to search for the client_fingerprint. If the
-    | 'client_fingerprint_parameter' is not set then this parameter is searched.
-    | This option is also useful when migrating the parameter name, making sure
-    | that devices still using the old parameter can still be identified
-    | through it.
-    |
-    */
-    'fingerprint_alternative_parameter' => null,
-
-    /*
-    |--------------------------------------------------------------------------
-    | Hierarchy of transports for client_fingerprint
-    |--------------------------------------------------------------------------
-    | This option specifies the transport method for the client fingerprint in
-    | order of priority.
-    | When searching for a client fingerprint, the first transport method that
-    | have a value set will determine the client fingerprint.
-    | By default only 'cookie' transport is used.
-    |
-    | Possible array values: 'cookie', 'header', 'session', 'request'
-    |
-    */
-    'fingerprint_transport_hierarchy' => [
-        'cookie',
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Transport for client fingerprint in the response
-    |--------------------------------------------------------------------------
-    | This option specifies the transport method for the client fingerprint
-    | when sending the response.
-    | By default the 'cookie' transport is used.
-    |
-    | Possible values: 'cookie', 'header', 'session'
-    |
-    */
-    'fingerprint_response_transport' => 'cookie',
-
-    /*
-    |--------------------------------------------------------------------------
-    | Device ID class
-    |--------------------------------------------------------------------------
-    | This option specifies the class that will be used to store
-    | and serialize the device id. Must implement the StorableId interface.
-    |
-    */
-    'device_id_storable_class' => \Ninja\DeviceTracker\ValueObject\DeviceId::class,
-
-    /*
-    |--------------------------------------------------------------------------
-    | Session ID class
-    |--------------------------------------------------------------------------
-    | This option specifies the class that will be used to store
-    | and serialize the session id. Must implement the StorableId interface.
-    |
-    */
-    'session_id_storable_class' => \Ninja\DeviceTracker\ValueObject\SessionId::class,
 
     /*
     |--------------------------------------------------------------------------
@@ -188,16 +88,6 @@ return [
     |
     */
     'event_id_storable_class' => \Ninja\DeviceTracker\ValueObject\EventId::class,
-
-    /*
-    |--------------------------------------------------------------------------
-    | Client fingerprint class
-    |--------------------------------------------------------------------------
-    | This option specifies the class that will be used to store and serialize
-    | the client fingerprint. Must implement the StorableId interface.
-    |
-    */
-    'fingerprint_storable_class' => \Ninja\DeviceTracker\ValueObject\Fingerprint::class,
 
     /*
     |--------------------------------------------------------------------------
@@ -216,15 +106,6 @@ return [
     |
     */
     'load_routes' => true,
-
-    /*
-    |--------------------------------------------------------------------------
-    | Regenerate devices
-    |--------------------------------------------------------------------------
-    | This option specifies if missing devices should be regenerated. Useful to avoid errors
-    | when the device is not found in the database, but it is in the cookie.
-    */
-    'regenerate_devices' => false,
 
     /*
     |--------------------------------------------------------------------------

@@ -126,7 +126,7 @@ final readonly class SessionTracker
                 fn (string $value) => Transport::tryFrom($value) !== null,
             );
             if (! empty($hierarchy)) {
-                Config::set('devices.session_id_transport_hierarchy', $hierarchy);
+                Config::set('devices.transports.session_id.transport_hierarchy', $hierarchy);
             }
         }
     }
@@ -138,7 +138,7 @@ final readonly class SessionTracker
             && Transport::tryFrom($parameterString) !== null
             && $parameterString !== Transport::Request->value
         ) {
-            Config::set('devices.session_id_response_transport', $parameterString);
+            Config::set('devices.devices.transports.session_id.response_transport', $parameterString);
         }
     }
 

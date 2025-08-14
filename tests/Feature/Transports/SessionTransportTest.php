@@ -97,8 +97,8 @@ class SessionTransportTest extends FeatureTestCase
     ): void {
         $parameter = 'session_id';
         $this->setConfig([
-            'devices.session_id_transport_hierarchy' => $hierarchy,
-            'devices.session_id_parameter' => $parameter,
+            'devices.transports.session_id.transport_hierarchy' => $hierarchy,
+            'devices.transports.session_id.parameter' => $parameter,
         ]);
 
         if (isset($cookie)) {
@@ -131,8 +131,8 @@ class SessionTransportTest extends FeatureTestCase
     {
         $parameter = 'device_id';
         $this->setConfig([
-            'devices.session_id_transport_hierarchy' => [Transport::Cookie->value],
-            'devices.session_id_parameter' => $parameter,
+            'devices.transports.session_id.transport_hierarchy' => [Transport::Cookie->value],
+            'devices.transports.session_id.parameter' => $parameter,
         ]);
         $id = 'f765e4d4-a990-4c59-aeed-d16f0aed2665';
 
@@ -153,8 +153,8 @@ class SessionTransportTest extends FeatureTestCase
         $parameter = 'session_id';
         $key = 'base64:Lzrm+AkE+RrRJWDHON58e8unP7LBK6PlyyLo5k4i6Q0=';
         $this->setConfig([
-            'devices.session_id_transport_hierarchy' => [Transport::Cookie->value],
-            'devices.session_id_parameter' => $parameter,
+            'devices.transports.session_id.transport_hierarchy' => [Transport::Cookie->value],
+            'devices.transports.session_id.parameter' => $parameter,
             'app.key' => $key,
         ]);
         $id = 'f765e4d4-a990-4c59-aeed-d16f0aed2665';
@@ -180,9 +180,9 @@ class SessionTransportTest extends FeatureTestCase
     {
         $parameter = 'session_id';
         $this->setConfig([
-            'devices.session_id_transport_hierarchy' => [Transport::Cookie->value],
-            'devices.session_id_parameter' => 'invalid_parameter',
-            'devices.session_id_alternative_parameter' => $parameter,
+            'devices.transports.session_id.transport_hierarchy' => [Transport::Cookie->value],
+            'devices.transports.session_id.parameter' => 'invalid_parameter',
+            'devices.transports.session_id.alternative_parameter' => $parameter,
         ]);
         $id = 'f765e4d4-a990-4c59-aeed-d16f0aed2665';
 
@@ -202,8 +202,8 @@ class SessionTransportTest extends FeatureTestCase
     {
         $parameter = 'session_id';
         $this->setConfig([
-            'devices.session_id_response_transport' => Transport::Session->value,
-            'devices.session_id_parameter' => $parameter,
+            'devices.transports.session_id.response_transport' => Transport::Session->value,
+            'devices.transports.session_id.parameter' => $parameter,
         ]);
         $id = 'f765e4d4-a990-4c59-aeed-d16f0aed2665';
 
@@ -219,8 +219,8 @@ class SessionTransportTest extends FeatureTestCase
     {
         $parameter = 'session_id';
         $this->setConfig([
-            'devices.session_id_response_transport' => Transport::Cookie->value,
-            'devices.session_id_parameter' => $parameter,
+            'devices.transports.session_id.response_transport' => Transport::Cookie->value,
+            'devices.transports.session_id.parameter' => $parameter,
         ]);
         $id = 'f765e4d4-a990-4c59-aeed-d16f0aed2665';
 
