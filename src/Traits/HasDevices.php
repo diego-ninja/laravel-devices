@@ -3,7 +3,9 @@
 namespace Ninja\DeviceTracker\Traits;
 
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Models\Relations\BelongsToManyDevices;
@@ -29,16 +31,13 @@ trait HasDevices
 
     public function devices(): BelongsToManyDevices
     {
-        $table = sprintf('%s_devices', str(\config('devices.authenticatable_table'))->singular());
-        $field = sprintf('%s_id', str(\config('devices.authenticatable_table'))->singular());
-
         $instance = $this->newRelatedInstance(Device::class);
 
         return new BelongsToManyDevices(
             query: $instance->newQuery(),
             parent: $this,
-            table: $table,
-            foreignPivotKey: $field,
+            table: 'device_sessions',
+            foreignPivotKey: 'user_id',
             relatedPivotKey: 'device_uuid',
             parentKey: 'id',
             relatedKey: 'uuid',
