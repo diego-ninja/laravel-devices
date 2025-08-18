@@ -31,7 +31,6 @@ use Ninja\DeviceTracker\Events\DeviceHijackedEvent;
 use Ninja\DeviceTracker\Events\DeviceUpdatedEvent;
 use Ninja\DeviceTracker\Events\DeviceVerifiedEvent;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
-use Ninja\DeviceTracker\Exception\FingerprintDuplicatedException;
 use Ninja\DeviceTracker\Facades\DeviceManager;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Models\Relations\HasManySessions;
@@ -300,7 +299,7 @@ class Device extends Model implements Cacheable
     public static function register(
         StorableId $deviceUuid,
         DeviceDTO $data,
-        ?string $fingerprint = null,
+        ?StorableId $fingerprint = null,
     ): ?self {
         $device = self::byUuid($deviceUuid, false);
         if ($device !== null) {
@@ -339,6 +338,30 @@ class Device extends Model implements Cacheable
         }
 
         return null;
+    }
+
+    public function updateInfo(?StorableId $fingerprint = null, ?DeviceDTO $data = null): Device
+    {
+        $fingerprintChanged = $fingerprint !== null && $this->fingerprint !== $fingerprint;
+        $dataChanged = $data !== null && ($this->browser_version !== $data->browser->version || $this->platform_version !== $data->platform->version);
+
+        if (! $fingerprintChanged && ! $dataChanged) {
+            return $this;
+        }
+
+        if ($fingerprintChanged) {
+            $this->fingerprint = $fingerprint;
+            event(new DeviceFingerprintedEvent($this));
+        }
+
+        if ($dataChanged) {
+            $this->browser_version = $data->browser->version;
+            $this->platform_version = $data->platform->version;
+        }
+
+        $this->save();
+
+        return $this;
     }
 
     public static function byUuid(StorableId|string $uuid, bool $cached = true): ?self

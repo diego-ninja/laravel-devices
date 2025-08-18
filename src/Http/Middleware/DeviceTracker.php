@@ -53,6 +53,10 @@ final readonly class DeviceTracker
         $device = DeviceManager::matchingDevice($fingerprint, $deviceUuid, $detectedDevice);
 
         if ($device !== null) {
+            $device = $device->updateInfo(
+                fingerprint: $fingerprint,
+                data: $detectedDevice,
+            );
             return DeviceTransport::set($next(DeviceTransport::propagate($device->uuid)), $device->uuid);
         }
 
