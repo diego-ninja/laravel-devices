@@ -50,7 +50,7 @@ final readonly class DeviceTracker
         $fingerprint = fingerprint();
         $deviceUuid = device_uuid();
 
-        $device = DeviceManager::matchingDevice($fingerprint, $deviceUuid, $detectedDevice);
+        $device = DeviceManager::matchingDevice($deviceUuid, $fingerprint, $detectedDevice);
 
         if ($device !== null) {
             $device = $device->updateInfo(

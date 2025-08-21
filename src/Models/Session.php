@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
@@ -122,6 +123,11 @@ class Session extends Model implements Cacheable
             foreignKey: 'session_uuid',
             localKey: 'uuid'
         );
+    }
+
+    public function history(): MorphMany
+    {
+        return $this->morphMany(ChangeHistory::class, 'model');
     }
 
     /**

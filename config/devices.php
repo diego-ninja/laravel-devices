@@ -672,4 +672,40 @@ return [
          */
         'client_fingerprint' => 'client_fingerprint',
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | History
+    |--------------------------------------------------------------------------
+    |
+    | This section allows to track in a custom table any change of fields in
+    | the device and session models.
+    |
+    */
+    'history' => [
+        /*
+        | Enable history tracking.
+        */
+        'enabled' => false,
+
+        /*
+        | Table containing the history values.
+        */
+        'table' => 'laravel_devices_history',
+
+        /*
+        | List of fields to track for each model.
+        | Currently only device and session models are usable.
+        */
+        'models' => [
+            'device' => [
+                'platform_version',
+                'browser_version',
+            ],
+            'session' => [
+                'ip',
+                'location',
+            ],
+        ],
+    ],
 ];

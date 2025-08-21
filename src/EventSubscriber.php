@@ -31,10 +31,6 @@ final readonly class EventSubscriber
                 }
             }
 
-            if (! DeviceManager::attach()) {
-                throw new DeviceNotFoundException('Failed to attach device during login');
-            }
-
             $session = SessionManager::refresh($event->user);
             SessionTransport::propagate($session?->uuid);
         } catch (DeviceNotFoundException $e) {
@@ -61,26 +57,10 @@ final readonly class EventSubscriber
         $user->session()->unlock();
     }
 
-    public function onDeviceTracked(DeviceTrackedEvent $event): void
-    {
-        if (config('devices.track_guest_sessions') === false) {
-            return;
-        }
-
-        if (! Device::exists($event->deviceUuid)) {
-            return;
-        }
-
-        if (user() !== null) {
-            DeviceManager::attach($event->deviceUuid);
-        }
-    }
-
     public function subscribe(Dispatcher $events): void
     {
         $events->listen('Illuminate\Auth\Events\Login', [self::class, 'onLogin']);
         $events->listen('Illuminate\Auth\Events\Logout', [self::class, 'onLogout']);
         $events->listen('Ninja\DeviceTracker\Events\Google2FASuccess', [self::class, 'onGoogle2FASuccess']);
-        $events->listen('Ninja\DeviceTracker\Events\DeviceTrackedEvent', [self::class, 'onDeviceTracked']);
     }
 }

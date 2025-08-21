@@ -10,11 +10,10 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Cookie;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Ninja\DeviceTracker\Cache\DeviceCache;
 use Ninja\DeviceTracker\Contracts\Cacheable;
@@ -149,6 +148,11 @@ class Device extends Model implements Cacheable
             parentKey: 'uuid',
             relatedKey: 'id',
         );
+    }
+
+    public function history(): MorphMany
+    {
+        return $this->morphMany(ChangeHistory::class, 'model');
     }
 
     /**
@@ -300,14 +304,14 @@ class Device extends Model implements Cacheable
         StorableId $deviceUuid,
         DeviceDTO $data,
         ?StorableId $fingerprint = null,
-    ): ?self {
+    ): self {
         $device = self::byUuid($deviceUuid, false);
         if ($device !== null) {
             return $device;
         }
 
         try {
-            $device = self::firstOrCreate([
+            return self::query()->firstOrCreate([
                 'uuid' => $deviceUuid,
             ], [
                 'uuid' => $deviceUuid,
@@ -326,24 +330,19 @@ class Device extends Model implements Cacheable
                 'metadata' => new Metadata([]),
                 'source' => $data->source,
             ]);
-
-            /** @var Device $device */
-            if ($device !== null) {
-                return $device;
-            }
         } catch (PDOException $e) {
             Log::warning(sprintf('Unable to create device for UUID: %s (%s)', $deviceUuid, $e->getMessage()));
-
-            return null;
+            throw $e;
         }
-
-        return null;
     }
 
     public function updateInfo(?StorableId $fingerprint = null, ?DeviceDTO $data = null): Device
     {
         $fingerprintChanged = $fingerprint !== null && $this->fingerprint !== $fingerprint;
-        $dataChanged = $data !== null && ($this->browser_version !== $data->browser->version || $this->platform_version !== $data->platform->version);
+        $dataChanged = $data !== null && (
+            $this->browser_version !== $data->browser->version->__toString()
+            || $this->platform_version !== $data->platform->version->__toString()
+        );
 
         if (! $fingerprintChanged && ! $dataChanged) {
             return $this;
@@ -355,8 +354,12 @@ class Device extends Model implements Cacheable
         }
 
         if ($dataChanged) {
-            $this->browser_version = $data->browser->version;
-            $this->platform_version = $data->platform->version;
+            if ($this->browser_version !== $data->browser->version->__toString()) {
+                $this->browser_version = $data->browser->version;
+            }
+            if ($this->platform_version !== $data->platform->version->__toString()) {
+                $this->platform_version = $data->platform->version;
+            }
         }
 
         $this->save();

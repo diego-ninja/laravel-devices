@@ -2,6 +2,7 @@
 
 namespace Ninja\DeviceTracker;
 
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
@@ -16,6 +17,8 @@ use Ninja\DeviceTracker\Generators\Google2FACodeGenerator;
 use Ninja\DeviceTracker\Http\Middleware\DeviceChecker;
 use Ninja\DeviceTracker\Http\Middleware\DeviceTracker;
 use Ninja\DeviceTracker\Http\Middleware\SessionTracker;
+use Ninja\DeviceTracker\Models\Device;
+use Ninja\DeviceTracker\Models\Session;
 use Ninja\DeviceTracker\Modules\Detection\Contracts\DeviceDetectorInterface;
 use Ninja\DeviceTracker\Modules\Detection\Device\LayeredDeviceDetector;
 use Ninja\DeviceTracker\Modules\Detection\Device\RequestDeviceDetector;
@@ -24,6 +27,7 @@ use Ninja\DeviceTracker\Modules\Fingerprinting\Http\Middleware\FingerprintTracke
 use Ninja\DeviceTracker\Modules\Location\Contracts\LocationProvider;
 use Ninja\DeviceTracker\Modules\Location\FallbackLocationProvider;
 use Ninja\DeviceTracker\Modules\Tracking\Http\Middleware\EventTracker;
+use Ninja\DeviceTracker\Observers\ChangeHistoryObserver;
 use PragmaRX\Google2FA\Google2FA;
 use PragmaRX\Google2FA\Support\Constants;
 
@@ -34,6 +38,7 @@ class DeviceTrackerServiceProvider extends ServiceProvider
         $this->registerPublishing();
         $this->registerMiddlewares();
         $this->registerCommands();
+        $this->registerObservers();
 
         $this->loadViewsFrom(resource_path('views/vendor/laravel-devices'), 'laravel-devices');
 
@@ -154,6 +159,19 @@ class DeviceTrackerServiceProvider extends ServiceProvider
             $this->publishesMigrations([
                 __DIR__.'/../database/migrations' => database_path('migrations'),
             ], 'laravel-devices-migrations');
+        }
+    }
+
+    private function registerObservers(): void
+    {
+        if (config('devices.history.enabled', false)) {
+            Device::observe(ChangeHistoryObserver::class);
+            Session::observe(ChangeHistoryObserver::class);
+
+            Relation::morphMap([
+                'device' => Device::class,
+                'session' => Session::class,
+            ]);
         }
     }
 }
