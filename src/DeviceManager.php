@@ -62,10 +62,14 @@ final class DeviceManager
         return $deviceUuid;
     }
 
-    public function shouldRegenerate(): bool
+    public function shouldTrack(): bool
     {
         try {
-            return device_uuid() !== null && ! Device::exists(device_uuid());
+            if (user() !== null) {
+                return device_uuid() === null || ! Device::exists(device_uuid());
+            } else {
+                return self::trackGuestSessions() && (device_uuid() === null || ! Device::exists(device_uuid()));
+            }
         } catch (Throwable) {
             return false;
         }
@@ -171,7 +175,7 @@ final class DeviceManager
         return null;
     }
 
-    public function shouldTrack(): bool
+    public static function trackGuestSessions(): bool
     {
         return config('devices.track_guest_sessions') === true;
     }

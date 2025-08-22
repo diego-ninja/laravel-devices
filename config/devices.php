@@ -302,20 +302,10 @@ return [
     | Enable fingerprinting
     |--------------------------------------------------------------------------
     |
-    | This option allows you to enable or disable client-side device fingerprinting.
+    | This option allows to enable device identification through fingerprint
     |
     */
     'fingerprinting_enabled' => true,
-
-    /*
-    |--------------------------------------------------------------------------
-    | Cookie name for current fingerprint device tracking
-    |--------------------------------------------------------------------------
-    | This option specifies the name of the cookie that will be used to store
-    | the client-side fingerprint of the current device.
-    |
-    */
-    'fingerprint_id_cookie_name' => 'laravel_device_fingerprint',
 
     /*
     |--------------------------------------------------------------------------
@@ -328,28 +318,6 @@ return [
     |
     */
     'fingerprint_client_library' => 'fingerprintjs',
-
-    /*
-    |--------------------------------------------------------------------------
-    | Fingerprint transport
-    |--------------------------------------------------------------------------
-    |
-    | This option allows you to specify the transport method for the fingerprint.
-    | Options: 'cookie', 'header', 'query'
-    |
-    */
-    'client_fingerprint_transport' => 'cookie',
-
-    /*
-    |--------------------------------------------------------------------------
-    | Fingerprint key
-    |--------------------------------------------------------------------------
-    |
-    | This option allows you to easily specify the key that will be used to store
-    | the fingerprint in cookie/header set by the client.
-    |
-    */
-    'client_fingerprint_key' => 'csf',
 
     /*
     |--------------------------------------------------------------------------

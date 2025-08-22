@@ -10,9 +10,9 @@ use Ninja\DeviceTracker\Models\Session;
 
 final class ChangeHistoryObserver
 {
-    public function updating(Model $model): void
+    public function updated(Model $model): void
     {
-        if (config('devices.history.enabled', false)) {
+        if (config('devices.history.enabled', false) && ! $model->wasRecentlyCreated) {
             $attributes = config(sprintf('devices.history.models.%s', self::getModelKey($model)), []);
             foreach ($attributes as $attribute) {
                 if (! $model->originalIsEquivalent($attribute)) {

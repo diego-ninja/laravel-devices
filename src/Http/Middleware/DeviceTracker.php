@@ -60,7 +60,7 @@ final readonly class DeviceTracker
             return DeviceTransport::set($next(DeviceTransport::propagate($device->uuid)), $device->uuid);
         }
 
-        if (DeviceManager::shouldRegenerate() || DeviceManager::shouldTrack()) {
+        if (DeviceManager::shouldTrack()) {
             try {
                 $device = DeviceManager::create(
                     deviceUuid: $deviceUuid,
@@ -75,7 +75,7 @@ final readonly class DeviceTracker
             return DeviceTransport::set($next(DeviceTransport::propagate($device->uuid)), $device->uuid);
         }
 
-        // Device does not exist and it should not be tracked. Keep the uuid provided or a new uuid in the request
+        // Device does not exist and it should not be tracked. Keep in the request the uuid provided or set a new uuid
         $deviceUuid ??= DeviceIdFactory::generate();
         return DeviceTransport::set($next(DeviceTransport::propagate($deviceUuid)), $deviceUuid);
     }
