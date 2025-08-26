@@ -74,6 +74,7 @@ final readonly class SessionTracker
             if (guard()->check()) {
                 // The login api could have been called again, get again the session to get the latest active one
                 $session = device_session();
+
                 return SessionTransport::set($response, $session->uuid);
             }
 
@@ -145,7 +146,7 @@ final readonly class SessionTracker
         $session = device_session();
 
         // This could happen if the user has been soft-deleted
-        if (null !== $session && null === $session->user) {
+        if ($session !== null && $session->user === null) {
             $session->end();
             $session = null;
             SessionTransport::cleanRequest();
@@ -218,7 +219,7 @@ final readonly class SessionTracker
 
     private function manageSessionLocationChange(Request $request, Session $session): Session
     {
-        if ( ! $this->changedLocation($request, $session)) {
+        if (! $this->changedLocation($request, $session)) {
             return $session;
         }
 
@@ -250,10 +251,7 @@ final readonly class SessionTracker
 
     private function relocateSession(Session $session): Session
     {
-        $session = $session->relocate();
-        $session->save();
-
-        return $session;
+        return $session->relocate();
     }
 
     private function startNewSession(Session $session): Session

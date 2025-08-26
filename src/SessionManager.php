@@ -142,4 +142,14 @@ final readonly class SessionManager
             Session::destroy(session_uuid());
         }
     }
+
+    public function alwaysSyncLastActivity(): bool
+    {
+        return config('devices.performance.session.always_sync_last_activity', true);
+    }
+
+    public function lastActivityUpdateInterval(): int
+    {
+        return (int) config('devices.performance.session.last_activity_update_interval', 300);
+    }
 }

@@ -28,6 +28,8 @@ use Ninja\DeviceTracker\Events\SessionStartedEvent;
 use Ninja\DeviceTracker\Events\SessionUnblockedEvent;
 use Ninja\DeviceTracker\Events\SessionUnlockedEvent;
 use Ninja\DeviceTracker\Exception\SessionNotFoundException;
+use Ninja\DeviceTracker\Facades\DeviceManager;
+use Ninja\DeviceTracker\Facades\SessionManager;
 use Ninja\DeviceTracker\Factories\SessionIdFactory;
 use Ninja\DeviceTracker\Modules\Location\Contracts\LocationProvider;
 use Ninja\DeviceTracker\Modules\Location\DTO\Location;
@@ -267,15 +269,26 @@ class Session extends Model implements Cacheable
 
     public function renew(?Authenticatable $user = null): bool
     {
-        $this->last_activity_at = Carbon::now();
-        $this->status = SessionStatus::Active;
-        $this->finished_at = null;
+        if (
+            $this->status !== SessionStatus::Active
+            || SessionManager::alwaysSyncLastActivity()
+            || (
+                $this->last_activity_at === null
+                || Carbon::now()->timestamp - $this->last_activity_at->timestamp > SessionManager::lastActivityUpdateInterval()
+            )
+        ) {
+            $this->last_activity_at = Carbon::now();
+            $this->status = SessionStatus::Active;
+            $this->finished_at = null;
 
-        if ($user !== null) {
-            $this->device->users()->updateExistingPivot($user->getAuthIdentifier(), ['last_activity_at' => $this->last_activity_at]);
+            if (DeviceManager::userDevicesTableEnabled() && $user !== null) {
+                $this->device->users()->updateExistingPivot($user->getAuthIdentifier(), ['last_activity_at' => $this->last_activity_at]);
+            }
+
+            return $this->save();
         }
 
-        return $this->save();
+        return true;
     }
 
     public function restart(Request $request): bool
