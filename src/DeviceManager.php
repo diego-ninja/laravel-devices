@@ -181,4 +181,9 @@ final class DeviceManager
 
         return null;
     }
+
+    public function userDevicesTableEnabled(): bool
+    {
+        return config('devices.user_devices.enabled', true);
+    }
 }

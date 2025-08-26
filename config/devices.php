@@ -655,4 +655,54 @@ return [
         'Mozilla/5.0 (Linux; Android 13; 2211133G Build/TKQ1.220905.001; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/113.0.5672.76 Mobile Safari/537.36',
         'Mozilla/5.0 (Linux; U; Android 13; pl-pl; Xiaomi 13 Build/TKQ1.220905.001) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/100.0.4896.127 Mobile Safari/537.36 XiaoMi/MiuiBrowser/13.28.0-gn',
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | User Devices table
+    |--------------------------------------------------------------------------
+    |
+    | This options makes the user_devices table update when needed.
+    | Table name is build like this: `{singular device.authenticatable_table}_devices`
+    |
+    */
+    'user_devices' => [
+        'enabled' => true,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Performance
+    |--------------------------------------------------------------------------
+    |
+    | This options allows to configure the package performances
+    |
+    */
+    'performance' => [
+        'session' => [
+            /*
+            |--------------------------------------------------------------------------
+            | Always Sync Last Activity
+            |--------------------------------------------------------------------------
+            |
+            | This option makes the last_activity_at field always update on each request.
+            | When disabled, the last_activity_at field is updated only when a request
+            | is received after at least `last_activity_update_interval` seconds.
+            |
+            */
+            'always_sync_last_activity' => true,
+
+            /*
+            |--------------------------------------------------------------------------
+            | Last Activity Update Interval
+            |--------------------------------------------------------------------------
+            |
+            | This option sets the minimum amount of seconds to wait between each
+            | `last_activity_at` session field update when the `always_sync_last_activity`
+            | is false. This is useful when trying to limit the number of queries that
+            | are run by this package.
+            |
+            */
+            'last_activity_update_interval' => 300,
+        ],
+    ],
 ];
