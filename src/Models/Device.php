@@ -30,7 +30,6 @@ use Ninja\DeviceTracker\Events\DeviceHijackedEvent;
 use Ninja\DeviceTracker\Events\DeviceUpdatedEvent;
 use Ninja\DeviceTracker\Events\DeviceVerifiedEvent;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
-use Ninja\DeviceTracker\Facades\DeviceManager;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
 use Ninja\DeviceTracker\Models\Relations\HasManySessions;
 use Ninja\DeviceTracker\Modules\Tracking\Models\Event;
@@ -201,14 +200,6 @@ class Device extends Model implements Cacheable
 
         $user = $user ?? user();
 
-        if (DeviceManager::userDevicesTableEnabled()) {
-            $this->users()->updateExistingPivot($user?->getAuthIdentifier(), [
-                'device_uuid' => $this->uuid,
-                'status' => DeviceStatus::Verified,
-                'verified_at' => now(),
-            ]);
-        }
-
         $this->sessions
             ->where('status', SessionStatus::Locked)
             ->where('user_id', $user?->getAuthIdentifier())
@@ -257,12 +248,6 @@ class Device extends Model implements Cacheable
         $user = $user ?? user();
 
         $this->hijacked_at = now();
-
-        if (DeviceManager::userDevicesTableEnabled()) {
-            $this->users()->updateExistingPivot($user?->getAuthIdentifier(), [
-                'status' => DeviceStatus::Hijacked,
-            ]);
-        }
 
         foreach ($this->sessions as $session) {
             $session->block();

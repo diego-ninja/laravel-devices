@@ -66,9 +66,9 @@ final readonly class SessionManager
         );
     }
 
-    public function renew(Authenticatable $user): ?bool
+    public function renew(): ?bool
     {
-        return Session::current()?->renew($user);
+        return Session::current()?->renew();
     }
 
     public function restart(Request $request): ?bool
@@ -92,7 +92,7 @@ final readonly class SessionManager
             return $this->start($user);
         }
 
-        $current->renew($user);
+        $current->renew();
 
         return $current;
     }
