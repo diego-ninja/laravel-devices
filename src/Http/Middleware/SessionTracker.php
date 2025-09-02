@@ -18,6 +18,7 @@ use Ninja\DeviceTracker\Enums\Transport;
 use Ninja\DeviceTracker\Events\SessionLocationChangedEvent;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Facades\SessionManager;
+use Ninja\DeviceTracker\Factories\SessionIdFactory;
 use Ninja\DeviceTracker\Models\Session;
 use Ninja\DeviceTracker\Transports\SessionTransport;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
@@ -98,6 +99,10 @@ final readonly class SessionTracker
             }
         } else {
             try {
+                // Make sure a session uuid is used when doing this so any api can still refer to the session uuid
+                // even when the session has not been created yet due to the api logging in.
+                $sessionUuid = SessionIdFactory::generate();
+                SessionTransport::propagate($sessionUuid);
                 $response = $next($request);
 
                 if (guard()->check()) {

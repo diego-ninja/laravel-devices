@@ -6,6 +6,7 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Route;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\DTO\Device as DeviceDTO;
 use Ninja\DeviceTracker\Events\DeviceTrackedEvent;
@@ -65,7 +66,9 @@ final class DeviceManager
     public function shouldTrack(): bool
     {
         try {
-            if (user() !== null) {
+            $withUser = user() !== null
+                || in_array(Route::currentRouteName(), config('devices.login_route_names', []));
+            if ($withUser) {
                 return device_uuid() === null || ! Device::exists(device_uuid());
             } else {
                 return self::trackGuestSessions() && (device_uuid() === null || ! Device::exists(device_uuid()));
