@@ -86,6 +86,7 @@ final readonly class SessionTracker
         if (guard()->check()) {
             try {
                 $session = SessionManager::start();
+                SessionTransport::propagate($session->uuid);
                 $response = $next($request);
 
                 if (guard()->check()) {
@@ -99,10 +100,12 @@ final readonly class SessionTracker
             }
         } else {
             try {
-                // Make sure a session uuid is used when doing this so any api can still refer to the session uuid
-                // even when the session has not been created yet due to the api logging in.
-                $sessionUuid = SessionIdFactory::generate();
-                SessionTransport::propagate($sessionUuid);
+                if (session_uuid() === null) {
+                    // Make sure a session uuid is used when doing this so any api can still refer to the session uuid
+                    // even when the session has not been created yet due to the api logging in.
+                    $sessionUuid = SessionIdFactory::generate();
+                    SessionTransport::propagate($sessionUuid);
+                }
                 $response = $next($request);
 
                 if (guard()->check()) {

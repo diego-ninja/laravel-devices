@@ -10,6 +10,7 @@ use Ninja\DeviceTracker\Console\Commands\CacheInvalidateCommand;
 use Ninja\DeviceTracker\Console\Commands\CacheWarmCommand;
 use Ninja\DeviceTracker\Console\Commands\CleanupDevicesCommand;
 use Ninja\DeviceTracker\Console\Commands\CleanupSessionsCommand;
+use Ninja\DeviceTracker\Console\Commands\ClearHistoryCommand;
 use Ninja\DeviceTracker\Console\Commands\DeviceInspectCommand;
 use Ninja\DeviceTracker\Console\Commands\DeviceStatusCommand;
 use Ninja\DeviceTracker\Contracts\CodeGenerator;
@@ -107,6 +108,7 @@ class DeviceTrackerServiceProvider extends ServiceProvider
                 CacheInvalidateCommand::class,
                 CleanupSessionsCommand::class,
                 CleanupDevicesCommand::class,
+                ClearHistoryCommand::class,
                 DeviceStatusCommand::class,
                 DeviceInspectCommand::class,
             ]);
