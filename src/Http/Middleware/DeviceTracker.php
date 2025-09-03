@@ -3,10 +3,12 @@
 namespace Ninja\DeviceTracker\Http\Middleware;
 
 use Closure;
+use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
+use Ninja\DeviceTracker\Contracts\LoggedUserGuesser;
 use Ninja\DeviceTracker\Enums\Transport;
 use Ninja\DeviceTracker\Exception\InvalidDeviceDetectedException;
 use Ninja\DeviceTracker\Exception\UnknownDeviceDetectedException;
@@ -26,6 +28,7 @@ final readonly class DeviceTracker
         Closure $next,
         ?string $hierarchyParameterString = null,
         ?string $responseTransport = null,
+        bool $skipDeviceMatchCheck = false,
     ): mixed {
         $this->checkCustomDeviceTransportHierarchy($hierarchyParameterString);
         $this->checkCustomDeviceResponseTransport($responseTransport);
@@ -49,14 +52,27 @@ final readonly class DeviceTracker
 
         $fingerprint = fingerprint();
         $deviceUuid = device_uuid();
+        $ip = $request->getClientIp();
+        $user = user() ?? $this->guessLoggingUser();
+        $checkIp = DeviceManager::isLoginRoute() || $user !== null;
 
-        $device = DeviceManager::matchingDevice($deviceUuid, $fingerprint, $detectedDevice);
+        $device = DeviceManager::matchingDevice(
+            deviceUuid: $deviceUuid,
+            fingerprint: $fingerprint,
+            deviceDto: $detectedDevice,
+            ip: $checkIp ? $ip : null,
+            user: $checkIp ? $user : null,
+            skipMatchCheck: $skipDeviceMatchCheck,
+        );
 
         if ($device !== null) {
-            $device = $device->updateInfo(
-                fingerprint: $fingerprint,
-                data: $detectedDevice,
-            );
+            if (! $skipDeviceMatchCheck) {
+                $device = $device->updateInfo(
+                    fingerprint: $fingerprint,
+                    data: $detectedDevice,
+                );
+            }
+
             return DeviceTransport::set($next(DeviceTransport::propagate($device->uuid)), $device->uuid);
         }
 
@@ -70,6 +86,7 @@ final readonly class DeviceTracker
             } catch (UnknownDeviceDetectedException $e) {
                 $this->abort($detectedDevice === null, $detectedDevice?->source ?? 'unknown', $e);
             }
+
             DeviceManager::track($device->uuid);
 
             return DeviceTransport::set($next(DeviceTransport::propagate($device->uuid)), $device->uuid);
@@ -77,6 +94,7 @@ final readonly class DeviceTracker
 
         // Device does not exist and it should not be tracked. Keep in the request the uuid provided or set a new uuid
         $deviceUuid ??= DeviceIdFactory::generate();
+
         return DeviceTransport::set($next(DeviceTransport::propagate($deviceUuid)), $deviceUuid);
     }
 
@@ -149,5 +167,32 @@ final readonly class DeviceTracker
     private function shouldThrow(): bool
     {
         return Config::get('devices.middlewares.device-tracker.exception_on_invalid_devices', false);
+    }
+
+    private function guessLoggingUser(): ?Authenticatable
+    {
+        $guesserClass = config('devices.logged_user_guesser');
+        if ($guesserClass === null) {
+            return null;
+        }
+
+        $instance = null;
+        try {
+            $instance = app($guesserClass);
+        } catch (Throwable $e) {
+            Log::info($e->getMessage());
+        }
+
+        if (! ($instance instanceof LoggedUserGuesser)) {
+            try {
+                $instance = new $guesserClass;
+            } catch (Throwable $e) {
+                Log::info($e->getMessage());
+            }
+        }
+
+        return $instance instanceof LoggedUserGuesser
+            ? $instance->guess()
+            : null;
     }
 }

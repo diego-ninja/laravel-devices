@@ -434,6 +434,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Logged user guesser
+    |--------------------------------------------------------------------------
+    |
+    | This option specifies a guesser that should be able to identify the user
+    | when a login api is called but the login code has not executed yet.
+    | When specified it must be a class implementing
+    | \Ninja\DeviceTracker\Contracts\LoggedUserGuesser
+    |
+    */
+    'logged_user_guesser' => null,
+
+    /*
+    |--------------------------------------------------------------------------
     | Auth guard
     |--------------------------------------------------------------------------
     |

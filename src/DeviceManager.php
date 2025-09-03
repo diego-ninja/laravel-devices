@@ -3,6 +3,7 @@
 namespace Ninja\DeviceTracker;
 
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -67,7 +68,7 @@ final class DeviceManager
     {
         try {
             $withUser = user() !== null
-                || in_array(Route::currentRouteName(), config('devices.login_route_names', []));
+                || $this->isLoginRoute();
             if ($withUser) {
                 return device_uuid() === null || ! Device::exists(device_uuid());
             } else {
@@ -76,6 +77,11 @@ final class DeviceManager
         } catch (Throwable) {
             return false;
         }
+    }
+
+    public function isLoginRoute(): bool
+    {
+        return in_array(Route::currentRouteName(), config('devices.login_route_names', []));
     }
 
     public function detect(?Request $request = null): ?DeviceDTO
@@ -148,6 +154,9 @@ final class DeviceManager
         ?StorableId $deviceUuid = null,
         ?StorableId $fingerprint = null,
         ?DeviceDTO $deviceDto = null,
+        ?string $ip = null,
+        ?Authenticatable $user = null,
+        bool $skipMatchCheck = false,
     ): ?Device {
         if ($deviceDto === null) {
             return null;
@@ -156,7 +165,7 @@ final class DeviceManager
         // Device by uuid and matching info
         if ($deviceUuid !== null) {
             $device = Device::byUuid($deviceUuid);
-            if ($device !== null && $device->equals($deviceDto, false)) {
+            if ($device !== null && ($skipMatchCheck || $device->equals($deviceDto, false))) {
                 return $device;
             }
         }
@@ -164,15 +173,31 @@ final class DeviceManager
         // Device by fingerprint and matching info
         if ($fingerprint !== null) {
             $device = Device::byFingerprint($fingerprint);
-            if ($device !== null && $device->equals($deviceDto, false)) {
+            if ($device !== null && ($skipMatchCheck || $device->equals($deviceDto, false))) {
                 return $device;
             }
         }
 
         // Device matching dto unique info
         $device = Device::byDeviceDtoUniqueInfo($deviceDto);
-        if ($device !== null && $device->equals($deviceDto, false)) {
+        if ($device !== null && ($skipMatchCheck || $device->equals($deviceDto, false))) {
             return $device;
+        }
+
+        // Device is used from the same ip and by the same user of an existing session of the same user
+        if ($ip !== null && $user !== null) {
+            $matchingDevicesCandidates = Device::query()
+                ->whereHas('sessions', function (Builder $query) use ($ip, $user): void {
+                    $query->where('ip', '=', $ip)
+                        ->where('user_id', '=', $user->getAuthIdentifier());
+                })
+                ->orderBy('created_at', 'desc')
+                ->get()
+                ->filter(fn (Device $device) => $skipMatchCheck || $device->equals($deviceDto, false));
+
+            if ($matchingDevicesCandidates->count() > 0) {
+                return $matchingDevicesCandidates->first();
+            }
         }
 
         return null;
