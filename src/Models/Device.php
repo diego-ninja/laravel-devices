@@ -526,6 +526,6 @@ class Device extends Model implements Cacheable
         }
 
         return ($dto->advertisingId === null || $this->advertising_id === null || $dto->advertisingId === $this->advertising_id)
-            && ($dto->advertisingId === null || $this->device_id === null || $dto->deviceId === $this->device_id);
+            && ($dto->deviceId === null || $this->device_id === null || $dto->deviceId === $this->device_id);
     }
 }
