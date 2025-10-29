@@ -23,8 +23,12 @@ final class RequestDeviceDetector implements DeviceDetectorInterface
             config('devices.device_identifiers_parameters.device_id', 'device_id'),
         );
 
-        $base->advertisingId ??= $advertisingId;
-        $base->deviceId ??= $deviceId;
+        if (empty($base->advertisingId) && ! empty($advertisingId)) {
+            $base->advertisingId = $advertisingId;
+        }
+        if (empty($base->deviceId) && ! empty($deviceId)) {
+            $base->deviceId = $deviceId;
+        }
 
         return $base;
     }

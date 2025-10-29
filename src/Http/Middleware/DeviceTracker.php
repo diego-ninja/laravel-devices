@@ -14,6 +14,7 @@ use Ninja\DeviceTracker\Exception\InvalidDeviceDetectedException;
 use Ninja\DeviceTracker\Exception\UnknownDeviceDetectedException;
 use Ninja\DeviceTracker\Facades\DeviceManager;
 use Ninja\DeviceTracker\Factories\DeviceIdFactory;
+use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Transports\DeviceTransport;
 use Throwable;
 
@@ -74,6 +75,10 @@ final readonly class DeviceTracker
             }
 
             return DeviceTransport::set($next(DeviceTransport::propagate($device->uuid)), $device->uuid);
+        } elseif ($deviceUuid !== null && Device::byUuid($deviceUuid) !== null) {
+            // Request has a device uuid that belongs to an existing device that do not match info. Reset device uuid
+            $deviceUuid = DeviceIdFactory::generate();
+            DeviceTransport::propagate($deviceUuid);
         }
 
         if (DeviceManager::shouldTrack()) {

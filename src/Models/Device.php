@@ -314,6 +314,8 @@ class Device extends Model implements Cacheable
                 'grade' => $data->grade,
                 'metadata' => new Metadata([]),
                 'source' => $data->source,
+                'advertising_id' => $data->advertisingId,
+                'device_id' => $data->deviceId,
             ]);
         } catch (PDOException $e) {
             Log::warning(sprintf('Unable to create device for UUID: %s (%s)', $deviceUuid, $e->getMessage()));
@@ -328,6 +330,8 @@ class Device extends Model implements Cacheable
             $this->browser_version !== $data->browser->version->__toString()
             || $this->platform_version !== $data->platform->version->__toString()
         );
+        $advertisingIdSet = $data->advertisingId !== null && $this->advertising_id === null;
+        $deviceIdSet = $data->deviceId !== null && $this->device_id === null;
 
         if (! $fingerprintChanged && ! $dataChanged) {
             return $this;
@@ -345,6 +349,14 @@ class Device extends Model implements Cacheable
             if ($this->platform_version !== $data->platform->version->__toString()) {
                 $this->platform_version = $data->platform->version;
             }
+        }
+
+        if ($advertisingIdSet) {
+            $this->advertising_id = $data->advertisingId;
+        }
+
+        if ($deviceIdSet) {
+            $this->device_id = $data->deviceId;
         }
 
         $this->save();
