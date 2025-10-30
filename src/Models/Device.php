@@ -333,7 +333,7 @@ class Device extends Model implements Cacheable
         $advertisingIdSet = $data->advertisingId !== null && $this->advertising_id === null;
         $deviceIdSet = $data->deviceId !== null && $this->device_id === null;
 
-        if (! $fingerprintChanged && ! $dataChanged) {
+        if (! $fingerprintChanged && ! $dataChanged && ! $advertisingIdSet && ! $deviceIdSet) {
             return $this;
         }
 
