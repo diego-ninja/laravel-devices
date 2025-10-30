@@ -3,6 +3,7 @@
 namespace Ninja\DeviceTracker\Traits;
 
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -14,6 +15,9 @@ use Ninja\DeviceTracker\Models\Session;
 
 /**
  * @phpstan-require-implements Authenticatable
+ *
+ * @property Collection<Device> $devices
+ * @property Collection<Session> $sessions
  */
 trait HasDevices
 {
