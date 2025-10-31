@@ -23,14 +23,18 @@
                 return tm.get();
             })
             .then(result => {
+                if (!result || !result.thumbmark) {
+                    throw new Error('Invalid thumbmark result');
+                }
+
                 const transport = window.DeviceTracker.config.transport;
 
                 window.DeviceTracker.config.current = result.thumbmark;
-                document.cookie = `${transport.key}=${result.thumbmark}; expires=Fri, 31 Dec 9999 23:59:59 GMT; domain=${location.hostname}; SameSite=Lax;`
+                document.cookie = `${transport.key}=${result.thumbmark}; expires=Fri, 31 Dec 9999 23:59:59 GMT; domain=${location.hostname}; SameSite=Lax; Secure;`
             })
             .catch(error => console.error(error));
     } else {
         const transport = window.DeviceTracker.config.transport;
-        document.cookie = `${transport.key}=${window.DeviceTracker.config.current}; expires=Fri, 31 Dec 9999 23:59:59 GMT; domain=${location.hostname}; SameSite=Lax;`
+        document.cookie = `${transport.key}=${window.DeviceTracker.config.current}; expires=Fri, 31 Dec 9999 23:59:59 GMT; domain=${location.hostname}; SameSite=Lax; Secure;`
     }
 </script>
