@@ -8,11 +8,11 @@ use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Config;
 use Ninja\DeviceTracker\Contracts\StorableId;
-use Ninja\DeviceTracker\Enums\SessionTransport;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Exception\SessionNotFoundException;
 use Ninja\DeviceTracker\Facades\DeviceManager;
 use Ninja\DeviceTracker\Models\Session;
+use Ninja\DeviceTracker\Transports\SessionTransport;
 
 final readonly class SessionManager
 {
@@ -66,9 +66,9 @@ final readonly class SessionManager
         );
     }
 
-    public function renew(Authenticatable $user): ?bool
+    public function renew(): ?bool
     {
-        return Session::current()?->renew($user);
+        return Session::current()?->renew();
     }
 
     public function restart(Request $request): ?bool
@@ -92,7 +92,7 @@ final readonly class SessionManager
             return $this->start($user);
         }
 
-        $current->renew($user);
+        $current->renew();
 
         return $current;
     }
@@ -141,5 +141,15 @@ final readonly class SessionManager
             SessionTransport::forget();
             Session::destroy(session_uuid());
         }
+    }
+
+    public function alwaysSyncLastActivity(): bool
+    {
+        return config('devices.performance.session.always_sync_last_activity', true);
+    }
+
+    public function lastActivityUpdateInterval(): int
+    {
+        return (int) config('devices.performance.session.last_activity_update_interval', 300);
     }
 }

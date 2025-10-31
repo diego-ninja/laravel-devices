@@ -36,5 +36,8 @@ abstract class AbstractStorableIdFactory
         return $idClass::from($id);
     }
 
+    /**
+     * @return class-string<StorableId>
+     */
     abstract protected function getIdClass(): string;
 }

@@ -15,7 +15,7 @@ final readonly class DeviceChecker
      */
     public function handle(Request $request, Closure $next): mixed
     {
-        if (is_null(device())) {
+        if (device() === null) {
             if (! $this->shouldThrow()) {
                 $errorCode = config('devices.middlewares.device-checker.http_error_code', 403);
                 if (! array_key_exists($errorCode, Response::$statusTexts)) {

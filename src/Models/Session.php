@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Foundation\Auth\User;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Route;
@@ -21,13 +22,14 @@ use Ninja\DeviceTracker\Contracts\Cacheable;
 use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\DTO\Metadata;
 use Ninja\DeviceTracker\Enums\SessionStatus;
-use Ninja\DeviceTracker\Enums\SessionTransport;
 use Ninja\DeviceTracker\Events\SessionBlockedEvent;
 use Ninja\DeviceTracker\Events\SessionFinishedEvent;
 use Ninja\DeviceTracker\Events\SessionStartedEvent;
 use Ninja\DeviceTracker\Events\SessionUnblockedEvent;
 use Ninja\DeviceTracker\Events\SessionUnlockedEvent;
 use Ninja\DeviceTracker\Exception\SessionNotFoundException;
+use Ninja\DeviceTracker\Facades\DeviceManager;
+use Ninja\DeviceTracker\Facades\SessionManager;
 use Ninja\DeviceTracker\Factories\SessionIdFactory;
 use Ninja\DeviceTracker\Modules\Location\Contracts\LocationProvider;
 use Ninja\DeviceTracker\Modules\Location\DTO\Location;
@@ -35,6 +37,7 @@ use Ninja\DeviceTracker\Modules\Tracking\Enums\EventType;
 use Ninja\DeviceTracker\Modules\Tracking\Models\Event;
 use Ninja\DeviceTracker\Modules\Tracking\Models\Relations\HasManyEvents;
 use Ninja\DeviceTracker\Traits\PropertyProxy;
+use Ninja\DeviceTracker\Transports\SessionTransport;
 use RuntimeException;
 
 /**
@@ -122,6 +125,11 @@ class Session extends Model implements Cacheable
         );
     }
 
+    public function history(): MorphMany
+    {
+        return $this->morphMany(ChangeHistory::class, 'model');
+    }
+
     /**
      * @return Attribute<Closure, Closure>
      */
@@ -205,7 +213,7 @@ class Session extends Model implements Cacheable
         $ip = self::getIp();
 
         $this->ip = $ip;
-        $this->location = app(LocationProvider::class)->locate($ip);;
+        $this->location = app(LocationProvider::class)->locate($ip);
 
         return $this;
     }
@@ -265,17 +273,24 @@ class Session extends Model implements Cacheable
         return false;
     }
 
-    public function renew(?Authenticatable $user = null): bool
+    public function renew(): bool
     {
-        $this->last_activity_at = Carbon::now();
-        $this->status = SessionStatus::Active;
-        $this->finished_at = null;
+        if (
+            $this->status !== SessionStatus::Active
+            || SessionManager::alwaysSyncLastActivity()
+            || (
+                $this->last_activity_at === null
+                || Carbon::now()->timestamp - $this->last_activity_at->timestamp > SessionManager::lastActivityUpdateInterval()
+            )
+        ) {
+            $this->last_activity_at = Carbon::now();
+            $this->status = SessionStatus::Active;
+            $this->finished_at = null;
 
-        if ($user !== null) {
-            $this->device->users()->updateExistingPivot($user->getAuthIdentifier(), ['last_activity_at' => $this->last_activity_at]);
+            return $this->save();
         }
 
-        return $this->save();
+        return true;
     }
 
     public function restart(Request $request): bool
@@ -304,7 +319,7 @@ class Session extends Model implements Cacheable
             return false;
         }
 
-        return $this->renew($user);
+        return $this->renew();
     }
 
     /**

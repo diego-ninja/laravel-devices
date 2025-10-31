@@ -2,7 +2,9 @@
 
 namespace Ninja\DeviceTracker\Exception;
 
-final class UnknownDeviceDetectedException extends \Exception
+use Exception;
+
+final class UnknownDeviceDetectedException extends Exception
 {
     public function __construct(string $message = 'Unknown device detected', int $code = 0, ?\Throwable $previous = null)
     {
@@ -12,5 +14,10 @@ final class UnknownDeviceDetectedException extends \Exception
     public static function withUA(?string $ua): self
     {
         return new self(sprintf('Unknown device detected with user agent: %s', $ua ?? 'undefined user-agent'));
+    }
+
+    public static function withMissingInfo(?string $missingInfo = null): self
+    {
+        return new self(sprintf('Unknown device detected due to missing info: %s', $missingInfo ?? 'unable to detect device info'));
     }
 }

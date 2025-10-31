@@ -14,11 +14,13 @@ use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Enums\FinishedSessionBehaviour;
 use Ninja\DeviceTracker\Enums\SessionIpChangeBehaviour;
 use Ninja\DeviceTracker\Enums\SessionStatus;
-use Ninja\DeviceTracker\Enums\SessionTransport;
+use Ninja\DeviceTracker\Enums\Transport;
 use Ninja\DeviceTracker\Events\SessionLocationChangedEvent;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Facades\SessionManager;
+use Ninja\DeviceTracker\Factories\SessionIdFactory;
 use Ninja\DeviceTracker\Models\Session;
+use Ninja\DeviceTracker\Transports\SessionTransport;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 
 final readonly class SessionTracker
@@ -74,6 +76,7 @@ final readonly class SessionTracker
             if (guard()->check()) {
                 // The login api could have been called again, get again the session to get the latest active one
                 $session = device_session();
+
                 return SessionTransport::set($response, $session->uuid);
             }
 
@@ -83,6 +86,7 @@ final readonly class SessionTracker
         if (guard()->check()) {
             try {
                 $session = SessionManager::start();
+                SessionTransport::propagate($session->uuid);
                 $response = $next($request);
 
                 if (guard()->check()) {
@@ -96,6 +100,12 @@ final readonly class SessionTracker
             }
         } else {
             try {
+                if (session_uuid() === null) {
+                    // Make sure a session uuid is used when doing this so any api can still refer to the session uuid
+                    // even when the session has not been created yet due to the api logging in.
+                    $sessionUuid = SessionIdFactory::generate();
+                    SessionTransport::propagate($sessionUuid);
+                }
                 $response = $next($request);
 
                 if (guard()->check()) {
@@ -121,10 +131,10 @@ final readonly class SessionTracker
         if (! empty($hierarchyParameterString)) {
             $hierarchy = array_filter(
                 explode('|', $hierarchyParameterString),
-                fn (string $value) => SessionTransport::tryFrom($value) !== null,
+                fn (string $value) => Transport::tryFrom($value) !== null,
             );
             if (! empty($hierarchy)) {
-                Config::set('devices.session_id_transport_hierarchy', $hierarchy);
+                Config::set('devices.transports.session_id.transport_hierarchy', $hierarchy);
             }
         }
     }
@@ -133,10 +143,10 @@ final readonly class SessionTracker
     {
         if (
             ! empty($parameterString)
-            && SessionTransport::tryFrom($parameterString) !== null
-            && $parameterString !== SessionTransport::Request->value
+            && Transport::tryFrom($parameterString) !== null
+            && $parameterString !== Transport::Request->value
         ) {
-            Config::set('devices.session_id_response_transport', $parameterString);
+            Config::set('devices.devices.transports.session_id.response_transport', $parameterString);
         }
     }
 
@@ -145,7 +155,7 @@ final readonly class SessionTracker
         $session = device_session();
 
         // This could happen if the user has been soft-deleted
-        if (null !== $session && null === $session->user) {
+        if ($session !== null && $session->user === null) {
             $session->end();
             $session = null;
             SessionTransport::cleanRequest();
@@ -218,7 +228,7 @@ final readonly class SessionTracker
 
     private function manageSessionLocationChange(Request $request, Session $session): Session
     {
-        if ( ! $this->changedLocation($request, $session)) {
+        if (! $this->changedLocation($request, $session)) {
             return $session;
         }
 
@@ -250,10 +260,7 @@ final readonly class SessionTracker
 
     private function relocateSession(Session $session): Session
     {
-        $session = $session->relocate();
-        $session->save();
-
-        return $session;
+        return $session->relocate();
     }
 
     private function startNewSession(Session $session): Session

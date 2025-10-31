@@ -7,6 +7,7 @@ use Ninja\DeviceTracker\Facades\DeviceManager;
 use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Modules\Fingerprinting\Injector\Contracts\Injector;
 use Ninja\DeviceTracker\Modules\Fingerprinting\Injector\Enums\Library;
+use Ninja\DeviceTracker\Transports\FingerprintTransport;
 
 abstract class AbstractInjector implements Injector
 {
@@ -21,8 +22,8 @@ abstract class AbstractInjector implements Injector
         return view($view, [
             'current' => $device->fingerprint,
             'transport' => [
-                'type' => config('devices.client_fingerprint_transport'),
-                'key' => config('devices.client_fingerprint_key'),
+                'type' => FingerprintTransport::responseTransport()->value,
+                'key' => FingerprintTransport::parameter(),
             ],
             'library' => [
                 'name' => static::LIBRARY_NAME,
