@@ -92,7 +92,7 @@ Other important changes:
   - `advertising_id`: is a unique, user-resettable, and user-deletable ID for advertising - ([Google](https://support.google.com/googleplay/android-developer/answer/6048248?hl=en), [Apple](https://developer.apple.com/documentation/adsupport/asidentifiermanager/advertisingidentifier))
 
 ## Credits
-This package is developed and maintained by [Diego Rin](https://diego.ninja).
+This project is developed and maintained by 🥷 [Diego Rin](https://diego.ninja) and [Davide Pizzato](https://github.com/dvdpzzt-kimia) in their free time.
 
 ## License
 The MIT License (MIT). Please see [License File](../LICENSE) for more information.
