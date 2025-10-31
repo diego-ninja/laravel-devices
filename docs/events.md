@@ -37,11 +37,11 @@ graph TD
 Fired when a new device is registered in the system.
 
 ```php
-use Ninja\DeviceTracker\Events\DeviceAttachedEvent;
+use Ninja\DeviceTracker\Events\DeviceCreatedEvent;
 
 class DeviceCreatedListener
 {
-    public function handle(DeviceAttachedEvent $event)
+    public function handle(DeviceCreatedEvent $event)
     {
         $device = $event->device;
         $user = $event->user;

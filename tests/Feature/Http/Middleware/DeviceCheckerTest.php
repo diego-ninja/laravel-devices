@@ -4,11 +4,11 @@ namespace Ninja\DeviceTracker\Tests\Feature\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Ninja\DeviceTracker\Enums\DeviceTransport;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Http\Middleware\DeviceChecker;
 use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Tests\FeatureTestCase;
+use Ninja\DeviceTracker\Transports\DeviceTransport;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 

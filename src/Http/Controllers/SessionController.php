@@ -85,7 +85,7 @@ final class SessionController extends Controller
         $session = $this->findUserSession($id);
 
         if ($session !== null) {
-            $session->renew($user);
+            $session->renew();
 
             return response()->json(['message' => 'Session renewed successfully']);
         }

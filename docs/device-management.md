@@ -267,15 +267,11 @@ $device->sessions->each(function ($session) {
 Device management triggers various events that you can listen for:
 
 ```php
-use Ninja\DeviceTracker\Events\DeviceAttachedEvent;
 use Ninja\DeviceTracker\Events\DeviceVerifiedEvent;
 use Ninja\DeviceTracker\Events\DeviceHijackedEvent;
 
 // In your EventServiceProvider
 protected $listen = [
-    DeviceAttachedEvent::class => [
-        SendDeviceNotification::class,
-    ],
     DeviceVerifiedEvent::class => [
         LogDeviceVerification::class,
     ],

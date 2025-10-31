@@ -6,14 +6,12 @@ use Illuminate\Auth\Events\Login;
 use Illuminate\Auth\Events\Logout;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Support\Facades\Log;
-use Ninja\DeviceTracker\Enums\SessionTransport;
-use Ninja\DeviceTracker\Events\DeviceTrackedEvent;
 use Ninja\DeviceTracker\Events\Google2FASuccess;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Facades\DeviceManager;
 use Ninja\DeviceTracker\Facades\SessionManager;
-use Ninja\DeviceTracker\Models\Device;
 use Ninja\DeviceTracker\Models\Session;
+use Ninja\DeviceTracker\Transports\SessionTransport;
 
 final readonly class EventSubscriber
 {
@@ -29,10 +27,6 @@ final readonly class EventSubscriber
                 if ($device === null) {
                     throw new DeviceNotFoundException('Failed to create device during login');
                 }
-            }
-
-            if (! DeviceManager::attach()) {
-                throw new DeviceNotFoundException('Failed to attach device during login');
             }
 
             $session = SessionManager::refresh($event->user);
@@ -61,26 +55,10 @@ final readonly class EventSubscriber
         $user->session()->unlock();
     }
 
-    public function onDeviceTracked(DeviceTrackedEvent $event): void
-    {
-        if (config('devices.track_guest_sessions') === false) {
-            return;
-        }
-
-        if (! Device::exists($event->deviceUuid)) {
-            return;
-        }
-
-        if (user() !== null) {
-            DeviceManager::attach($event->deviceUuid);
-        }
-    }
-
     public function subscribe(Dispatcher $events): void
     {
         $events->listen('Illuminate\Auth\Events\Login', [self::class, 'onLogin']);
         $events->listen('Illuminate\Auth\Events\Logout', [self::class, 'onLogout']);
         $events->listen('Ninja\DeviceTracker\Events\Google2FASuccess', [self::class, 'onGoogle2FASuccess']);
-        $events->listen('Ninja\DeviceTracker\Events\DeviceTrackedEvent', [self::class, 'onDeviceTracked']);
     }
 }

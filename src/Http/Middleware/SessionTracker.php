@@ -14,11 +14,13 @@ use Ninja\DeviceTracker\Contracts\StorableId;
 use Ninja\DeviceTracker\Enums\FinishedSessionBehaviour;
 use Ninja\DeviceTracker\Enums\SessionIpChangeBehaviour;
 use Ninja\DeviceTracker\Enums\SessionStatus;
-use Ninja\DeviceTracker\Enums\SessionTransport;
+use Ninja\DeviceTracker\Enums\Transport;
 use Ninja\DeviceTracker\Events\SessionLocationChangedEvent;
 use Ninja\DeviceTracker\Exception\DeviceNotFoundException;
 use Ninja\DeviceTracker\Facades\SessionManager;
+use Ninja\DeviceTracker\Factories\SessionIdFactory;
 use Ninja\DeviceTracker\Models\Session;
+use Ninja\DeviceTracker\Transports\SessionTransport;
 use Symfony\Component\Routing\Exception\RouteNotFoundException;
 
 final readonly class SessionTracker
@@ -84,6 +86,7 @@ final readonly class SessionTracker
         if (guard()->check()) {
             try {
                 $session = SessionManager::start();
+                SessionTransport::propagate($session->uuid);
                 $response = $next($request);
 
                 if (guard()->check()) {
@@ -97,6 +100,12 @@ final readonly class SessionTracker
             }
         } else {
             try {
+                if (session_uuid() === null) {
+                    // Make sure a session uuid is used when doing this so any api can still refer to the session uuid
+                    // even when the session has not been created yet due to the api logging in.
+                    $sessionUuid = SessionIdFactory::generate();
+                    SessionTransport::propagate($sessionUuid);
+                }
                 $response = $next($request);
 
                 if (guard()->check()) {
@@ -122,10 +131,10 @@ final readonly class SessionTracker
         if (! empty($hierarchyParameterString)) {
             $hierarchy = array_filter(
                 explode('|', $hierarchyParameterString),
-                fn (string $value) => SessionTransport::tryFrom($value) !== null,
+                fn (string $value) => Transport::tryFrom($value) !== null,
             );
             if (! empty($hierarchy)) {
-                Config::set('devices.session_id_transport_hierarchy', $hierarchy);
+                Config::set('devices.transports.session_id.transport_hierarchy', $hierarchy);
             }
         }
     }
@@ -134,10 +143,10 @@ final readonly class SessionTracker
     {
         if (
             ! empty($parameterString)
-            && SessionTransport::tryFrom($parameterString) !== null
-            && $parameterString !== SessionTransport::Request->value
+            && Transport::tryFrom($parameterString) !== null
+            && $parameterString !== Transport::Request->value
         ) {
-            Config::set('devices.session_id_response_transport', $parameterString);
+            Config::set('devices.devices.transports.session_id.response_transport', $parameterString);
         }
     }
 

@@ -41,18 +41,17 @@ use Ninja\DeviceTracker\Models\Relations\BelongsToManyDevices;
 // In User model
 public function devices(): BelongsToManyDevices
 {
-    $table = sprintf('%s_devices', str(\config('devices.authenticatable_table'))->singular());
-    $field = sprintf('%s_id', str(\config('devices.authenticatable_table'))->singular());
+    $instance = $this->newRelatedInstance(Device::class);
 
-    return new BelongsToManyDevices(
-        Device::query(),
-        $this,
-        $table,
-        $field,
-        'device_uuid',
-        'id',
-        'uuid'
-    );
+     return new BelongsToManyDevices(
+         query: $instance->newQuery(),
+         parent: $this,
+         table: 'device_sessions',
+         foreignPivotKey: 'user_id',
+         relatedPivotKey: 'device_uuid',
+         parentKey: 'id',
+         relatedKey: 'uuid',
+     );
 }
 
 // Usage examples

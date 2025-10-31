@@ -197,23 +197,12 @@ class DeviceTrackerSeeder extends Seeder
             'device_model' => $deviceInfo->device->model,
             'grade' => $deviceInfo->grade,
             'source' => $userAgent,
-            'ip' => $ip_address,
             'fingerprint' => hash('xxh128', $userAgent.$deviceUuid),
             'created_at' => $deviceCreatedAt,
             'updated_at' => $deviceCreatedAt,
             'verified_at' => $status === DeviceStatus::Verified->value ? $deviceCreatedAt : null,
             'hijacked_at' => $status === DeviceStatus::Hijacked->value ?
                 $this->faker->dateTimeBetween($deviceCreatedAt) : null,
-        ]);
-
-        DB::table('user_devices')->insert([
-            'user_id' => $userId,
-            'device_uuid' => $deviceUuid,
-            'status' => $status,
-            'verified_at' => $status === DeviceStatus::Verified->value ? $deviceCreatedAt : null,
-            'last_activity_at' => $deviceCreatedAt,
-            'created_at' => $deviceCreatedAt,
-            'updated_at' => $deviceCreatedAt,
         ]);
 
         $numSessions = $this->faker->numberBetween(1, self::MAX_SESSIONS_PER_DEVICE);

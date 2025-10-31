@@ -9,12 +9,12 @@ use DeviceDetector\Parser\Device\AbstractDeviceParser;
 use Illuminate\Http\Request;
 use Ninja\DeviceTracker\Cache\UserAgentCache;
 use Ninja\DeviceTracker\DTO\Device;
-use Ninja\DeviceTracker\Modules\Detection\Contracts;
+use Ninja\DeviceTracker\Modules\Detection\Contracts\DeviceDetectorInterface;
 use Ninja\DeviceTracker\Modules\Detection\DTO\Browser;
 use Ninja\DeviceTracker\Modules\Detection\DTO\DeviceType;
 use Ninja\DeviceTracker\Modules\Detection\DTO\Platform;
 
-final class UserAgentDeviceDetector implements Contracts\DeviceDetector
+final class UserAgentDeviceDetector implements DeviceDetectorInterface
 {
     private DeviceDetector $dd;
 
@@ -23,7 +23,7 @@ final class UserAgentDeviceDetector implements Contracts\DeviceDetector
         AbstractDeviceParser::setVersionTruncation(AbstractParser::VERSION_TRUNCATION_PATCH);
     }
 
-    public function detect(Request|string $request): ?Device
+    public function detect(Request|string $request, ?Device $base = null): ?Device
     {
         $ua = is_string($request) ? $request : $request->header('User-Agent', $this->fakeUA());
         if (! is_string($ua) || empty($ua)) {
