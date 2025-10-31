@@ -28,7 +28,7 @@ This is a work in progress, and maybe or maybe not be ready for production use. 
 * Ready to use middleware, routes, controllers, dtos, value objects and resources
 * Ready to use Google 2FA integration
 * Cache support for devices, sessions, locations and user agents
-* [FingerprintJS](https://github.com/fingerprintjs/fingerprintjs) and [ClientJS](https://github.com/jackspirou/clientjs) integrations for device fingerprinting
+* [FingerprintJS](https://github.com/fingerprintjs/fingerprintjs), [ClientJS](https://github.com/jackspirou/clientjs) and [ThumbmarkJS](https://www.thumbmarkjs.com/) integrations for device fingerprinting
 
 ## 🗓️ Planned features
 
@@ -44,7 +44,7 @@ Please refer to the [documentation](./docs/README.md) for more information on th
 
 ## 🙏 Credits
 
-This project is developed and maintained by 🥷 [Diego Rin](https://diego.ninja) in his free time.
+This project is developed and maintained by 🥷 [Diego Rin](https://diego.ninja) and [Davide Pizzato](https://github.com/dvdpzzt-kimia) in their free time.
 
 Special thanks to:
 

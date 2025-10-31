@@ -314,7 +314,7 @@ return [
     | This option specifies the library that will be used to generate
     | the client-side fingerprint of the current device.
     |
-    | Options: 'fingerprintjs', 'clientjs', 'creepjs', 'none'
+    | Options: 'fingerprintjs', 'clientjs', 'creepjs', 'thumbmarkjs', 'none'
     |
     */
     'fingerprint_client_library' => 'fingerprintjs',
