@@ -14,17 +14,13 @@ final class Device implements JsonSerializable, Stringable
     use DataModel;
 
     public const UNKNOWN = 'UNK';
-
     public Browser $browser;
-
     public Platform $platform;
-
     public DeviceType $device;
-
+    public ?string $advertisingId = null;
+    public ?string $deviceId = null;
     public ?bool $bot = false;
-
     public ?string $grade = self::UNKNOWN;
-
     public ?string $source;
 
     public function unknown(): bool
@@ -46,6 +42,8 @@ final class Device implements JsonSerializable, Stringable
             'browser' => $this->browser->array(),
             'platform' => $this->platform->array(),
             'device' => $this->device->array(),
+            'advertising_id' => $this->advertisingId,
+            'device_id' => $this->deviceId,
             'grade' => $this->grade,
             'source' => $this->source,
             'label' => (string) $this,

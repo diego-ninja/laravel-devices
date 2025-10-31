@@ -2,7 +2,7 @@
 
 namespace Ninja\DeviceTracker;
 
-use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
@@ -10,6 +10,7 @@ use Ninja\DeviceTracker\Console\Commands\CacheInvalidateCommand;
 use Ninja\DeviceTracker\Console\Commands\CacheWarmCommand;
 use Ninja\DeviceTracker\Console\Commands\CleanupDevicesCommand;
 use Ninja\DeviceTracker\Console\Commands\CleanupSessionsCommand;
+use Ninja\DeviceTracker\Console\Commands\ClearHistoryCommand;
 use Ninja\DeviceTracker\Console\Commands\DeviceInspectCommand;
 use Ninja\DeviceTracker\Console\Commands\DeviceStatusCommand;
 use Ninja\DeviceTracker\Contracts\CodeGenerator;
@@ -17,12 +18,17 @@ use Ninja\DeviceTracker\Generators\Google2FACodeGenerator;
 use Ninja\DeviceTracker\Http\Middleware\DeviceChecker;
 use Ninja\DeviceTracker\Http\Middleware\DeviceTracker;
 use Ninja\DeviceTracker\Http\Middleware\SessionTracker;
-use Ninja\DeviceTracker\Modules\Detection\Contracts\DeviceDetector;
+use Ninja\DeviceTracker\Models\Device;
+use Ninja\DeviceTracker\Models\Session;
+use Ninja\DeviceTracker\Modules\Detection\Contracts\DeviceDetectorInterface;
+use Ninja\DeviceTracker\Modules\Detection\Device\LayeredDeviceDetector;
+use Ninja\DeviceTracker\Modules\Detection\Device\RequestDeviceDetector;
 use Ninja\DeviceTracker\Modules\Detection\Device\UserAgentDeviceDetector;
 use Ninja\DeviceTracker\Modules\Fingerprinting\Http\Middleware\FingerprintTracker;
 use Ninja\DeviceTracker\Modules\Location\Contracts\LocationProvider;
 use Ninja\DeviceTracker\Modules\Location\FallbackLocationProvider;
 use Ninja\DeviceTracker\Modules\Tracking\Http\Middleware\EventTracker;
+use Ninja\DeviceTracker\Observers\ChangeHistoryObserver;
 use PragmaRX\Google2FA\Google2FA;
 use PragmaRX\Google2FA\Support\Constants;
 
@@ -33,12 +39,9 @@ class DeviceTrackerServiceProvider extends ServiceProvider
         $this->registerPublishing();
         $this->registerMiddlewares();
         $this->registerCommands();
+        $this->registerObservers();
 
         $this->loadViewsFrom(resource_path('views/vendor/laravel-devices'), 'laravel-devices');
-
-        $this->app->resolving(EncryptCookies::class, function (EncryptCookies $encrypter) {
-            $encrypter->disableFor(config('devices.client_fingerprint_key'));
-        });
 
         if (config('devices.load_routes') === true) {
             $this->loadRoutesFrom(__DIR__.'/../routes/devices.php');
@@ -55,8 +58,11 @@ class DeviceTrackerServiceProvider extends ServiceProvider
 
         $this->registerLocationProviders();
 
-        $this->app->singleton(DeviceDetector::class, function () {
-            return new UserAgentDeviceDetector;
+        $this->app->singleton(DeviceDetectorInterface::class, function () {
+            return new LayeredDeviceDetector([
+                new UserAgentDeviceDetector,
+                new RequestDeviceDetector,
+            ]);
         });
 
         $this->app->singleton(CodeGenerator::class, function () {
@@ -102,6 +108,7 @@ class DeviceTrackerServiceProvider extends ServiceProvider
                 CacheInvalidateCommand::class,
                 CleanupSessionsCommand::class,
                 CleanupDevicesCommand::class,
+                ClearHistoryCommand::class,
                 DeviceStatusCommand::class,
                 DeviceInspectCommand::class,
             ]);
@@ -115,10 +122,7 @@ class DeviceTrackerServiceProvider extends ServiceProvider
             $router->aliasMiddleware('device-tracker', DeviceTracker::class);
             $router->aliasMiddleware('device-checker', DeviceChecker::class);
             $router->aliasMiddleware('session-tracker', SessionTracker::class);
-
-            if (config('devices.fingerprinting_enabled') === true) {
-                $router->aliasMiddleware('fingerprint-tracker', FingerprintTracker::class);
-            }
+            $router->aliasMiddleware('fingerprint-tracker', FingerprintTracker::class);
 
             if (config('devices.event_tracking_enabled') === true) {
                 $router->aliasMiddleware('event-tracker', EventTracker::class);
@@ -157,6 +161,19 @@ class DeviceTrackerServiceProvider extends ServiceProvider
             $this->publishesMigrations([
                 __DIR__.'/../database/migrations' => database_path('migrations'),
             ], 'laravel-devices-migrations');
+        }
+    }
+
+    private function registerObservers(): void
+    {
+        if (config('devices.history.enabled', false)) {
+            Device::observe(ChangeHistoryObserver::class);
+            Session::observe(ChangeHistoryObserver::class);
+
+            Relation::morphMap([
+                'device' => Device::class,
+                'session' => Session::class,
+            ]);
         }
     }
 }

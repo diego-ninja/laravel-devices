@@ -12,6 +12,7 @@ use Ninja\DeviceTracker\Exception\FingerprintDuplicatedException;
 use Ninja\DeviceTracker\Facades\DeviceManager;
 use Ninja\DeviceTracker\Modules\Fingerprinting\Injector\Enums\Library;
 use Ninja\DeviceTracker\Modules\Fingerprinting\Injector\Factories\InjectorFactory;
+use Ninja\DeviceTracker\Transports\FingerprintTransport;
 
 final class FingerprintTracker
 {
@@ -20,10 +21,6 @@ final class FingerprintTracker
      */
     public function handle(Request $request, Closure $next): mixed
     {
-        if (! config('devices.fingerprinting_enabled')) {
-            return $next($request);
-        }
-
         $response = $next($request);
 
         if (! DeviceManager::fingerprinted()) {
@@ -41,26 +38,13 @@ final class FingerprintTracker
         return $response;
     }
 
-    /**
-     * @throws FingerprintDuplicatedException
-     */
     private function addFingerprint(Response $response): Response
     {
-        $clientCookie = Config::get('devices.client_fingerprint_key');
-        $serverCookie = Config::get('devices.fingerprint_id_cookie_name');
-
+        $fingerprint = FingerprintTransport::currentId();
         $library = Config::get('devices.fingerprint_client_library', Library::FingerprintJS);
 
-        if (! request()->cookie($clientCookie)) {
+        if ($fingerprint === null) {
             return InjectorFactory::make($library)->inject($response);
-        } else {
-            $fingerprint = request()->cookie($clientCookie);
-            if (! is_string($fingerprint)) {
-                return $response;
-            }
-
-            device()?->fingerprint($fingerprint, $serverCookie);
-            Cookie::queue(Cookie::forget($clientCookie));
         }
 
         return $response;
