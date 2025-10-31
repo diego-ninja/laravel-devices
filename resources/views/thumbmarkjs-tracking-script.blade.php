@@ -30,11 +30,11 @@
                 const transport = window.DeviceTracker.config.transport;
 
                 window.DeviceTracker.config.current = result.thumbmark;
-                document.cookie = `${transport.key}=${result.thumbmark}; expires=Fri, 31 Dec 9999 23:59:59 GMT; domain=${location.hostname}; SameSite=Lax; Secure;`
+                document.cookie = `${transport.key}=${result.thumbmark}; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT; SameSite=Lax; Secure;`
             })
-            .catch(error => console.error(error));
+            .catch(error => console.error('ThumbmarkJS fingerprinting failed:', error));
     } else {
         const transport = window.DeviceTracker.config.transport;
-        document.cookie = `${transport.key}=${window.DeviceTracker.config.current}; expires=Fri, 31 Dec 9999 23:59:59 GMT; domain=${location.hostname}; SameSite=Lax; Secure;`
+        document.cookie = `${transport.key}=${window.DeviceTracker.config.current}; path=/; expires=Fri, 31 Dec 9999 23:59:59 GMT; SameSite=Lax; Secure;`
     }
 </script>
