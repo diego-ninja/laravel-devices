@@ -148,12 +148,20 @@ class DeviceTest extends FeatureTestCase
                 'deviceInfo' => [
                     'advertising_id' => 'advertisingId',
                     'platform' => 'Mac',
+                    'browser' => 'Chrome',
+                    'browser_engine' => 'Blink',
+                    'browser_version' => '1.0.0',
                 ],
                 'dtoInfo' => [
                     'platform' => Platform::from([
                         'name' => 'Mac',
                         'version' => '10.15.7',
                         'family' => 'Mac',
+                    ]),
+                    'browser' => Browser::from([
+                        'name' => 'Chrome',
+                        'version' => '10.15.7',
+                        'engine' => 'Blink',
                     ]),
                     'advertisingId' => 'advertisingId',
                     'deviceId' => null,
@@ -164,12 +172,20 @@ class DeviceTest extends FeatureTestCase
                 'deviceInfo' => [
                     'device_id' => 'deviceId',
                     'platform' => 'Mac',
+                    'browser' => 'Chrome',
+                    'browser_engine' => 'Blink',
+                    'browser_version' => '1.0.0',
                 ],
                 'dtoInfo' => [
                     'platform' => Platform::from([
                         'name' => 'Mac',
                         'version' => '10.15.7',
                         'family' => 'Mac',
+                    ]),
+                    'browser' => Browser::from([
+                        'name' => 'Chrome',
+                        'version' => '10.15.7',
+                        'engine' => 'Blink',
                     ]),
                     'advertisingId' => null,
                     'deviceId' => 'deviceId',
