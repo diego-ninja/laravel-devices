@@ -329,6 +329,7 @@ class Device extends Model implements Cacheable
         $dataChanged = $data !== null && (
             $this->browser_version !== $data->browser->version->__toString()
             || $this->platform_version !== $data->platform->version->__toString()
+            || $this->source !== $data->source
         );
         $advertisingIdSet = $data->advertisingId !== null && $this->advertising_id === null;
         $deviceIdSet = $data->deviceId !== null && $this->device_id === null;
@@ -348,6 +349,9 @@ class Device extends Model implements Cacheable
             }
             if ($this->platform_version !== $data->platform->version->__toString()) {
                 $this->platform_version = $data->platform->version;
+            }
+            if ($this->source !== $data->source) {
+                $this->source = $data->source;
             }
         }
 
