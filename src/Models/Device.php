@@ -323,12 +323,24 @@ class Device extends Model implements Cacheable
         }
     }
 
+    /**
+     * Update the device record with new fingerprint and/or device data, persist changes, and return the device.
+     *
+     * If the fingerprint changes, the fingerprint is updated and a DeviceFingerprintedEvent is dispatched.
+     * If device data (browser version, platform version, or source) changes those fields are updated.
+     * If advertising ID or device ID are newly provided, they are set.
+     *
+     * @param StorableId|null $fingerprint New fingerprint to set, or null to leave unchanged.
+     * @param DeviceDTO|null $data Device information used to update browser/platform versions, source, advertising ID, and device ID; null to leave unchanged.
+     * @return Device The updated device instance.
+     */
     public function updateInfo(?StorableId $fingerprint = null, ?DeviceDTO $data = null): Device
     {
         $fingerprintChanged = $fingerprint !== null && $this->fingerprint !== $fingerprint;
         $dataChanged = $data !== null && (
             $this->browser_version !== $data->browser->version->__toString()
             || $this->platform_version !== $data->platform->version->__toString()
+            || $this->source !== $data->source
         );
         $advertisingIdSet = $data->advertisingId !== null && $this->advertising_id === null;
         $deviceIdSet = $data->deviceId !== null && $this->device_id === null;
@@ -348,6 +360,9 @@ class Device extends Model implements Cacheable
             }
             if ($this->platform_version !== $data->platform->version->__toString()) {
                 $this->platform_version = $data->platform->version;
+            }
+            if ($this->source !== $data->source) {
+                $this->source = $data->source;
             }
         }
 
@@ -406,12 +421,23 @@ class Device extends Model implements Cacheable
         );
     }
 
+    /**
+     * Finds a device that matches unique identifiers provided by a DeviceDto.
+     *
+     * The lookup prefers a match by `deviceId` and falls back to `advertisingId` if no deviceId match is found.
+     * Both searches require the device's platform, browser name, and browser engine to match the values from the DTO.
+     *
+     * @param DeviceDto $deviceDto DTO containing device identifiers and attributes used for matching.
+     * @return self|null The first matching Device instance, or `null` if no match is found.
+     */
     public static function byDeviceDtoUniqueInfo(DeviceDto $deviceDto): ?self
     {
         if ($deviceDto->deviceId !== null) {
             $device = Device::query()
                 ->where('device_id', $deviceDto->deviceId)
                 ->where('platform', $deviceDto->platform->name)
+                ->where('browser', $deviceDto->browser->name)
+                ->where('browser_engine', $deviceDto->browser->engine)
                 ->first();
             if ($device !== null) {
                 return $device;
@@ -422,6 +448,8 @@ class Device extends Model implements Cacheable
             $device = Device::query()
                 ->where('advertising_id', $deviceDto->advertisingId)
                 ->where('platform', $deviceDto->platform->name)
+                ->where('browser', $deviceDto->browser->name)
+                ->where('browser_engine', $deviceDto->browser->engine)
                 ->first();
             if ($device !== null) {
                 return $device;
