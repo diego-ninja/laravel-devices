@@ -323,12 +323,25 @@ class Device extends Model implements Cacheable
         }
     }
 
+    /**
+     * Update the device's fingerprint and identifying information when new values are provided and different.
+     *
+     * If the fingerprint changes, the model's fingerprint is updated and a DeviceFingerprintedEvent is dispatched.
+     * If provided device DTO fields differ from stored values, the model's browser_version, platform_version, and source
+     * are updated. advertising_id and device_id are set only if they are provided on the DTO and currently null on the model.
+     * The model is saved before returning.
+     *
+     * @param StorableId|null $fingerprint New fingerprint to apply, or null to leave unchanged.
+     * @param DeviceDTO|null $data DTO containing browser, platform, source, advertisingId, and deviceId info to merge into the model, or null to leave unchanged.
+     * @return Device The updated device instance.
+     */
     public function updateInfo(?StorableId $fingerprint = null, ?DeviceDTO $data = null): Device
     {
         $fingerprintChanged = $fingerprint !== null && $this->fingerprint !== $fingerprint;
         $dataChanged = $data !== null && (
             $this->browser_version !== $data->browser->version->__toString()
             || $this->platform_version !== $data->platform->version->__toString()
+            || $this->source !== $data->source
         );
         $advertisingIdSet = $data->advertisingId !== null && $this->advertising_id === null;
         $deviceIdSet = $data->deviceId !== null && $this->device_id === null;
@@ -348,6 +361,9 @@ class Device extends Model implements Cacheable
             }
             if ($this->platform_version !== $data->platform->version->__toString()) {
                 $this->platform_version = $data->platform->version;
+            }
+            if ($this->source !== $data->source) {
+                $this->source = $data->source;
             }
         }
 
@@ -406,12 +422,23 @@ class Device extends Model implements Cacheable
         );
     }
 
+    /**
+     * Locate a device using unique identifiers from a DeviceDto.
+     *
+     * Attempts to find an existing Device first by `deviceId` and, if not found, by `advertisingId`.
+     * Both lookups also require matching `platform`, `browser`, and `browser_engine` from the provided DTO.
+     *
+     * @param \Ninja\DeviceTracker\DTO\DeviceDto $deviceDto DTO containing identifying fields to match.
+     * @return self|null The matching Device instance if found, `null` otherwise.
+     */
     public static function byDeviceDtoUniqueInfo(DeviceDto $deviceDto): ?self
     {
         if ($deviceDto->deviceId !== null) {
             $device = Device::query()
                 ->where('device_id', $deviceDto->deviceId)
                 ->where('platform', $deviceDto->platform->name)
+                ->where('browser', $deviceDto->browser->name)
+                ->where('browser_engine', $deviceDto->browser->engine)
                 ->first();
             if ($device !== null) {
                 return $device;
@@ -422,6 +449,8 @@ class Device extends Model implements Cacheable
             $device = Device::query()
                 ->where('advertising_id', $deviceDto->advertisingId)
                 ->where('platform', $deviceDto->platform->name)
+                ->where('browser', $deviceDto->browser->name)
+                ->where('browser_engine', $deviceDto->browser->engine)
                 ->first();
             if ($device !== null) {
                 return $device;
