@@ -87,7 +87,7 @@ Other important changes:
 - `fingerprint` is now always active and simply ignored when not available in the request.
 - `fingerprint` transport has been refactored and standardized like session and device transports;
 - `Device` model identification has improved. The model has been enriched with two new values, that can both be used separately to identify the physical devices 
-  proved the platform stays the same:
+  proved the platform and the browsers stays the same:
   - `device_id`: is an anonymous unique device identifier.
   - `advertising_id`: is a unique, user-resettable, and user-deletable ID for advertising - ([Google](https://support.google.com/googleplay/android-developer/answer/6048248?hl=en), [Apple](https://developer.apple.com/documentation/adsupport/asidentifiermanager/advertisingidentifier))
 

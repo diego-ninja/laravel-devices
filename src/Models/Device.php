@@ -329,6 +329,7 @@ class Device extends Model implements Cacheable
         $dataChanged = $data !== null && (
             $this->browser_version !== $data->browser->version->__toString()
             || $this->platform_version !== $data->platform->version->__toString()
+            || $this->source !== $data->source
         );
         $advertisingIdSet = $data->advertisingId !== null && $this->advertising_id === null;
         $deviceIdSet = $data->deviceId !== null && $this->device_id === null;
@@ -348,6 +349,9 @@ class Device extends Model implements Cacheable
             }
             if ($this->platform_version !== $data->platform->version->__toString()) {
                 $this->platform_version = $data->platform->version;
+            }
+            if ($this->source !== $data->source) {
+                $this->source = $data->source;
             }
         }
 
@@ -412,6 +416,8 @@ class Device extends Model implements Cacheable
             $device = Device::query()
                 ->where('device_id', $deviceDto->deviceId)
                 ->where('platform', $deviceDto->platform->name)
+                ->where('browser', $deviceDto->browser->name)
+                ->where('browser_engine', $deviceDto->browser->engine)
                 ->first();
             if ($device !== null) {
                 return $device;
@@ -422,6 +428,8 @@ class Device extends Model implements Cacheable
             $device = Device::query()
                 ->where('advertising_id', $deviceDto->advertisingId)
                 ->where('platform', $deviceDto->platform->name)
+                ->where('browser', $deviceDto->browser->name)
+                ->where('browser_engine', $deviceDto->browser->engine)
                 ->first();
             if ($device !== null) {
                 return $device;
