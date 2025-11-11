@@ -12,8 +12,8 @@ return new class extends Migration
             $table->dropUnique('idx_platform_advertising_id_unique');
             $table->dropUnique('idx_platform_device_id_unique');
 
-            $table->unique(['platform', 'browser', 'advertising_id'], 'idx_platform_browser_advertising_id_unique');
-            $table->unique(['platform', 'browser', 'device_id'], 'idx_platform_browser_device_id_unique');
+            $table->unique(['platform', 'browser', 'browser_engine', 'advertising_id'], 'idx_platform_browser_advertising_id_unique');
+            $table->unique(['platform', 'browser', 'browser_engine', 'device_id'], 'idx_platform_browser_device_id_unique');
         });
     }
 
