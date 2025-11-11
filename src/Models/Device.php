@@ -412,6 +412,7 @@ class Device extends Model implements Cacheable
             $device = Device::query()
                 ->where('device_id', $deviceDto->deviceId)
                 ->where('platform', $deviceDto->platform->name)
+                ->where('browser', $deviceDto->browser->name)
                 ->first();
             if ($device !== null) {
                 return $device;
@@ -422,6 +423,7 @@ class Device extends Model implements Cacheable
             $device = Device::query()
                 ->where('advertising_id', $deviceDto->advertisingId)
                 ->where('platform', $deviceDto->platform->name)
+                ->where('browser', $deviceDto->browser->name)
                 ->first();
             if ($device !== null) {
                 return $device;
