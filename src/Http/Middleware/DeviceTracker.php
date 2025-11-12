@@ -4,11 +4,14 @@ namespace Ninja\DeviceTracker\Http\Middleware;
 
 use Closure;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Ninja\DeviceTracker\Contracts\LoggedUserGuesser;
+use Ninja\DeviceTracker\Contracts\StorableId;
+use Ninja\DeviceTracker\DTO\Device as DeviceDto;
 use Ninja\DeviceTracker\Enums\Transport;
 use Ninja\DeviceTracker\Exception\InvalidDeviceDetectedException;
 use Ninja\DeviceTracker\Exception\UnknownDeviceDetectedException;
@@ -57,23 +60,17 @@ final readonly class DeviceTracker
         $user = user() ?? $this->guessLoggingUser();
         $checkIp = DeviceManager::isLoginRoute() || $user !== null;
 
-        $device = DeviceManager::matchingDevice(
+        $device = $this->getMatchingDevice(
             deviceUuid: $deviceUuid,
             fingerprint: $fingerprint,
             deviceDto: $detectedDevice,
-            ip: $checkIp ? $ip : null,
-            user: $checkIp ? $user : null,
-            skipMatchCheck: $skipDeviceMatchCheck,
+            ckeckIpAndUser: $checkIp,
+            ip: $ip,
+            user: $user,
+            skipDeviceMatchCheck: $skipDeviceMatchCheck,
         );
 
         if ($device !== null) {
-            if (! $skipDeviceMatchCheck) {
-                $device = $device->updateInfo(
-                    fingerprint: $fingerprint,
-                    data: $detectedDevice,
-                );
-            }
-
             return DeviceTransport::set($next(DeviceTransport::propagate($device->uuid)), $device->uuid);
         } elseif ($deviceUuid !== null && Device::byUuid($deviceUuid) !== null) {
             // Request has a device uuid that belongs to an existing device that do not match info. Reset device uuid
@@ -88,6 +85,24 @@ final readonly class DeviceTracker
                     fingerprint: $fingerprint,
                     deviceDto: $detectedDevice,
                 );
+            } catch (UniqueConstraintViolationException $e) {
+                // Race conditions probably means that a device has been created between the matching device check
+                // and the previous DeviceManager::create. Try to find again the matching device that should now exist
+                $device = $this->getMatchingDevice(
+                    deviceUuid: $deviceUuid,
+                    fingerprint: $fingerprint,
+                    deviceDto: $detectedDevice,
+                    ckeckIpAndUser: $checkIp,
+                    ip: $ip,
+                    user: $user,
+                    skipDeviceMatchCheck: $skipDeviceMatchCheck,
+                );
+
+                if ($device !== null) {
+                    return DeviceTransport::set($next(DeviceTransport::propagate($device->uuid)), $device->uuid);
+                }
+
+                $this->abort($detectedDevice === null, $detectedDevice?->source ?? 'unknown', $e);
             } catch (UnknownDeviceDetectedException $e) {
                 $this->abort($detectedDevice === null, $detectedDevice?->source ?? 'unknown', $e);
             }
@@ -125,6 +140,38 @@ final readonly class DeviceTracker
         ) {
             Config::set('devices.transports.device_id.response_transport', $parameterString);
         }
+    }
+
+    private function getMatchingDevice(
+        ?StorableId $deviceUuid,
+        ?StorableId $fingerprint,
+        ?DeviceDto $deviceDto,
+        bool $ckeckIpAndUser = false,
+        ?string $ip = null,
+        ?Authenticatable $user = null,
+        bool $skipDeviceMatchCheck = false,
+    ): ?Device {
+        $device = DeviceManager::matchingDevice(
+            deviceUuid: $deviceUuid,
+            fingerprint: $fingerprint,
+            deviceDto: $deviceDto,
+            ip: $ckeckIpAndUser ? $ip : null,
+            user: $ckeckIpAndUser ? $user : null,
+            skipMatchCheck: $skipDeviceMatchCheck,
+        );
+
+        if ($device !== null) {
+            if (! $skipDeviceMatchCheck) {
+                $device = $device->updateInfo(
+                    fingerprint: $fingerprint,
+                    data: $deviceDto,
+                );
+            }
+
+            return $device;
+        }
+
+        return null;
     }
 
     /**
