@@ -4,11 +4,14 @@ namespace Ninja\DeviceTracker\Http\Middleware;
 
 use Closure;
 use Illuminate\Contracts\Auth\Authenticatable;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Log;
 use Ninja\DeviceTracker\Contracts\LoggedUserGuesser;
+use Ninja\DeviceTracker\Contracts\StorableId;
+use Ninja\DeviceTracker\DTO\Device as DeviceDto;
 use Ninja\DeviceTracker\Enums\Transport;
 use Ninja\DeviceTracker\Exception\InvalidDeviceDetectedException;
 use Ninja\DeviceTracker\Exception\UnknownDeviceDetectedException;
@@ -21,8 +24,21 @@ use Throwable;
 final readonly class DeviceTracker
 {
     /**
-     * @throws UnknownDeviceDetectedException
-     * @throws InvalidDeviceDetectedException
+     * Process an incoming HTTP request to detect a device, match it against existing records,
+     * optionally create and track a new device, and propagate the device UUID to downstream handlers.
+     *
+     * Applies optional custom transport hierarchy and response transport, enforces whitelist/allowance
+     * policies for unknown or bot devices, attempts to locate a matching Device (with optional IP/user checks),
+     * handles race conditions during device creation, and ensures a device UUID is available for propagation.
+     *
+     * @param string|null $hierarchyParameterString Pipe-separated list of transport names to override the configured device transport hierarchy; when null or empty the configured hierarchy is used.
+     * @param string|null $responseTransport Optional transport name to override the configured device response transport for device_id; when null the configured response transport is used.
+     * @param bool $skipDeviceMatchCheck When true, skip device match validation that would update existing device information.
+     *
+     * @throws UnknownDeviceDetectedException When an unknown device is detected and exceptions are configured to be thrown.
+     * @throws InvalidDeviceDetectedException When a bot/invalid device is detected and exceptions are configured to be thrown.
+     *
+     * @return mixed A response produced by the next middleware, wrapped by DeviceTransport so the propagated device UUID is available to downstream code.
      */
     public function handle(
         Request $request,
@@ -57,23 +73,17 @@ final readonly class DeviceTracker
         $user = user() ?? $this->guessLoggingUser();
         $checkIp = DeviceManager::isLoginRoute() || $user !== null;
 
-        $device = DeviceManager::matchingDevice(
+        $device = $this->getMatchingDevice(
             deviceUuid: $deviceUuid,
             fingerprint: $fingerprint,
             deviceDto: $detectedDevice,
-            ip: $checkIp ? $ip : null,
-            user: $checkIp ? $user : null,
-            skipMatchCheck: $skipDeviceMatchCheck,
+            ckeckIpAndUser: $checkIp,
+            ip: $ip,
+            user: $user,
+            skipDeviceMatchCheck: $skipDeviceMatchCheck,
         );
 
         if ($device !== null) {
-            if (! $skipDeviceMatchCheck) {
-                $device = $device->updateInfo(
-                    fingerprint: $fingerprint,
-                    data: $detectedDevice,
-                );
-            }
-
             return DeviceTransport::set($next(DeviceTransport::propagate($device->uuid)), $device->uuid);
         } elseif ($deviceUuid !== null && Device::byUuid($deviceUuid) !== null) {
             // Request has a device uuid that belongs to an existing device that do not match info. Reset device uuid
@@ -88,6 +98,24 @@ final readonly class DeviceTracker
                     fingerprint: $fingerprint,
                     deviceDto: $detectedDevice,
                 );
+            } catch (UniqueConstraintViolationException $e) {
+                // Race conditions probably means that a device has been created between the matching device check
+                // and the previous DeviceManager::create. Try to find again the matching device that should now exist
+                $device = $this->getMatchingDevice(
+                    deviceUuid: $deviceUuid,
+                    fingerprint: $fingerprint,
+                    deviceDto: $detectedDevice,
+                    ckeckIpAndUser: $checkIp,
+                    ip: $ip,
+                    user: $user,
+                    skipDeviceMatchCheck: $skipDeviceMatchCheck,
+                );
+
+                if ($device !== null) {
+                    return DeviceTransport::set($next(DeviceTransport::propagate($device->uuid)), $device->uuid);
+                }
+
+                $this->abort($detectedDevice === null, $detectedDevice?->source ?? 'unknown', $e);
             } catch (UnknownDeviceDetectedException $e) {
                 $this->abort($detectedDevice === null, $detectedDevice?->source ?? 'unknown', $e);
             }
@@ -116,6 +144,14 @@ final readonly class DeviceTracker
         }
     }
 
+    /**
+     * Applies a custom response transport for the device_id transport when a valid, non-default transport string is provided.
+     *
+     * If `$parameterString` is non-empty, corresponds to a known Transport value, and is not the Request transport,
+     * the configuration key `devices.transports.device_id.response_transport` is set to that value.
+     *
+     * @param string|null $parameterString The transport name to apply (e.g., a Transport enum value); ignored if null, empty, invalid, or equal to the default Request transport.
+     */
     private function checkCustomDeviceResponseTransport(?string $parameterString = null): void
     {
         if (
@@ -125,6 +161,53 @@ final readonly class DeviceTracker
         ) {
             Config::set('devices.transports.device_id.response_transport', $parameterString);
         }
+    }
+
+    /**
+     * Finds an existing Device that matches the provided identifiers and optional context.
+     *
+     * If a matching device is found and `$skipDeviceMatchCheck` is false, the device's info
+     * will be updated with the given fingerprint and device DTO before being returned.
+     *
+     * @param StorableId|null $deviceUuid Device UUID to match, if available.
+     * @param StorableId|null $fingerprint Fingerprint identifier to match, if available.
+     * @param DeviceDto|null $deviceDto Device data transfer object used for matching and updating.
+     * @param bool $ckeckIpAndUser When true, include `$ip` and `$user` in the matching criteria.
+     * @param string|null $ip Client IP address used when `$ckeckIpAndUser` is true.
+     * @param Authenticatable|null $user Authenticated user used when `$ckeckIpAndUser` is true.
+     * @param bool $skipDeviceMatchCheck When true, return a found device without updating its stored info.
+     * @return Device|null The matching Device instance, or `null` if no match was found.
+     */
+    private function getMatchingDevice(
+        ?StorableId $deviceUuid,
+        ?StorableId $fingerprint,
+        ?DeviceDto $deviceDto,
+        bool $ckeckIpAndUser = false,
+        ?string $ip = null,
+        ?Authenticatable $user = null,
+        bool $skipDeviceMatchCheck = false,
+    ): ?Device {
+        $device = DeviceManager::matchingDevice(
+            deviceUuid: $deviceUuid,
+            fingerprint: $fingerprint,
+            deviceDto: $deviceDto,
+            ip: $ckeckIpAndUser ? $ip : null,
+            user: $ckeckIpAndUser ? $user : null,
+            skipMatchCheck: $skipDeviceMatchCheck,
+        );
+
+        if ($device !== null) {
+            if (! $skipDeviceMatchCheck) {
+                $device = $device->updateInfo(
+                    fingerprint: $fingerprint,
+                    data: $deviceDto,
+                );
+            }
+
+            return $device;
+        }
+
+        return null;
     }
 
     /**
