@@ -328,8 +328,9 @@ class Device extends Model implements Cacheable
         $fingerprintChanged = $fingerprint !== null && $this->fingerprint !== $fingerprint;
         $dataChanged = $data !== null && (
             $this->browser_version !== $data->browser->version->__toString()
-            || $this->platform_version !== $data->platform->version->__toString()
-            || $this->source !== $data->source
+                || $this->platform_version !== $data->platform->version->__toString()
+                || $this->source !== $data->source
+                || $this->device_model !== $data->device->model
         );
         $advertisingIdSet = $data->advertisingId !== null && $this->advertising_id === null;
         $deviceIdSet = $data->deviceId !== null && $this->device_id === null;
@@ -352,6 +353,9 @@ class Device extends Model implements Cacheable
             }
             if ($this->source !== $data->source) {
                 $this->source = $data->source;
+            }
+            if ($this->device_model !== $data->device->model) {
+                $this->device_model = $data->device->model;
             }
         }
 
@@ -534,8 +538,8 @@ class Device extends Model implements Cacheable
     protected function matchDevice(DeviceDTO $dto, bool $strict = true): bool
     {
         return $dto->device->family === $this->device_family
-            && $dto->device->model === $this->device_model
-            && $dto->device->type === $this->device_type;
+            && $dto->device->type === $this->device_type
+            && (! $strict || $dto->device->model === $this->device_model);
     }
 
     protected function matchDeviceUniqueInfo(DeviceDto $dto, bool $strict = true): bool
