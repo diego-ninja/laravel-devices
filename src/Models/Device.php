@@ -545,11 +545,10 @@ class Device extends Model implements Cacheable
     protected function matchDeviceUniqueInfo(DeviceDto $dto, bool $strict = true): bool
     {
         if ($strict) {
-            return $dto->advertisingId === $this->advertising_id
-                && $dto->deviceId === $this->device_id;
+            return ($dto->advertisingId === null || $this->advertising_id === null || $dto->advertisingId === $this->advertising_id)
+                && ($dto->deviceId === null || $this->device_id === null || $dto->deviceId === $this->device_id);
         }
 
-        return ($dto->advertisingId === null || $this->advertising_id === null || $dto->advertisingId === $this->advertising_id)
-            && ($dto->deviceId === null || $this->device_id === null || $dto->deviceId === $this->device_id);
+        return true;
     }
 }
